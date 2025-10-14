@@ -1,17 +1,18 @@
-# Imagen base de Python
-FROM python:3.10
+# Imagen base de Python optimizada
+FROM python:3.10-slim
 
-# Crear directorio de trabajo
+# Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar todos los archivos del proyecto
-COPY . /app
+# Copiar solo los archivos necesarios
+COPY . .
 
-# Instalar dependencias desde requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Instalar dependencias
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
 
-# Exponer el puerto 8000 para FastAPI
+# Exponer el puerto para FastAPI
 EXPOSE 8000
 
-# Comando para ejecutar el servidor con Uvicorn
+# Comando para ejecutar el servidor
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
