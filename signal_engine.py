@@ -23,3 +23,4 @@ def calcular_valor(datos):
     prob_real = datos.get("prob_real", 0.75)
     prob_implicita = datos.get("prob_implicita", 0.54)
     return round((prob_real - prob_implicita) * 100, 2)
+
