@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from signal_engine import generar_señal
+from signal_engine import generar_senal
 from notifier import enviar_notificacion
 
 app = FastAPI()
@@ -10,7 +10,8 @@ def home():
 
 @app.post("/analizar/")
 def analizar_partido(datos: dict):
-    señal = generar_señal(datos)
-    if señal["confianza"] >= 75:
-        enviar_notificacion(señal)
-    return señal
+    senal = generar_senal(datos)
+    if senal["confianza"] >= 75:
+        enviar_notificacion(senal)
+
+    return senal
