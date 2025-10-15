@@ -1,4 +1,4 @@
-from fastapi import from fastapi import FastAPI
+from fastapi import FastAPI
 from pydantic import BaseModel
 from signal_engine import generar_senal
 from notifier import enviar_notificacion
@@ -18,8 +18,8 @@ def home():
 
 @app.post("/analizar/")
 def analizar_partido(datos: Datos):
-    senal = generar_senal(datos.dict())
-    if senal["confianza"] >= 75:
+    datos_dict = datos.dict()
+    senal = generar_senal(datos_dict)
+    if senal.get("confianza", 0) >= 75:
         enviar_notificacion(senal)
-
     return senal
