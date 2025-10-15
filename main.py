@@ -18,8 +18,7 @@ def home():
 
 @app.post("/analizar/")
 def analizar_partido(datos: Datos):
-    datos_dict = datos.dict()
-    senal = generar_senal(datos_dict)
+    senal = generar_senal(datos.dict())
     if senal.get("confianza", 0) >= 75:
         enviar_notificacion(senal)
     return senal
