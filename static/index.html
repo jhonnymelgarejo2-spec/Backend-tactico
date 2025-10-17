@@ -24,14 +24,30 @@
   <script>
     document.getElementById("formulario").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const datos = Object.fromEntries(new FormData(e.target));
-      const respuesta = await fetch("https://backend-tactico-9l6l.onrender.com/analizar/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(datos),
-      });
-      const resultado = await respuesta.json();
-      document.getElementById("resultado").textContent = JSON.stringify(resultado, null, 2);
+      const resultado = document.getElementById("resultado");
+      resultado.textContent = "Procesando...";
+
+      const form = new FormData(e.target);
+      const datos = {
+        id: form.get("id"),
+        momentum: form.get("momentum"),
+        valor: parseFloat(form.get("valor")),
+        prob_real: parseFloat(form.get("prob_real")),
+        prob_implicita: parseFloat(form.get("prob_implicita"))
+      };
+
+      try {
+        const respuesta = await fetch("https://backend-tactico-9l6l.onrender.com/analizar/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(datos),
+        });
+
+        const texto = await respuesta.text();
+        resultado.textContent = texto;
+      } catch (error) {
+        resultado.textContent = `Error: ${error.message}`;
+      }
     });
   </script>
 </body>
