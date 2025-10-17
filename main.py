@@ -1,19 +1,21 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
+from signal_engine import generar_senal
+from notifier import enviar_notificacion
 
 app = FastAPI()
 
-# 🔓 Habilitar CORS para que el frontend pueda conectarse
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Montar carpeta estática
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# 🧠 Modelo de entrada
+# Servir index.html directamente en "/"
+@app.get("/", response_class=FileResponse)
+def serve_index():
+    return "static/index.html"
+
+# Modelo de datos para análisis
 class Datos(BaseModel):
     id: str
     momentum: str
@@ -21,29 +23,10 @@ class Datos(BaseModel):
     prob_real: float
     prob_implicita: float
 
-# 🧭 Función táctica para detectar liga
-def detectar_liga(id: str) -> str:
-    if id.startswith("ATP"):
-        return "ATP Tour"
-    elif id.startswith("WTA"):
-        return "WTA Tour"
-    elif id.startswith("FIFA"):
-        return "Fútbol Internacional"
-    elif id.startswith("NBA"):
-        return "NBA"
-    else:
-        return "Desconocida"
-
-# 🚀 Endpoint principal
+# Endpoint de análisis táctico
 @app.post("/analizar/")
-def analizar(datos: Datos):
-    liga = detectar_liga(datos.id)
-    # Aquí puedes agregar más lógica táctica si lo deseas
-    return {
-        "id": datos.id,
-        "liga": liga,
-        "equipoA": "Desconocido",
-        "equipoB": "Desconocido",
-        "confianza": 0.85,
-        "señal": "Alta probabilidad de victoria"
-    }
+def analizar_partido(datos: Datos):
+    senal = generar_senal(datos.dict())
+    if senal.get("confianza", 0) >= 75:
+        enviar_notificacion(senal)
+    return senal
