@@ -29,8 +29,8 @@
 
       const form = new FormData(e.target);
       const datos = {
-        id: form.get("id"),
-        momentum: form.get("momentum"),
+        id: form.get("id").trim(),
+        momentum: form.get("momentum").trim(),
         valor: parseFloat(form.get("valor")),
         prob_real: parseFloat(form.get("prob_real")),
         prob_implicita: parseFloat(form.get("prob_implicita"))
@@ -42,6 +42,11 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(datos),
         });
+
+        if (!respuesta.ok) {
+          const errorTexto = await respuesta.text();
+          throw new Error(`Error ${respuesta.status}: ${errorTexto}`);
+        }
 
         const texto = await respuesta.text();
         resultado.textContent = texto;
