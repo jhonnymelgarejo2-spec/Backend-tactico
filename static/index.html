@@ -1,38 +1,31 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Sistema táctico JHONNY ELITE V7.0 para análisis predictivo en tiempo real" />
-  <title>JHONNY ELITE V7.0</title>
-</head>
-<body>
-  <h1>Sistema JHONNY ELITE V7.0</h1>
-  <p>Bienvenido al sistema de análisis táctico en vivo.</p>
+<script>
+  document.getElementById("formulario").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = new FormData(e.target);
 
-  <form id="formulario">
-    <input type="text" name="id" placeholder="ID" required />
-    <input type="text" name="momentum" placeholder="Momentum" required />
-    <input type="number" step="0.01" name="valor" placeholder="Valor" required />
-    <input type="number" step="0.01" name="prob_real" placeholder="Probabilidad Real" required />
-    <input type="number" step="0.01" name="prob_implicita" placeholder="Probabilidad Implícita" required />
-    <button type="submit">Analizar</button>
-  </form>
+    const datos = {
+      id: form.get("id"),
+      momentum: form.get("momentum"),
+      valor: parseFloat(form.get("valor")),
+      prob_real: parseFloat(form.get("prob_real")),
+      prob_implicita: parseFloat(form.get("prob_implicita"))
+    };
 
-  <pre id="resultado"></pre>
-
-  <script>
-    document.getElementById("formulario").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const datos = Object.fromEntries(new FormData(e.target));
+    try {
       const respuesta = await fetch("https://backend-tactico-9l6l.onrender.com/analizar/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(datos),
       });
+
+      if (!respuesta.ok) {
+        throw new Error(`Error ${respuesta.status}`);
+      }
+
       const resultado = await respuesta.json();
       document.getElementById("resultado").textContent = JSON.stringify(resultado, null, 2);
-    });
-  </script>
-</body>
-</html>
+    } catch (error) {
+      document.getElementById("resultado").textContent = `Error: ${error.message}`;
+    }
+  });
+</script>
