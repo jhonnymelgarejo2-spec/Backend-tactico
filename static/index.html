@@ -114,30 +114,4 @@
     });
   </script>
 </body>
-  </html>        prob_real: parseFloat(form.get("prob_real")),
-        prob_implicita: parseFloat(form.get("prob_implicita")),
-        cuota: parseFloat(form.get("cuota")),
-        minuto: parseInt(form.get("minuto"))
-      };
-
-      try {
-        const respuesta = await fetch("https://backend-tactico-9lld.onrender.com/analizar/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(datos),
-        });
-
-        if (!respuesta.ok) {
-          const errorTexto = await respuesta.text();
-          throw new Error(`Error ${respuesta.status}: ${errorTexto}`);
-        }
-
-        const json = await respuesta.json();
-        resultado.textContent = JSON.stringify(json, null, 2);
-      } catch (error) {
-        resultado.textContent = `Error: ${error.message}`;
-      }
-    });
-  </script>
-</body>
-</html>
+  </html>
