@@ -1,23 +1,16 @@
-def generar_senal(datos):
-    confianza = calcular_confianza(datos)
-    liga = detectar_liga(datos.get("id", "000"))
-    equipoA, equipoB = detectar_equipos(datos.get("id", "000"))
-    tipo_evento = detectar_evento(datos.get("id", "000"))
+# signal_engine.py
 
-    return {
-        "id": datos.get("id", "000"),
-        "liga": liga,
-        "tipo_evento": tipo_evento,
-        "equipoA": equipoA,
-        "equipoB": equipoB,
-        "minuto": datos.get("minuto", 0),
-        "apuesta": "Ganador",
-        "cuota": datos.get("cuota", 1.85),
-        "confianza": confianza,
-        "valor": calcular_valor(datos),
-        "prob_real": datos.get("prob_real", 0.75),
-        "razon": "Momentum alto + xG > 1.2"
-    }
+# 📊 Calcular confianza táctica
+def calcular_confianza(datos):
+    if datos.get("momentum") == "ALTO" and datos.get("xG", 0) > 1.2:
+        return 85
+    return 60
+
+# 💡 Calcular valor esperado
+def calcular_valor(datos):
+    prob_real = datos.get("prob_real", 0.75)
+    prob_implicita = datos.get("prob_implicita", 0.54)
+    return round((prob_real - prob_implicita) * 100, 2)
 
 # 🧠 Detectar liga según prefijo
 def detectar_liga(id):
@@ -55,14 +48,24 @@ def detectar_evento(id):
     else:
         return "Partido regular"
 
-# 📊 Calcular confianza táctica
-def calcular_confianza(datos):
-    if datos.get("momentum") == "ALTO" and datos.get("xG", 0) > 1.2:
-        return 85
-    return 60
+# 🎯 Generar señal táctica
+def generar_senal(datos):
+    confianza = calcular_confianza(datos)
+    liga = detectar_liga(datos.get("id", "000"))
+    equipoA, equipoB = detectar_equipos(datos.get("id", "000"))
+    tipo_evento = detectar_evento(datos.get("id", "000"))
 
-# 💡 Calcular valor esperado
-def calcular_valor(datos):
-    prob_real = datos.get("prob_real", 0.75)
-    prob_implicita = datos.get("prob_implicita", 0.54)
-    return round((prob_real - prob_implicita) * 100, 2)
+    return {
+        "id": datos.get("id", "000"),
+        "liga": liga,
+        "tipo_evento": tipo_evento,
+        "equipoA": equipoA,
+        "equipoB": equipoB,
+        "minuto": datos.get("minuto", 0),
+        "apuesta": "Ganador",
+        "cuota": datos.get("cuota", 1.85),
+        "confianza": confianza,
+        "valor": calcular_valor(datos),
+        "prob_real": datos.get("prob_real", 0.75),
+        "razon": "Momentum alto + xG > 1.2"
+}
