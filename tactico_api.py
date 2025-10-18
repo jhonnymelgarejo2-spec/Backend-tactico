@@ -7,23 +7,25 @@ from notifier import enviar_notificacion
 
 app = FastAPI()
 
-# Montar carpeta estática
+# 📁 Montar carpeta estática para frontend
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Servir index.html directamente en "/"
+# 🖥️ Servir index.html directamente en "/"
 @app.get("/", response_class=FileResponse)
 def serve_index():
     return "static/index.html"
 
-# Modelo de datos para análisis
+# 📊 Modelo de datos para análisis táctico
 class Datos(BaseModel):
     id: str
     momentum: str
-    valor: float
+    xG: float
     prob_real: float
     prob_implicita: float
+    cuota: float
+    minuto: int
 
-# Endpoint de análisis táctico
+# 🎯 Endpoint de análisis táctico
 @app.post("/analizar/")
 def analizar_partido(datos: Datos):
     senal = generar_senal(datos.dict())
