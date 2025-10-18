@@ -32,3 +32,4 @@ def analizar_partido(datos: Datos):
     if senal.get("confianza", 0) >= 75:
         enviar_notificacion(senal)
     return senal
+
