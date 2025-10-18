@@ -5,6 +5,60 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Sistema táctico JHONNY ELITE V7.0 para análisis predictivo en tiempo real" />
   <title>JHONNY ELITE V7.0</title>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f2f6fc;
+      color: #1c1c1c;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #0055a5;
+      margin-bottom: 10px;
+    }
+
+    form {
+      background-color: #ffffff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    input, button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      background-color: #0055a5;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #003f7d;
+    }
+
+    pre#resultado {
+      background-color: #fff;
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-top: 20px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-size: 14px;
+      color: #333;
+    }
+  </style>
 </head>
 <body>
   <h1>Sistema JHONNY ELITE V7.0</h1>
@@ -35,6 +89,32 @@
         momentum: form.get("momentum").trim(),
         xG: parseFloat(form.get("xG")),
         prob_real: parseFloat(form.get("prob_real")),
+        prob_implicita: parseFloat(form.get("prob_implicita")),
+        cuota: parseFloat(form.get("cuota")),
+        minuto: parseInt(form.get("minuto"))
+      };
+
+      try {
+        const respuesta = await fetch("https://backend-tactico-9lld.onrender.com/analizar/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(datos),
+        });
+
+        if (!respuesta.ok) {
+          const errorTexto = await respuesta.text();
+          throw new Error(`Error ${respuesta.status}: ${errorTexto}`);
+        }
+
+        const json = await respuesta.json();
+        resultado.textContent = JSON.stringify(json, null, 2);
+      } catch (error) {
+        resultado.textContent = `Error: ${error.message}`;
+      }
+    });
+  </script>
+</body>
+  </html>        prob_real: parseFloat(form.get("prob_real")),
         prob_implicita: parseFloat(form.get("prob_implicita")),
         cuota: parseFloat(form.get("cuota")),
         minuto: parseInt(form.get("minuto"))
