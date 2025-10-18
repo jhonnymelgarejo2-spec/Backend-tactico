@@ -12,26 +12,58 @@ def calcular_valor(datos):
 
 # 🧠 Detectar liga según prefijo
 def detectar_liga(id):
-    if id.startswith("ATP"):
-        return "ATP Tour"
-    elif id.startswith("WTA"):
-        return "WTA Tour"
-    elif id.startswith("NBA"):
-        return "NBA"
-    elif id.startswith("FIFA"):
+    id = id.upper()
+    if "UEFA" in id:
+        return "Champions League"
+    elif "CONMEBOL" in id:
+        return "Copa Libertadores"
+    elif "FIFA" in id:
         return "Fútbol Internacional"
+    elif "ATP" in id:
+        return "ATP Tour"
+    elif "NBA" in id:
+        return "NBA"
     else:
-        return "Desconocida"
+        return "Liga desconocida"
 
 # ⚔️ Detectar equipos según ID
-def detectar_equipos(id):
-    mapa = {
-        "ATP-2025-001": ("Djokovic", "Alcaraz"),
-        "ATP-2025-002": ("Medvedev", "Sinner"),
-        "NBA-2025-001": ("Lakers", "Warriors"),
-        "FIFA-2025-001": ("Brasil", "Argentina")
+def detectar_equipos(id: str):
+    id = id.upper().strip()
+    ligas = {
+        "FIFA": {
+            "FINAL-2025": ("Brasil", "Argentina"),
+            "GRUPO-2025": ("Francia", "Alemania"),
+            "SEMIS-2025": ("España", "Inglaterra")
+        },
+        "UEFA": {
+            "FINAL-2025": ("Real Madrid", "Manchester City"),
+            "SF-2025": ("Bayern Munich", "PSG"),
+            "QF-2025": ("Chelsea", "Barcelona")
+        },
+        "CONMEBOL": {
+            "FINAL-2025": ("Boca Juniors", "Palmeiras"),
+            "SF-2025": ("Flamengo", "River Plate"),
+            "GRUPO-2025": ("Colo-Colo", "Atlético Nacional")
+        },
+        "ATP": {
+            "2025-001": ("Djokovic", "Alcaraz"),
+            "2025-002": ("Medvedev", "Sinner")
+        },
+        "NBA": {
+            "2025-001": ("Lakers", "Warriors"),
+            "2025-002": ("Celtics", "Heat")
+        }
     }
-    return mapa.get(id, ("Equipo A", "Equipo B"))
+
+    partes = id.split("-", 1)
+    if len(partes) != 2:
+        return ("Equipo A", "Equipo B")
+
+    prefijo, sufijo = partes
+    liga = ligas.get(prefijo)
+    if liga:
+        return liga.get(sufijo, ("Equipo A", "Equipo B"))
+    return ("Equipo A", "Equipo B")
 
 # 🏆 Detectar tipo de evento según ID
 def detectar_evento(id):
@@ -69,4 +101,4 @@ def generar_senal(datos):
         "valor": valor,
         "prob_real": float(datos.get("prob_real", 0.75)),
         "razon": razon
-    }
+}
