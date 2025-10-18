@@ -1,13 +1,17 @@
 def enviar_notificacion(senal: dict):
+    if not isinstance(senal, dict):
+        print("⚠️ Señal inválida: no es un diccionario")
+        return
+
     try:
-        equipoA = senal.get("equipoA", "Equipo A")
-        equipoB = senal.get("equipoB", "Equipo B")
-        apuesta = senal.get("apuesta", "N/A")
-        cuota = senal.get("cuota", "N/A")
-        confianza = senal.get("confianza", 0)
-        valor = senal.get("valor", 0)
-        prob_real = senal.get("prob_real", 0)
-        razon = senal.get("razon", "Sin razón definida")
+        equipoA = str(senal.get("equipoA", "Equipo A"))
+        equipoB = str(senal.get("equipoB", "Equipo B"))
+        apuesta = str(senal.get("apuesta", "N/A"))
+        cuota = float(senal.get("cuota", 0))
+        confianza = int(senal.get("confianza", 0))
+        valor = float(senal.get("valor", 0))
+        prob_real = float(senal.get("prob_real", 0))
+        razon = str(senal.get("razon", "Sin razón definida"))
 
         print("🔔 Señal activada:")
         print(f"{equipoA} vs {equipoB}")
