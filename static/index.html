@@ -60,26 +60,4 @@
     });
   </script>
 </body>
-</html>      };
-
-      try {
-        const respuesta = await fetch("https://backend-tactico-9lld.onrender.com/analizar/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(datos),
-        });
-
-        if (!respuesta.ok) {
-          const errorTexto = await respuesta.text();
-          throw new Error(`Error ${respuesta.status}: ${errorTexto}`);
-        }
-
-        const texto = await respuesta.text();
-        resultado.textContent = texto;
-      } catch (error) {
-        resultado.textContent = `Error: ${error.message}`;
-      }
-    });
-  </script>
-</body>
 </html>
