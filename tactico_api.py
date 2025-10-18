@@ -15,6 +15,11 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 def read_index():
     return FileResponse("static/index.html")
 
+# 🧪 Endpoint de prueba para confirmar vida del backend
+@app.get("/ping")
+def ping():
+    return {"status": "ok"}
+
 # 📊 Modelo de datos para análisis táctico
 class DatosDeAnalisisTactico(BaseModel):
     id: str
@@ -29,6 +34,15 @@ class DatosDeAnalisisTactico(BaseModel):
 @app.post("/analizar/")
 def analizar_partido(datos: DatosDeAnalisisTactico):
     senal = generar_senal(datos.dict())
-    if senal.get("confianza", 0) >= 75:
-        enviar_notificacion(senal)
+    try:
+        if senal.get("confianza", 0) >= 75:
+            enviar_notificacion(senal)
+    except Exception as e:
+        print(f"⚠️ Error al enviar notificación: {e}")
     return senal
+
+# 🚀 Bloque final para ejecución en Render
+if __name__ == "__main__":
+    import uvicorn, os
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run("tactico_api:app", host="0.0.0.0", port=port)
