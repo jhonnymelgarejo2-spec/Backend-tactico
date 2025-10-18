@@ -45,4 +45,4 @@ def analizar_partido(datos: DatosDeAnalisisTactico):
 if __name__ == "__main__":
     import uvicorn, os
     port = int(os.environ.get("PORT", 10000))
-    uvicorn.run("tactico_api:app", host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=port)
