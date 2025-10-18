@@ -26,9 +26,10 @@ def detectar_liga(id):
     else:
         return "Liga desconocida"
 
-# ⚔️ Detectar equipos según ID
+# ⚔️ Detectar equipos según ID (formato flexible)
 def detectar_equipos(id: str):
-    id = id.upper().strip()
+    id = id.upper().replace("_", "-").replace(" ", "-").strip()
+
     ligas = {
         "FIFA": {
             "FINAL-2025": ("Brasil", "Argentina"),
@@ -38,7 +39,8 @@ def detectar_equipos(id: str):
         "UEFA": {
             "FINAL-2025": ("Real Madrid", "Manchester City"),
             "SF-2025": ("Bayern Munich", "PSG"),
-            "QF-2025": ("Chelsea", "Barcelona")
+            "QF-2025": ("Chelsea", "Barcelona"),
+            "2025": ("España", "Italia")  # ← para casos como "UEFA_2025"
         },
         "CONMEBOL": {
             "FINAL-2025": ("Boca Juniors", "Palmeiras"),
