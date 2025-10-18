@@ -1,3 +1,5 @@
+Puedes agregarle tu
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -88,7 +90,7 @@
       font-weight: bold;
     }
 
-    #resultado, #lista-partidos {
+    #resultado {
       margin-top: 20px;
     }
   </style>
@@ -108,9 +110,7 @@
     <button type="submit">Analizar</button>
   </form>
 
-  <button onclick="verPartidos()">Ver partidos en vivo</button>
   <div id="resultado"></div>
-  <div id="lista-partidos"></div>
 
   <script>
     function detectarBandera(equipo) {
@@ -138,14 +138,14 @@
         id: form.get("id").trim(),
         momentum: form.get("momentum").trim(),
         xG: parseFloat(form.get("xG")),
-        prob_real: parseFloat(form.get("prob_real")),
-        prob_implicita: parseFloat(form.get("prob_implicita")),
+        probreal: parseFloat(form.get("probreal")),
+        probimplicita: parseFloat(form.get("probimplicita")),
         cuota: parseFloat(form.get("cuota")),
         minuto: parseInt(form.get("minuto"))
       };
 
       try {
-        const respuesta = await fetch("/analizar/", {
+        const respuesta = await fetch("https://backend-tactico-9lld.onrender.com/analizar/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(datos),
@@ -153,7 +153,7 @@
 
         if (!respuesta.ok) {
           const errorTexto = await respuesta.text();
-          throw new Error(`Error ${respuesta.status}: ${errorTexto}`);
+          throw new Error(Error ${respuesta.status}: ${errorTexto});
         }
 
         const json = await respuesta.json();
@@ -167,6 +167,7 @@
               <h2>${json.equipoA} vs ${json.equipoB}</h2>
               <img src="https://flagcdn.com/w320/${banderaB}.png" alt="${json.equipoB}" class="bandera">
             </div>
+
             <p><strong>⚽ ${json.liga} — Min ${json.minuto}°</strong></p>
             <p>📈 <strong>Momentum:</strong> <span class="momentum-alto">${datos.momentum}</span></p>
             <p>💡 <strong>APUESTA:</strong> ${json.equipoA} gana @${json.cuota}</p>
@@ -177,35 +178,9 @@
           </div>
         `;
       } catch (error) {
-        resultado.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+        resultado.innerHTML = <p style="color:red;">Error: ${error.message}</p>;
       }
     });
-
-    async function verPartidos() {
-      const contenedor = document.getElementById("lista-partidos");
-      contenedor.innerHTML = "<p>Cargando partidos...</p>";
-
-      try {
-        const res = await fetch("/partidos-en-vivo");
-        const json = await res.json();
-
-        if (json.status !== "ok") throw new Error(json.detalle || "Error desconocido");
-
-        contenedor.innerHTML = json.partidos.map(p => {
-          const banderaLocal = detectarBandera(p.equipo_local);
-          const banderaVisitante = detectarBandera(p.equipo_visitante);
-
-          return `
-            <div class="tarjeta-senal">
-              <div class="encabezado">
-                <img src="https://flagcdn.com/w320/${banderaLocal}.png" alt="${p.equipo_local}" class="bandera">
-                <h2>${p.equipo_local} vs ${p.equipo_visitante}</h2>
-                <img src="https://flagcdn.com/w320/${banderaVisitante}.png" alt="${p.equipo_visitante}" class="bandera">
-              </div>
-              <p><strong>🏆 ${p.torneo}</strong> — 🕒 ${p.hora}</p>
-              <p>⚽ <strong>Goles:</strong> ${p.goles_local} - ${p.goles_visitante}</p>
-            </div>
-          `;
-        }).join("");
-      } catch (error) {
-        contenedor.innerHTML = `<p style="color:red;">Error: ${error[43dcd9a7-70db-4a1f-b0ae-981daa162054](https://github.com/grsnn/contacto-php/tree/e9eab0074215579168a828797cc4c8ff031c7ddf/index.php?citationMarker=43dcd9a7-70db-4a1f-b0ae-981daa162054 "1")
+  </script>
+</body>
+  </html>
