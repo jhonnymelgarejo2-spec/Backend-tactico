@@ -1,5 +1,3 @@
-# signal_engine.py
-
 # 📊 Calcular confianza táctica
 def calcular_confianza(datos):
     if datos.get("momentum") == "ALTO" and datos.get("xG", 0) > 1.2:
@@ -8,8 +6,8 @@ def calcular_confianza(datos):
 
 # 💡 Calcular valor esperado
 def calcular_valor(datos):
-    prob_real = datos.get("prob_real", 0.75)
-    prob_implicita = datos.get("prob_implicita", 0.54)
+    prob_real = float(datos.get("prob_real", 0.75))
+    prob_implicita = float(datos.get("prob_implicita", 0.54))
     return round((prob_real - prob_implicita) * 100, 2)
 
 # 🧠 Detectar liga según prefijo
@@ -37,6 +35,7 @@ def detectar_equipos(id):
 
 # 🏆 Detectar tipo de evento según ID
 def detectar_evento(id):
+    id = id.upper()
     if "FINAL" in id:
         return "Final"
     elif "SEMIS" in id or "SF" in id:
@@ -54,6 +53,8 @@ def generar_senal(datos):
     liga = detectar_liga(datos.get("id", "000"))
     equipoA, equipoB = detectar_equipos(datos.get("id", "000"))
     tipo_evento = detectar_evento(datos.get("id", "000"))
+    valor = calcular_valor(datos)
+    razon = "Momentum alto + xG > 1.2" if confianza >= 75 else "Condiciones tácticas estándar"
 
     return {
         "id": datos.get("id", "000"),
@@ -61,11 +62,11 @@ def generar_senal(datos):
         "tipo_evento": tipo_evento,
         "equipoA": equipoA,
         "equipoB": equipoB,
-        "minuto": datos.get("minuto", 0),
+        "minuto": int(datos.get("minuto", 0)),
         "apuesta": "Ganador",
-        "cuota": datos.get("cuota", 1.85),
+        "cuota": float(datos.get("cuota", 1.85)),
         "confianza": confianza,
-        "valor": calcular_valor(datos),
-        "prob_real": datos.get("prob_real", 0.75),
-        "razon": "Momentum alto + xG > 1.2"
-}
+        "valor": valor,
+        "prob_real": float(datos.get("prob_real", 0.75)),
+        "razon": razon
+    }
