@@ -101,4 +101,34 @@ def generar_senal(datos):
         "valor": valor,
         "prob_real": float(datos.get("prob_real", 0.75)),
         "razon": razon
-}
+    }
+
+# 🧾 Formatear señal en narrativa táctica
+def formatear_senal_narrativa(senal, hora_local="19:59 BOL", numero=1):
+    equipoA = senal.get("equipoA", "Equipo A")
+    equipoB = senal.get("equipoB", "Equipo B")
+    minuto = senal.get("minuto", 0)
+    liga = senal.get("liga", "Liga desconocida")
+    tipo = senal.get("tipo_evento", "Partido")
+    confianza = senal.get("confianza", 0)
+    cuota = senal.get("cuota", 1.85)
+    razon = senal.get("razon", "Sin razón definida")
+    valor = senal.get("valor", 0)
+    prob_real = senal.get("prob_real", 0.75)
+
+    return f"""
+📊 DATOS PARTIDO [{senal.get("id", "SIN-ID")}]
+⚽ {equipoA} vs {equipoB} — Min {minuto}°
+📈Momentum: {senal.get("momentum", "N/A")}
+🎯Cuota: {equipoA} @{cuota}
+
+---
+
+🎯 SEÑAL #{numero} — {hora_local}
+⚽ {liga} — {equipoA} vs {equipoB} — Min {minuto}°
+🎯 CONFIANZA: {confianza}%  
+💡APUESTA: {equipoA} gana @{cuota}  
+⏱️VENTANA: Min {minuto - 2}–{minuto + 10} | 💰 TAMAÑO: 4%  
+🔍RAZÓN: {razon}  
+📈VALOR: +{valor}% margen | 🎲 PROB REAL: {round(prob_real * 100, 2)}%
+""".strip()
