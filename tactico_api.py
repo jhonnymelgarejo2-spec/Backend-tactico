@@ -11,12 +11,12 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # 🖥️ Servir index.html directamente en "/"
-@app.get("/", response_class=FileResponse)
-def serve_index():
-    return "static/index.html"
+@app.get("/")
+def read_index():
+    return FileResponse("static/index.html")
 
 # 📊 Modelo de datos para análisis táctico
-class Datos(BaseModel):
+class DatosDeAnalisisTactico(BaseModel):
     id: str
     momentum: str
     xG: float
@@ -27,7 +27,7 @@ class Datos(BaseModel):
 
 # 🎯 Endpoint de análisis táctico
 @app.post("/analizar/")
-def analizar_partido(datos: Datos):
+def analizar_partido(datos: DatosDeAnalisisTactico):
     senal = generar_senal(datos.dict())
     if senal.get("confianza", 0) >= 75:
         enviar_notificacion(senal)
