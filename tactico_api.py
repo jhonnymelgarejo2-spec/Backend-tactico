@@ -1,7 +1,7 @@
 # 📦 Importaciones principales
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pathlib import Path
@@ -26,7 +26,9 @@ app = FastAPI(
     description="Backend táctico para análisis y señales de apuestas deportivas",
     version="1.0.0"
 )
-iniciar_scheduler()  # 🧠 Activar escaneo táctico en segundo plano
+
+# ⏱️ Activar escaneo táctico en segundo plano
+iniciar_scheduler()
 
 # 🔓 Activar CORS para permitir conexión desde frontend externo
 app.add_middleware(
