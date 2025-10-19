@@ -48,6 +48,11 @@ def read_index():
     ruta = Path(__file__).parent / "static" / "index.html"
     return FileResponse(ruta)
 
+# 🧪 Endpoint de prueba para confirmar vida del backend
+@app.get("/ping")
+def ping():
+    return {"status": "ok"}
+
 # 📊 Modelo de datos para análisis táctico
 class DatosDeAnalisisTactico(BaseModel):
     id: str
