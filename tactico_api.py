@@ -2,6 +2,7 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 # ⚙️ Módulos internos
@@ -17,6 +18,15 @@ except Exception as e:
 
 # 🚀 Inicializar FastAPI
 app = FastAPI()
+
+# 🔓 Activar CORS para permitir conexión desde frontend externo
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Puedes reemplazar "*" por tu dominio exacto si prefieres seguridad
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # 📁 Montar carpeta estática para frontend
 app.mount("/static", StaticFiles(directory="static"), name="static")
