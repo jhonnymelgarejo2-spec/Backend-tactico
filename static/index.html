@@ -1,100 +1,156 @@
-<script>
-  function detectarBandera(equipo) {
-    const mapa = {
-      "España": "es",
-      "Italia": "it",
-      "Brasil": "br",
-      "Argentina": "ar",
-      "Francia": "fr",
-      "Alemania": "de",
-      "Inglaterra": "gb",
-      "Portugal": "pt",
-      "Países Bajos": "nl"
-    };
-    return mapa[equipo] || "xx";
-  }
-
-  document.getElementById("formulario").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const resultado = document.getElementById("resultado");
-    resultado.innerHTML = "<p>Procesando...</p>";
-
-    const form = new FormData(e.target);
-    const datos = {
-      id: form.get("id").trim(),
-      momentum: form.get("momentum").trim(),
-      xG: parseFloat(form.get("xG")),
-      prob_real: parseFloat(form.get("prob_real")),
-      prob_implicita: parseFloat(form.get("prob_implicita")),
-      cuota: parseFloat(form.get("cuota")),
-      minuto: parseInt(form.get("minuto"))
-    };
-
-    try {
-      const respuesta = await fetch("https://backend-tactico-9lld.onrender.com/analizar/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(datos),
-      });
-
-      if (!respuesta.ok) {
-        const errorTexto = await respuesta.text();
-        throw new Error(`Error ${respuesta.status}: ${errorTexto}`);
-      }
-
-      const json = await respuesta.json();
-      const banderaA = detectarBandera(json.equipoA);
-      const banderaB = detectarBandera(json.equipoB);
-
-      resultado.innerHTML = `
-        <div class="tarjeta-senal">
-          <div class="encabezado">
-            <img src="https://flagcdn.com/w320/${banderaA}.png" alt="${json.equipoA}" class="bandera">
-            <h2>${json.equipoA} vs ${json.equipoB}</h2>
-            <img src="https://flagcdn.com/w320/${banderaB}.png" alt="${json.equipoB}" class="bandera">
-          </div>
-          <p><strong>⚽ ${json.liga} — Min ${json.minuto}°</strong></p>
-          <p>📈 <strong>Momentum:</strong> <span class="momentum-alto">${datos.momentum}</span></p>
-          <p>💡 <strong>APUESTA:</strong> ${json.equipoA} gana @${json.cuota}</p>
-          <p>🎯 <strong>CONFIANZA:</strong> <span class="confianza-alta">${json.confianza}%</span></p>
-          <p>⏱️ <strong>VENTANA:</strong> Min ${json.minuto - 2}–${json.minuto + 10} | 💰 <strong>TAMAÑO:</strong> 4%</p>
-          <p>🔍 <strong>RAZÓN:</strong> ${json.razon}</p>
-          <p>📈 <strong>VALOR:</strong> ${json.valor}% margen | 🎲 <strong>PROB REAL:</strong> ${Math.round(json.prob_real * 100)}%</p>
-        </div>
-      `;
-    } catch (error) {
-      resultado.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>JHONNY_ELITE V7.0</title>
+  <style>
+    body {
+      background-color: #111;
+      color: #0f0;
+      font-family: sans-serif;
+      padding: 20px;
     }
-  });
+    input, button {
+      margin: 5px;
+      padding: 8px;
+      font-size: 14px;
+    }
+    .tarjeta-senal {
+      border: 1px solid #0f0;
+      padding: 10px;
+      margin: 10px 0;
+      background-color: #222;
+    }
+    .bandera {
+      width: 40px;
+      height: auto;
+    }
+    .encabezado {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .momentum-alto {
+      color: #0ff;
+    }
+    .confianza-alta {
+      color: #ff0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎯 JHONNY_ELITE V7.0</h1>
 
-  async function verPartidos() {
-    const contenedor = document.getElementById("lista-partidos");
-    contenedor.innerHTML = "<p>Cargando partidos...</p>";
+  <form id="formulario">
+    <input name="id" placeholder="ID" required>
+    <input name="momentum" placeholder="Momentum" required>
+    <input name="xG" type="number" step="0.01" placeholder="xG" required>
+    <input name="prob_real" type="number" step="0.01" placeholder="Prob Real" required>
+    <input name="prob_implicita" type="number" step="0.01" placeholder="Prob Implícita" required>
+    <input name="cuota" type="number" step="0.01" placeholder="Cuota" required>
+    <input name="minuto" type="number" placeholder="Minuto" required>
+    <button type="submit">Analizar</button>
+  </form>
 
-    try {
-      const res = await fetch("https://backend-tactico-9lld.onrender.com/partidos-en-vivo");
-      const json = await res.json();
+  <div id="resultado"></div>
 
-      if (json.status !== "ok") throw new Error(json.detalle || "Error desconocido");
+  <h2>📡 Partidos en Vivo</h2>
+  <button onclick="verPartidos()">Ver Partidos</button>
+  <div id="lista-partidos"></div>
 
-      contenedor.innerHTML = json.partidos.map(p => {
-        const banderaLocal = detectarBandera(p.equipo_local);
-        const banderaVisitante = detectarBandera(p.equipo_visitante);
+  <script>
+    function detectarBandera(equipo) {
+      const mapa = {
+        "España": "es", "Italia": "it", "Brasil": "br", "Argentina": "ar",
+        "Francia": "fr", "Alemania": "de", "Inglaterra": "gb", "Portugal": "pt",
+        "Países Bajos": "nl"
+      };
+      return mapa[equipo] || "xx";
+    }
 
-        return `
+    document.getElementById("formulario").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const resultado = document.getElementById("resultado");
+      resultado.innerHTML = "<p>Procesando...</p>";
+
+      const form = new FormData(e.target);
+      const datos = {
+        id: form.get("id").trim(),
+        momentum: form.get("momentum").trim(),
+        xG: parseFloat(form.get("xG")),
+        prob_real: parseFloat(form.get("prob_real")),
+        prob_implicita: parseFloat(form.get("prob_implicita")),
+        cuota: parseFloat(form.get("cuota")),
+        minuto: parseInt(form.get("minuto"))
+      };
+
+      try {
+        const respuesta = await fetch("https://backend-tactico-9lld.onrender.com/analizar/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(datos),
+        });
+
+        if (!respuesta.ok) {
+          const errorTexto = await respuesta.text();
+          throw new Error(`Error ${respuesta.status}: ${errorTexto}`);
+        }
+
+        const json = await respuesta.json();
+        const banderaA = detectarBandera(json.equipoA);
+        const banderaB = detectarBandera(json.equipoB);
+
+        resultado.innerHTML = `
           <div class="tarjeta-senal">
             <div class="encabezado">
-              <img src="https://flagcdn.com/w320/${banderaLocal}.png" alt="${p.equipo_local}" class="bandera">
-              <h2>${p.equipo_local} vs ${p.equipo_visitante}</h2>
-              <img src="https://flagcdn.com/w320/${banderaVisitante}.png" alt="${p.equipo_visitante}" class="bandera">
+              <img src="https://flagcdn.com/w320/${banderaA}.png" alt="${json.equipoA}" class="bandera">
+              <h2>${json.equipoA} vs ${json.equipoB}</h2>
+              <img src="https://flagcdn.com/w320/${banderaB}.png" alt="${json.equipoB}" class="bandera">
             </div>
-            <p><strong>🏆 ${p.torneo}</strong> — 🕒 ${p.hora}</p>
-            <p>⚽ <strong>Goles:</strong> ${p.goles_local} - ${p.goles_visitante}</p>
+            <p><strong>⚽ ${json.liga} — Min ${json.minuto}°</strong></p>
+            <p>📈 <strong>Momentum:</strong> <span class="momentum-alto">${datos.momentum}</span></p>
+            <p>💡 <strong>APUESTA:</strong> ${json.equipoA} gana @${json.cuota}</p>
+            <p>🎯 <strong>CONFIANZA:</strong> <span class="confianza-alta">${json.confianza}%</span></p>
+            <p>⏱️ <strong>VENTANA:</strong> Min ${json.minuto - 2}–${json.minuto + 10} | 💰 <strong>TAMAÑO:</strong> 4%</p>
+            <p>🔍 <strong>RAZÓN:</strong> ${json.razon}</p>
+            <p>📈 <strong>VALOR:</strong> ${json.valor}% margen | 🎲 <strong>PROB REAL:</strong> ${Math.round(json.prob_real * 100)}%</p>
           </div>
         `;
-      }).join("");
-    } catch (error) {
-      contenedor.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+      } catch (error) {
+        resultado.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+      }
+    });
+
+    async function verPartidos() {
+      const contenedor = document.getElementById("lista-partidos");
+      contenedor.innerHTML = "<p>Cargando partidos...</p>";
+
+      try {
+        const res = await fetch("https://backend-tactico-9lld.onrender.com/partidos-en-vivo");
+        const json = await res.json();
+
+        if (json.status !== "ok") throw new Error(json.detalle || "Error desconocido");
+
+        contenedor.innerHTML = json.partidos.map(p => {
+          const banderaLocal = detectarBandera(p.equipo_local);
+          const banderaVisitante = detectarBandera(p.equipo_visitante);
+
+          return `
+            <div class="tarjeta-senal">
+              <div class="encabezado">
+                <img src="https://flagcdn.com/w320/${banderaLocal}.png" alt="${p.equipo_local}" class="bandera">
+                <h2>${p.equipo_local} vs ${p.equipo_visitante}</h2>
+                <img src="https://flagcdn.com/w320/${banderaVisitante}.png" alt="${p.equipo_visitante}" class="bandera">
+              </div>
+              <p><strong>🏆 ${p.torneo}</strong> — 🕒 ${p.hora}</p>
+              <p>⚽ <strong>Goles:</strong> ${p.goles_local} - ${p.goles_visitante}</p>
+            </div>
+          `;
+        }).join("");
+      } catch (error) {
+        contenedor.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+      }
     }
-  }
-      </script>
+  </script>
+</body>
+</html>
