@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from pathlib import Path  # 🛡️ Nueva importación para ruta segura
 
 # ⚙️ Módulos internos
 from signal_engine import generar_senal
@@ -34,7 +35,8 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # 🖥️ Servir index.html directamente en "/"
 @app.get("/")
 def read_index():
-    return FileResponse("static/index.html")
+    ruta = Path(__file__).parent / "static" / "index.html"
+    return FileResponse(ruta)
 
 # 🧪 Endpoint de prueba para confirmar vida del backend
 @app.get("/ping")
