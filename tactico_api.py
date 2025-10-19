@@ -1,7 +1,7 @@
 # 📦 Importaciones principales
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pathlib import Path  # 🛡️ Nueva importación para ruta segura
@@ -9,6 +9,9 @@ from pathlib import Path  # 🛡️ Nueva importación para ruta segura
 # ⚙️ Módulos internos
 from signal_engine import generar_senal
 from notifier import enviar_notificacion
+
+# ⏱️ Activar escaneo automático de señales
+from scheduler import iniciar_scheduler
 
 # 🧩 Integración con router de Sofascore
 try:
@@ -19,6 +22,7 @@ except Exception as e:
 
 # 🚀 Inicializar FastAPI
 app = FastAPI()
+iniciar_scheduler()  # 🧠 Activar escaneo táctico en segundo plano
 
 # 🔓 Activar CORS para permitir conexión desde frontend externo
 app.add_middleware(
@@ -72,8 +76,17 @@ if live_router:
 @app.get("/debug")
 def debug():
     return {"status": "ok", "mensaje": "Backend táctico activo y operativo"}
-from fastapi.responses import HTMLResponse
 
+# 🧩 Endpoint de verificación modular
+@app.get("/status")
+def status():
+    return {
+        "backend": "activo",
+        "sofascore_router": bool(live_router),
+        "mensaje": "Sistema táctico operativo"
+    }
+
+# 🧪 Endpoint de prueba HTML
 @app.get("/html-test", response_class=HTMLResponse)
 def html_test():
     return """
@@ -85,10 +98,9 @@ def html_test():
         </body>
     </html>
     """
+
 # 🚀 Bloque final para ejecución en Render
 if __name__ == "__main__":
     import uvicorn, os
     port = int(os.environ.get("PORT", 8000))  # 🛠️ Cambio: usar variable dinámica
     uvicorn.run(app, host="0.0.0.0", port=port)
-
-
