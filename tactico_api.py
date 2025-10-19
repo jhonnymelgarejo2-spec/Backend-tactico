@@ -76,5 +76,5 @@ def debug():
 # 🚀 Bloque final para ejecución en Render
 if __name__ == "__main__":
     import uvicorn, os
-    port = int(os.environ.get("PORT", 10000))
+    port = int(os.environ.get("PORT", 8000))  # 🛠️ Cambio: usar variable dinámica
     uvicorn.run(app, host="0.0.0.0", port=port)
