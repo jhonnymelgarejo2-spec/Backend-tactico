@@ -1,17 +1,17 @@
 # 📦 Importaciones principales
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from pathlib import Path  # 🛡️ Nueva importación para ruta segura
+from pathlib import Path
+from dotenv import load_dotenv
+import os
 
 # ⚙️ Módulos internos
 from signal_engine import generar_senal
 from notifier import enviar_notificacion
-
-# ⏱️ Activar escaneo automático de señales
-from scheduler import iniciar_scheduler
+from scheduler import iniciar_scheduler  # ⏱️ Escaneo automático
 
 # 🧩 Integración con router de Sofascore
 try:
@@ -21,13 +21,17 @@ except Exception as e:
     print(f"⚠️ No se pudo cargar live_router: {e}")
 
 # 🚀 Inicializar FastAPI
-app = FastAPI()
+app = FastAPI(
+    title="JHONNY_ELITE V7.0",
+    description="Backend táctico para análisis y señales de apuestas deportivas",
+    version="1.0.0"
+)
 iniciar_scheduler()  # 🧠 Activar escaneo táctico en segundo plano
 
 # 🔓 Activar CORS para permitir conexión desde frontend externo
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Puedes reemplazar "*" por tu dominio exacto si prefieres seguridad
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -101,6 +105,6 @@ def html_test():
 
 # 🚀 Bloque final para ejecución en Render
 if __name__ == "__main__":
-    import uvicorn, os
-    port = int(os.environ.get("PORT", 8000))  # 🛠️ Cambio: usar variable dinámica
+    port = int(os.environ.get("PORT", 8000))
+    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=port)
