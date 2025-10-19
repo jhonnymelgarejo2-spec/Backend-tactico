@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from pathlib import Path  # 🛡️ Nueva importación para ruta segura
 
 # ⚙️ Módulos internos
 from signal_engine import generar_senal
@@ -34,7 +35,8 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # 🖥️ Servir index.html directamente en "/"
 @app.get("/")
 def read_index():
-    return FileResponse("static/index.html")
+    ruta = Path(__file__).parent / "static" / "index.html"
+    return FileResponse(ruta)
 
 # 🧪 Endpoint de prueba para confirmar vida del backend
 @app.get("/ping")
@@ -66,8 +68,27 @@ def analizar_partido(datos: DatosDeAnalisisTactico):
 if live_router:
     app.include_router(live_router)
 
+# 🧪 Endpoint de diagnóstico para confirmar vida del backend
+@app.get("/debug")
+def debug():
+    return {"status": "ok", "mensaje": "Backend táctico activo y operativo"}
+from fastapi.responses import HTMLResponse
+
+@app.get("/html-test", response_class=HTMLResponse)
+def html_test():
+    return """
+    <html>
+        <head><title>Test HTML</title></head>
+        <body style="background-color:#111;color:#0f0;font-family:sans-serif;">
+            <h1>✅ Backend táctico operativo</h1>
+            <p>Este contenido fue servido directamente por FastAPI.</p>
+        </body>
+    </html>
+    """
 # 🚀 Bloque final para ejecución en Render
 if __name__ == "__main__":
     import uvicorn, os
-    port = int(os.environ.get("PORT", 10000))
+    port = int(os.environ.get("PORT", 8000))  # 🛠️ Cambio: usar variable dinámica
     uvicorn.run(app, host="0.0.0.0", port=port)
+
+
