@@ -66,6 +66,11 @@ def analizar_partido(datos: DatosDeAnalisisTactico):
 if live_router:
     app.include_router(live_router)
 
+# 🧪 Endpoint de diagnóstico para confirmar vida del backend
+@app.get("/debug")
+def debug():
+    return {"status": "ok", "mensaje": "Backend táctico activo y operativo"}
+
 # 🚀 Bloque final para ejecución en Render
 if __name__ == "__main__":
     import uvicorn, os
