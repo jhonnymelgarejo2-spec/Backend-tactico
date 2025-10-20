@@ -1,59 +1,51 @@
-# 📦 Importaciones principales
+Puedes hacerlo tu 
+
+📦 Importaciones principales
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from pathlib import Path
-from dotenv import load_dotenv
-import os
+from pathlib import Path  # 🛡️ Nueva importación para ruta segura
 
-# ⚙️ Módulos internos
-from signal_engine import generar_senal
+⚙️ Módulos internos
+from signalengine import generarsenal
 from notifier import enviar_notificacion
-from scheduler import iniciar_scheduler  # ⏱️ Escaneo automático
 
-# 🧩 Integración con router de Sofascore
+🧩 Integración con router de Sofascore
 try:
-    from live_router import router as live_router
+    from liverouter import router as liverouter
 except Exception as e:
     live_router = None
     print(f"⚠️ No se pudo cargar live_router: {e}")
 
-# 🚀 Inicializar FastAPI
-app = FastAPI(
-    title="JHONNY_ELITE V7.0",
-    description="Backend táctico para análisis y señales de apuestas deportivas",
-    version="1.0.0"
-)
+🚀 Inicializar FastAPI
+app = FastAPI()
 
-# ⏱️ Activar escaneo táctico en segundo plano
-iniciar_scheduler()
-
-# 🔓 Activar CORS para permitir conexión desde frontend externo
+🔓 Activar CORS para permitir conexión desde frontend externo
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[""],  # Puedes reemplazar "" por tu dominio exacto si prefieres seguridad
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 📁 Montar carpeta estática para frontend
+📁 Montar carpeta estática para frontend
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# 🖥️ Servir index.html directamente en "/"
+🖥️ Servir index.html directamente en "/"
 @app.get("/")
 def read_index():
-    ruta = Path(__file__).parent / "static" / "index.html"
+    ruta = Path(file).parent / "static" / "index.html"
     return FileResponse(ruta)
 
-# 🧪 Endpoint de prueba para confirmar vida del backend
+🧪 Endpoint de prueba para confirmar vida del backend
 @app.get("/ping")
 def ping():
     return {"status": "ok"}
 
-# 📊 Modelo de datos para análisis táctico
+📊 Modelo de datos para análisis táctico
 class DatosDeAnalisisTactico(BaseModel):
     id: str
     momentum: str
@@ -63,7 +55,7 @@ class DatosDeAnalisisTactico(BaseModel):
     cuota: float
     minuto: int
 
-# 🎯 Endpoint de análisis táctico
+🎯 Endpoint de análisis táctico
 @app.post("/analizar/")
 def analizar_partido(datos: DatosDeAnalisisTactico):
     senal = generar_senal(datos.dict())
@@ -74,25 +66,16 @@ def analizar_partido(datos: DatosDeAnalisisTactico):
         print(f"⚠️ Error al enviar notificación: {e}")
     return senal
 
-# 🔗 Activar router de Sofascore si fue cargado correctamente
+🔗 Activar router de Sofascore si fue cargado correctamente
 if live_router:
-    app.include_router(live_router)
+    app.includerouter(liverouter)
 
-# 🧪 Endpoint de diagnóstico para confirmar vida del backend
+🧪 Endpoint de diagnóstico para confirmar vida del backend
 @app.get("/debug")
 def debug():
     return {"status": "ok", "mensaje": "Backend táctico activo y operativo"}
+from fastapi.responses import HTMLResponse
 
-# 🧩 Endpoint de verificación modular
-@app.get("/status")
-def status():
-    return {
-        "backend": "activo",
-        "sofascore_router": bool(live_router),
-        "mensaje": "Sistema táctico operativo"
-    }
-
-# 🧪 Endpoint de prueba HTML
 @app.get("/html-test", response_class=HTMLResponse)
 def html_test():
     return """
@@ -105,8 +88,8 @@ def html_test():
     </html>
     """
 
-# 🚀 Bloque final para ejecución en Render
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    import uvicorn
+🚀 Bloque final para ejecución en Render
+if name == "main":
+    import uvicorn, os
+    port = int(os.environ.get("PORT", 8000))  # 🛠️ Cambio: usar variable dinámica
     uvicorn.run(app, host="0.0.0.0", port=port)
