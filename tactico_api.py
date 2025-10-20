@@ -9,7 +9,6 @@ import os
 # Módulos internos
 from signal_engine import generar_senal
 from notifier import enviar_notificacion
-from scheduler import iniciar_scheduler
 
 # Integración con router de Sofascore
 try:
@@ -24,9 +23,6 @@ app = FastAPI(
     description="Backend táctico para análisis de apuestas deportivas",
     version="1.0"
 )
-
-# Activar escaneo táctico en segundo plano
-iniciar_scheduler()
 
 # Activar CORS para permitir conexión desde frontend externo
 app.add_middleware(
