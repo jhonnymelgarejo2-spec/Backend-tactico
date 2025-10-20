@@ -8,12 +8,13 @@ from pathlib import Path
 import os
 
 # ⚙️ Módulos internos
-from signalengine import generar_senal
+from signal_engine import generar_senal
 from notifier import enviar_notificacion
+from scheduler import iniciar_scheduler  # ⏱️ Escaneo automático
 
 # 🧩 Integración con router de Sofascore
 try:
-    from liverouter import router as live_router
+    from live_router import router as live_router
 except Exception as e:
     live_router = None
     print(f"⚠️ No se pudo cargar live_router: {e}")
@@ -24,6 +25,9 @@ app = FastAPI(
     description="Backend táctico para análisis y señales de apuestas deportivas",
     version="1.0.0"
 )
+
+# ⏱️ Activar escaneo táctico en segundo plano
+iniciar_scheduler()
 
 # 🔓 Activar CORS para permitir conexión desde frontend externo
 app.add_middleware(
@@ -69,6 +73,15 @@ def analizar_partido(datos: DatosDeAnalisisTactico):
         print(f"⚠️ Error al enviar notificación: {e}")
     return senal
 
+# 📡 Endpoint para enviar señal directamente
+@app.post("/enviar/")
+def enviar_senal_directa(datos: DatosDeAnalisisTactico):
+    try:
+        enviar_notificacion(datos.dict())
+        return {"status": "enviada"}
+    except Exception as e:
+        return {"status": "error", "detalle": str(e)}
+
 # 🔗 Activar router de Sofascore si fue cargado correctamente
 if live_router:
     app.include_router(live_router)
@@ -76,7 +89,7 @@ if live_router:
 # 🧪 Endpoint de diagnóstico para confirmar vida del backend
 @app.get("/debug")
 def debug():
-    return {"status": "ok", "mensaje": "Backend táctico activo y operativo"}
+    return {"status": "activo", "mensaje": "Backend táctico operativo"}
 
 # 🧪 Endpoint de prueba HTML
 @app.get("/html-test", response_class=HTMLResponse)
