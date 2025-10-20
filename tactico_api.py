@@ -1,5 +1,3 @@
-Puedes hacerlo tu 
-
 📦 Importaciones principales
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
