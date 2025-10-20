@@ -1,8 +1,7 @@
 fastapi
 uvicorn
 pydantic
-xgboost
 sqlalchemy
-sofascore-wrapper
-psycopg2-binary
 python-dotenv
+requests
+psycopg2-binary
