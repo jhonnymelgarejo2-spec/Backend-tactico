@@ -14,19 +14,21 @@ load_dotenv()
 from signal_engine import generar_senal
 from notifier import enviar_notificacion
 
-# Integración con router de Sofascore
+# Routers externos
 try:
     from live_router import router as live_router
 except Exception as e:
     live_router = None
     print(f"⚠️ Error: No se pudo cargar live_router: {e}")
 
-# Integración con módulo de fixtures (si lo tenés)
 try:
     from scan_fixtures import router as fixtures_router
 except Exception as e:
     fixtures_router = None
     print(f"⚠️ Error: No se pudo cargar scan_fixtures: {e}")
+
+# ✅ Nuevo router para partidos en vivo
+from partidos_en_vivo import router as partidos_router
 
 # Inicializar FastAPI
 app = FastAPI(
@@ -85,13 +87,15 @@ def enviar_senal_directa(datos: DatosDeAnalisisTactico):
     except Exception as e:
         return {"status": "error", "detalle": str(e)}
 
-# Activar router de Sofascore si fue cargado correctamente
+# Activar routers si fueron cargados correctamente
 if live_router:
     app.include_router(live_router)
 
-# Activar router de fixtures si fue cargado correctamente
 if fixtures_router:
     app.include_router(fixtures_router)
+
+# ✅ Activar router de partidos en vivo
+app.include_router(partidos_router)
 
 # Endpoint de diagnóstico para confirmar vida del backend
 @app.get("/status")
