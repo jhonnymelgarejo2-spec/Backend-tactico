@@ -27,8 +27,9 @@ except Exception as e:
     fixtures_router = None
     print(f"⚠️ Error: No se pudo cargar scan_fixtures: {e}")
 
-# ✅ Nuevo router para partidos en vivo
+# ✅ Nuevos routers tácticos
 from partidos_en_vivo import router as partidos_router
+from footapi import router as footapi_router  # ← NUEVA LÍNEA
 
 # Inicializar FastAPI
 app = FastAPI(
@@ -94,8 +95,9 @@ if live_router:
 if fixtures_router:
     app.include_router(fixtures_router)
 
-# ✅ Activar router de partidos en vivo
+# ✅ Activar routers tácticos
 app.include_router(partidos_router)
+app.include_router(footapi_router)  # ← NUEVA LÍNEA
 
 # Endpoint de diagnóstico para confirmar vida del backend
 @app.get("/status")
