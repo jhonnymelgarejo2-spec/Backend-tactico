@@ -1,3 +1,8 @@
+# Si es un módulo externo
+from sofascore_api import SofascoreAPI
+
+# O si es tu propia clase en otro archivo
+from mi_modulo.sofascore import SofascoreAPI
 async def obtener_partidos_en_vivo():
     try:
         api = SofascoreAPI()
