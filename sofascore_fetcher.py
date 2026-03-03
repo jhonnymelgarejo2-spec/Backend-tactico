@@ -1,44 +1,41 @@
-# Si es un módulo externo
-from sofascore_api import SofascoreAPI
+import httpx
 
-# O si es tu propia clase en otro archivo
-from mi_modulo.sofascore import SofascoreAPI
 async def obtener_partidos_en_vivo():
+    url = "https://api.sofascore.com/api/v1/sport/football/events/live"
+
     try:
-        api = SofascoreAPI()
-        partidos = await api.get_live_matches()
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url)
+            data = response.json()
 
         resultados = []
-        for match in partidos:
-            datos = {
-                "torneo": match.tournament.name,
-                "equipo_local": match.homeTeam.name,
-                "equipo_visitante": match.awayTeam.name,
-                "minuto": getattr(match.time, "currentPeriodStartMinute", 0),
-                "score": f"{match.homeScore.current}–{match.awayScore.current}",
-                "estado": match.status.type,
-                "id": match.id
-            }
-            resultados.append(datos)
 
-        await api.close()
+        for match in data.get("events", []):
+            resultados.append({
+                "torneo": match["tournament"]["name"],
+                "equipo_local": match["homeTeam"]["name"],
+                "equipo_visitante": match["awayTeam"]["name"],
+                "minuto": match.get("time", {}).get("currentPeriodStartMinute", 0),
+                "score": f"{match['homeScore']['current']}–{match['awayScore']['current']}",
+                "estado": match["status"]["type"],
+                "id": match["id"]
+            })
 
-        # 🛡️ Fallback si no hay partidos
         if not resultados:
             resultados.append({
-                "torneo": "Simulado",
-                "equipo_local": "Argentina",
-                "equipo_visitante": "Brasil",
-                "minuto": 45,
-                "score": "2–1",
-                "estado": "en_juego",
-                "id": 99999
+                "torneo": "Sin partidos",
+                "equipo_local": "-",
+                "equipo_visitante": "-",
+                "minuto": 0,
+                "score": "0–0",
+                "estado": "sin_eventos",
+                "id": 0
             })
 
         return resultados
 
     except Exception as e:
-        print(f"⚠️ Error en Sofascore: {e}")
+        print(f"⚠ Error en Sofascore: {e}")
         return [{
             "torneo": "Error",
             "equipo_local": "Sin datos",
