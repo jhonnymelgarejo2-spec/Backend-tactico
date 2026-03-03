@@ -1,15 +1,14 @@
-import httpx
+import requests
 
-async def obtener_partidos_en_vivo():
+def obtener_partidos_en_vivo():
     url = "https://api.sofascore.com/api/v1/sport/football/events/live"
 
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url)
-            data = response.json()
+        r = requests.get(url, timeout=15)
+        r.raise_for_status()
+        data = r.json()
 
         resultados = []
-
         for match in data.get("events", []):
             resultados.append({
                 "torneo": match["tournament"]["name"],
@@ -22,7 +21,7 @@ async def obtener_partidos_en_vivo():
             })
 
         if not resultados:
-            resultados.append({
+            return [{
                 "torneo": "Sin partidos",
                 "equipo_local": "-",
                 "equipo_visitante": "-",
@@ -30,7 +29,7 @@ async def obtener_partidos_en_vivo():
                 "score": "0–0",
                 "estado": "sin_eventos",
                 "id": 0
-            })
+            }]
 
         return resultados
 
