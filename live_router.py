@@ -9,4 +9,5 @@ def partidos_en_vivo():
         datos = obtener_partidos_en_vivo()
         return {"estado": "OK", "partidos": datos}
     except Exception as e:
+        print(f"⚠ Error al obtener partidos en vivo: {e}")
         return {"estado": "error", "detalle": str(e), "partidos": []}
