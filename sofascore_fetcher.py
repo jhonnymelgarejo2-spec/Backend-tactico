@@ -6,12 +6,24 @@ def obtener_partidos_en_vivo():
     headers = {
         "User-Agent": "Mozilla/5.0",
         "Accept": "application/json",
-        "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
         "Referer": "https://www.sofascore.com/"
     }
 
     try:
         r = requests.get(url, headers=headers, timeout=15)
+
+        # Si Sofascore bloquea (403), hacemos fallback
+        if r.status_code == 403:
+            return [{
+                "torneo": "Demo (Sofascore bloqueado)",
+                "equipo_local": "Argentina",
+                "equipo_visitante": "Brasil",
+                "minuto": 45,
+                "score": "2–1",
+                "estado": "en_juego",
+                "id": 99999
+            }]
+
         r.raise_for_status()
         data = r.json()
 
@@ -27,8 +39,21 @@ def obtener_partidos_en_vivo():
                 "id": match["id"]
             })
 
+        # Si no hay eventos, no es error
+        if not resultados:
+            return []
+
         return resultados
 
     except Exception as e:
-        print("⚠️ Sofascore bloqueó o falló:", e)
-        return []
+        print("⚠️ Error Sofascore:", e)
+        # fallback por error general
+        return [{
+            "torneo": "Demo (Error)",
+            "equipo_local": "Equipo A",
+            "equipo_visitante": "Equipo B",
+            "minuto": 0,
+            "score": "0–0",
+            "estado": "sin_datos",
+            "id": 0
+        }]
