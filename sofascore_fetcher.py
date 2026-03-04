@@ -20,27 +20,8 @@ def obtener_partidos_en_vivo():
                 "id": match["id"]
             })
 
-        if not resultados:
-            return [{
-                "torneo": "Sin partidos",
-                "equipo_local": "-",
-                "equipo_visitante": "-",
-                "minuto": 0,
-                "score": "0–0",
-                "estado": "sin_eventos",
-                "id": 0
-            }]
-
-        return resultados
+        return resultados if resultados else []
 
     except Exception as e:
         print(f"⚠ Error en Sofascore: {e}")
-        return [{
-            "torneo": "Error",
-            "equipo_local": "Sin datos",
-            "equipo_visitante": "Sin datos",
-            "minuto": 0,
-            "score": "0–0",
-            "estado": "error",
-            "id": 0
-        }]
+        return []
