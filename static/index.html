@@ -1,39 +1,52 @@
-async function verPartidos() {
-  const contenedor = document.getElementById("lista-partidos");
-  contenedor.innerHTML = "<p>Cargando partidos...</p>";
-
-  try {
-    const res = await fetch("https://backend-tactico-9lld.onrender.com/partidos-en-vivo");
-    const json = await res.json();
-
-    // ✅ Tu backend devuelve "estado", no "status"
-    if (json.estado !== "OK") throw new Error(json.detalle || "Error desconocido");
-
-    // ✅ Si no hay partidos, no es error: solo no hay en vivo
-    if (!json.partidos || json.partidos.length === 0) {
-      contenedor.innerHTML = "<p>No hay partidos en vivo ahora mismo.</p>";
-      return;
-    }
-
-    contenedor.innerHTML = json.partidos.map(p => {
-      const banderaLocal = detectarBandera(p.equipo_local);
-      const banderaVisitante = detectarBandera(p.equipo_visitante);
-
-      return `
-        <div class="tarjeta-senal">
-          <div class="encabezado">
-            <img src="https://flagcdn.com/w320/${banderaLocal}.png" alt="${p.equipo_local}" class="bandera">
-            <h2>${p.equipo_local} vs ${p.equipo_visitante}</h2>
-            <img src="https://flagcdn.com/w320/${banderaVisitante}.png" alt="${p.equipo_visitante}" class="bandera">
+            <div class="encabezado">
+              <img src="https://flagcdn.com/w320/${banderaA}.png" alt="${json.equipoA}" class="bandera">
+              <h2>${json.equipoA} vs ${json.equipoB}</h2>
+              <img src="https://flagcdn.com/w320/${banderaB}.png" alt="${json.equipoB}" class="bandera">
+            </div>
+            <p><strong>⚽ ${json.liga} — Min ${json.minuto}°</strong></p>
+            <p>📈 <strong>Momentum:</strong> <span class="momentum-alto">${datos.momentum}</span></p>
+            <p>💡 <strong>APUESTA:</strong> ${json.equipoA} gana @${json.cuota}</p>
+            <p>🎯 <strong>CONFIANZA:</strong> <span class="confianza-alta">${json.confianza}%</span></p>
+            <p>⏱️ <strong>VENTANA:</strong> Min ${json.minuto - 2}–${json.minuto + 10} | 💰 <strong>TAMAÑO:</strong> 4%</p>
+            <p>🔍 <strong>RAZÓN:</strong> ${json.razon}</p>
+            <p>📈 <strong>VALOR:</strong> ${json.valor}% margen | 🎲 <strong>PROB REAL:</strong> ${Math.round(json.prob_real * 100)}%</p>
           </div>
-          <p><strong>🏆 ${p.torneo}</strong></p>
-          <p>⏱️ <strong>Minuto:</strong> ${p.minuto} — <strong>Marcador:</strong> ${p.score}</p>
-          <p><strong>Estado:</strong> ${p.estado}</p>
-        </div>
-      `;
-    }).join("");
+        `;
+      } catch (error) {
+        resultado.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+      }
+    });
 
-  } catch (error) {
-    contenedor.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
-  }
-}
+    async function verPartidos() {
+      const contenedor = document.getElementById("lista-partidos");
+      contenedor.innerHTML = "<p>Cargando partidos...</p>";
+
+      try {
+        const res = await fetch("https://backend-tactico-9lld.onrender.com/partidos-en-vivo");
+        const json = await res.json();
+
+        if (json.status !== "ok") throw new Error(json.detalle || "Error desconocido");
+
+        contenedor.innerHTML = json.partidos.map(p => {
+          const banderaLocal = detectarBandera(p.equipo_local);
+          const banderaVisitante = detectarBandera(p.equipo_visitante);
+
+          return `
+            <div class="tarjeta-senal">
+              <div class="encabezado">
+                <img src="https://flagcdn.com/w320/${banderaLocal}.png" alt="${p.equipo_local}" class="bandera">
+                <h2>${p.equipo_local} vs ${p.equipo_visitante}</h2>
+                <img src="https://flagcdn.com/w320/${banderaVisitante}.png" alt="${p.equipo_visitante}" class="bandera">
+              </div>
+              <p><strong>🏆 ${p.torneo}</strong> — 🕒 ${p.hora}</p>
+              <p>⚽ <strong>Goles:</strong> ${p.goles_local} - ${p.goles_visitante}</p>
+            </div>
+          `;
+        }).join("");
+      } catch (error) {
+        contenedor.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+      }
+    }
+  </script>
+</body>
+</html>
