@@ -62,4 +62,4 @@ def predecir_next15(partido: Dict) -> Dict:
         "pred_next15": bundle["pred_next15"],
         "pred_final": bundle["pred_final"],
         "signals": bundle["signals"],
-}
+    }
