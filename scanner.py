@@ -1,44 +1,52 @@
 # scanner.py
-from __future__ import annotations
-import asyncio
-from typing import Dict, Any, List
-from providers import DataProvider, MockProvider, to_dict as p_to_dict
-from signals import generate_signal, to_dict as s_to_dict
+from typing import List, Dict
+import random
 
-class Scanner:
-    def __init__(self, provider: DataProvider, max_matches: int = 60):
-        self.provider = provider
-        self.max_matches = max_matches
-        self.last_snapshot: Dict[str, Any] = {
-            "matches": [],
-            "signals": [],
-            "updated_at": None,
-        }
+# ✅ ligas fuertes (puedes agregar/quitar)
+LIGAS_FUERTES = {
+    "Premier League",
+    "LaLiga",
+    "Serie A",
+    "Bundesliga",
+    "Ligue 1",
+    "Primeira Liga",
+    "Eredivisie",
+    "Brasileirão",
+    "Primera División",
+    "MLS",
+}
 
-    async def run_once(self) -> Dict[str, Any]:
-        matches = await self.provider.get_live_matches()
+def filtrar_partidos(partidos: List[Dict], max_partidos: int = 60) -> List[Dict]:
+    """
+    Filtra solo ligas fuertes y corta a máximo N partidos.
+    """
+    fuertes = [p for p in partidos if p.get("liga") in LIGAS_FUERTES]
+    return fuertes[:max_partidos]
 
-        # “Primera división” (por ahora mock ya viene True; con API real filtramos aquí)
-        first_div = [m for m in matches if m.is_first_division][: self.max_matches]
 
-        signals = []
-        for m in first_div:
-            stats = await self.provider.get_live_stats(m.id)
-            odds = await self.provider.get_odds(m.id)
-            sig = generate_signal(m, stats, odds)
-            signals.append(s_to_dict(sig))
+def predecir_next15(partido: Dict) -> Dict:
+    """
+    🔥 Predicción simple (demo): calcula prob de gol próximo 15 min
+    (Luego lo reemplazamos con API real + modelo mejor).
+    """
+    minuto = int(partido.get("minuto", 0))
+    marcador_local = int(partido.get("marcador_local", 0))
+    marcador_visitante = int(partido.get("marcador_visitante", 0))
 
-        snapshot = {
-            "matches": [p_to_dict(m) for m in first_div],
-            "signals": signals,
-        }
-        self.last_snapshot = snapshot
-        return snapshot
+    # base: mientras más tarde, más chance de gol (ejemplo)
+    base = min(0.15 + (minuto / 90) * 0.35, 0.60)
 
-    async def loop(self, interval_sec: int = 60):
-        while True:
-            try:
-                await self.run_once()
-            except Exception as e:
-                self.last_snapshot = {"error": str(e), "matches": [], "signals": []}
-            await asyncio.sleep(interval_sec)
+    # si está empatado sube un poquito
+    if marcador_local == marcador_visitante:
+        base += 0.07
+
+    # ruido pequeño para no repetir siempre
+    base += random.uniform(-0.03, 0.03)
+
+    prob_gol_15 = max(0.05, min(base, 0.85))
+
+    pred = {
+        "pred_next15_more_goals": prob_gol_15,
+        "pred_next15_no_goal": 1 - prob_gol_15,
+    }
+    return pred
