@@ -1,6 +1,5 @@
 # scanner.py
 from typing import List, Dict
-import random
 
 # ✅ ligas fuertes (puedes agregar/quitar)
 LIGAS_FUERTES = {
@@ -24,29 +23,43 @@ def filtrar_partidos(partidos: List[Dict], max_partidos: int = 60) -> List[Dict]
     return fuertes[:max_partidos]
 
 
+# ✅ NUEVO: usamos el motor real
+from prediction_engine import run_prediction_bundle
+
 def predecir_next15(partido: Dict) -> Dict:
     """
-    🔥 Predicción simple (demo): calcula prob de gol próximo 15 min
-    (Luego lo reemplazamos con API real + modelo mejor).
+    Predicción real usando prediction_engine.py
+    Devuelve:
+      - pred_next15 (probabilidades próximos 15)
+      - pred_final  (marcador final más probable)
+      - signals     (sugerencias de mercado)
     """
-    minuto = int(partido.get("minuto", 0))
-    marcador_local = int(partido.get("marcador_local", 0))
-    marcador_visitante = int(partido.get("marcador_visitante", 0))
 
-    # base: mientras más tarde, más chance de gol (ejemplo)
-    base = min(0.15 + (minuto / 90) * 0.35, 0.60)
+    # Convertimos el partido a lo que espera el motor
+    payload = {
+        "minute": partido.get("minuto", 0),
+        "local": partido.get("local", "Equipo A"),
+        "visitante": partido.get("visitante", "Equipo B"),
+        "marcador_local": partido.get("marcador_local", 0),
+        "marcador_visitante": partido.get("marcador_visitante", 0),
 
-    # si está empatado sube un poquito
-    if marcador_local == marcador_visitante:
-        base += 0.07
+        # Si tu partido ya trae xG, perfecto. Si no, queda 0.0 (motor usa fallback)
+        "xG": partido.get("xG", partido.get("xg", 0.0)),
 
-    # ruido pequeño para no repetir siempre
-    base += random.uniform(-0.03, 0.03)
+        # Si tienes momentum en tu data, pásalo. Si no, se usa "medio"
+        "momentum": partido.get("momentum", "medio"),
 
-    prob_gol_15 = max(0.05, min(base, 0.85))
-
-    pred = {
-        "pred_next15_more_goals": prob_gol_15,
-        "pred_next15_no_goal": 1 - prob_gol_15,
+        # Si en el futuro traes odds/prob, también lo soporta:
+        "prob_real": partido.get("prob_real"),
+        "prob_implicita": partido.get("prob_implicita"),
+        "cuota": partido.get("cuota"),
     }
-    return pred
+
+    bundle = run_prediction_bundle(payload)
+
+    # Para que sea fácil de usar en /scan o /signals
+    return {
+        "pred_next15": bundle["pred_next15"],
+        "pred_final": bundle["pred_final"],
+        "signals": bundle["signals"],
+}
