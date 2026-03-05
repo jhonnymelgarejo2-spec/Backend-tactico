@@ -1,35 +1,30 @@
-import os
-import requests
 from fastapi import APIRouter
+from providers import obtener_partidos_demo
+from scanner import filtrar_partidos
+from signals import generar_senales
 
 router = APIRouter()
 
-@router.get("/scan-fixtures")
-def scan_fixtures():
-    url = "https://free-football-soccer-videos.p.rapidapi.com/fixtures"
-    headers = {
-        "X-RapidAPI-Key": os.getenv("RAPIDAPI_KEY"),
-        "X-RapidAPI-Host": os.getenv("RAPIDAPI_HOST")
+# guarda cache simple en memoria
+CACHE_PARTIDOS = []
+CACHE_SENALES = []
+
+@router.get("/scan")
+def scan():
+    global CACHE_PARTIDOS, CACHE_SENALES
+    partidos = obtener_partidos_demo()
+    partidos = filtrar_partidos(partidos, max_partidos=60)
+
+    CACHE_PARTIDOS = partidos
+    CACHE_SENALES = generar_senales(partidos)
+
+    return {
+        "status": "ok",
+        "scanned": len(CACHE_PARTIDOS),
+        "signals": len(CACHE_SENALES),
+        "partidos": CACHE_PARTIDOS,
     }
 
-    response = requests.get(url, headers=headers)
-
-    if response.status_code != 200:
-        return {"error": "No se pudo obtener los datos", "status": response.status_code}
-
-    data = response.json()
-    fixtures = []
-
-    for match in data.get("fixtures", []):
-        fixture = {
-            "fecha": match.get("date"),
-            "liga": match.get("league", {}).get("name"),
-            "local": match.get("homeTeam", {}).get("name"),
-            "visitante": match.get("awayTeam", {}).get("name"),
-            "estado": match.get("status"),
-            "goles_local": match.get("goals", {}).get("home"),
-            "goles_visitante": match.get("goals", {}).get("away")
-        }
-        fixtures.append(fixture)
-
-    return {"partidos": fixtures}
+@router.get("/signals")
+def signals():
+    return CACHE_SENALES
