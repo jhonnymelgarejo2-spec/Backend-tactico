@@ -3,17 +3,19 @@ from typing import List, Dict
 from scanner import predecir_next15
 
 def generar_senales(partidos: List[Dict]) -> List[Dict]:
+    """
+    Genera señales de apuesta basadas en predicción (DEMO).
+    Luego conectamos Odds API real.
+    """
     senales = []
 
     for p in partidos:
-        bundle = predecir_next15(p)
+        pred = predecir_next15(p)
+        prob = float(pred.get("pred_next15_more_goals", 0))
 
-        # ✅ ahora el formato fijo
-        prob = float(bundle["pred_next15"]["p_plus_goals"])
-
-        # regla simple: si prob >= 0.62 → señal OVER 0.5 next15
+        # ✅ regla simple: si prob >= 0.62 => señal OVER 0.5 next 15
         if prob >= 0.62:
-            odd = round(1.60 + (1 - prob) * 1.4, 2)
+            odd = round(1.60 + (1 - prob) * 1.4, 2)  # demo
             value = round((prob * odd - 1) * 100, 2)
 
             senales.append({
@@ -25,11 +27,12 @@ def generar_senales(partidos: List[Dict]) -> List[Dict]:
                 "market": "OVER_UNDER_0.5_NEXT_15",
                 "selection": "OVER",
                 "odd": odd,
-                "prob_goal_next15": round(prob, 3),
+                "prob": round(prob, 3),
                 "value": value,
                 "confidence": int(prob * 100),
-                "reason": "Predicción alta de gol en próximos 15 minutos"
+                "reason": "Probabilidad alta de gol en próximos 15 minutos (demo)"
             })
 
+    # ✅ ordena por mayor value primero
     senales.sort(key=lambda x: x["value"], reverse=True)
     return senales
