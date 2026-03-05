@@ -1,40 +1,43 @@
 # providers.py
-from __future__ import annotations
-from typing import List, Dict, Any
 import random
 
-class MockProvider:
+def obtener_partidos_demo():
     """
-    Provider de prueba (gratis).
-    Devuelve partidos 'fake' para que el sistema funcione sin pagar APIs.
+    Genera partidos falsos para pruebas
+    mientras no tengamos API real.
     """
 
-    def get_live_matches(self, limit: int = 60) -> List[Dict[str, Any]]:
-        ligas = [
-            "Premier League", "LaLiga", "Serie A", "Bundesliga", "Ligue 1",
-            "Primeira Liga", "Eredivisie", "Brasileirão", "Primera División", "MLS"
-        ]
-        equipos = ["Barcelona", "Real Madrid", "PSG", "City", "Inter", "Milan", "Bayern", "Liverpool", "Ajax", "Benfica"]
+    equipos = [
+        "Real Madrid","Barcelona","Bayern","PSG","Liverpool",
+        "Manchester City","Inter","Milan","Ajax","Porto",
+        "Benfica","Flamengo","Palmeiras","River","Boca"
+    ]
 
-        matches = []
-        for i in range(limit):
-            home = random.choice(equipos)
-            away = random.choice([e for e in equipos if e != home])
-            minuto = random.randint(1, 90)
-            marcador_local = random.randint(0, 3)
-            marcador_visitante = random.randint(0, 3)
+    ligas = [
+        "Premier League",
+        "LaLiga",
+        "Serie A",
+        "Bundesliga",
+        "Ligue 1"
+    ]
 
-            matches.append({
-                "id": 100000 + i,
-                "liga": random.choice(ligas),
-                "local": home,
-                "visitante": away,
-                "minuto": minuto,
-                "marcador_local": marcador_local,
-                "marcador_visitante": marcador_visitante,
-                # opcional para tu motor:
-                "xG": round(random.uniform(0.2, 2.2), 2),
-                "momentum": random.choice(["bajo", "medio", "alto"]),
-            })
+    partidos = []
 
-        return matches
+    for i in range(60):
+
+        local = random.choice(equipos)
+        visitante = random.choice(equipos)
+
+        partidos.append({
+            "id": 10000 + i,
+            "pais": "Demo",
+            "liga": random.choice(ligas),
+            "local": local,
+            "visitante": visitante,
+            "minuto": random.randint(1,90),
+            "marcador_local": random.randint(0,3),
+            "marcador_visitante": random.randint(0,3),
+            "xG": round(random.uniform(0.1,3.5),2)
+        })
+
+    return partidos
