@@ -1,8 +1,7 @@
 # scanner.py
 from typing import List, Dict
-import random
+from prediction_engine import run_prediction_bundle
 
-# ✅ ligas fuertes (puedes agregar/quitar)
 LIGAS_FUERTES = {
     "Premier League",
     "LaLiga",
@@ -17,35 +16,31 @@ LIGAS_FUERTES = {
 }
 
 def filtrar_partidos(partidos: List[Dict], max_partidos: int = 60) -> List[Dict]:
-    """
-    Filtra solo ligas fuertes y corta a máximo N partidos.
-    """
     fuertes = [p for p in partidos if p.get("liga") in LIGAS_FUERTES]
     return fuertes[:max_partidos]
 
 
 def predecir_next15(partido: Dict) -> Dict:
     """
-    🔥 Predicción simple (DEMO):
-    Devuelve prob de que haya al menos 1 gol en los próximos 15 minutos.
+    Ahora usa el motor real (prediction_engine.py)
+    y devuelve un formato simple compatible con signals.py.
     """
-    minuto = int(partido.get("minuto", 0) or 0)
-    marcador_local = int(partido.get("marcador_local", 0) or 0)
-    marcador_visitante = int(partido.get("marcador_visitante", 0) or 0)
+    bundle = run_prediction_bundle({
+        "minuto": partido.get("minuto", 0),
+        "local": partido.get("local", "Equipo A"),
+        "visitante": partido.get("visitante", "Equipo B"),
+        "marcador_local": partido.get("marcador_local", 0),
+        "marcador_visitante": partido.get("marcador_visitante", 0),
+        "xG": partido.get("xG", partido.get("xg", 0.0)),
+        "momentum": partido.get("momentum", "medio"),
+        "prob_real": partido.get("prob_real"),
+        "prob_implicita": partido.get("prob_implicita"),
+        "cuota": partido.get("cuota"),
+    })
 
-    # Base: mientras más tarde, un poco más de chance (demo)
-    base = min(0.15 + (minuto / 90) * 0.35, 0.60)
-
-    # Si está empatado, sube un poquito (demo)
-    if marcador_local == marcador_visitante:
-        base += 0.07
-
-    # ruido pequeño para que no sea igual siempre
-    base += random.uniform(-0.03, 0.03)
-
-    prob_gol_15 = max(0.05, min(base, 0.85))
-
+    p1plus = float(bundle["pred_next15"]["p_1plus_goals"])
     return {
-        "pred_next15_more_goals": prob_gol_15,
-        "pred_next15_no_goal": 1 - prob_gol_15,
-    }      
+        "pred_next15_more_goals": p1plus,
+        "pred_next15_no_goal": 1 - p1plus,
+        "bundle": bundle,  # si luego quieres mostrar todo
+    }
