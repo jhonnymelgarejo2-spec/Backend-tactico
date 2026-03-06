@@ -6,7 +6,6 @@ from pydantic import BaseModel
 from pathlib import Path
 import os
 
-# Cargar variables .env
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -31,14 +30,12 @@ except Exception as e:
 from partidos_en_vivo import router as partidos_router
 from footapi import router as footapi_router
 
-# Inicializar FastAPI
 app = FastAPI(
     title="JHONNY_ELITE V7.0",
     description="Backend táctico para análisis de apuestas deportivas",
     version="1.0"
 )
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -47,16 +44,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Carpeta estática
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Servir index.html
 @app.get("/")
 def read_index():
     ruta = Path(__file__).parent / "static" / "index.html"
     return FileResponse(ruta)
 
-# Modelo análisis
+# Opcional: evita el 405 en los chequeos HEAD de Render
+@app.head("/")
+def head_index():
+    return
+
 class DatosDeAnalisisTactico(BaseModel):
     id: str
     momentum: str
@@ -66,7 +65,6 @@ class DatosDeAnalisisTactico(BaseModel):
     cuota: float
     minuto: int
 
-# Endpoint análisis
 @app.post("/analizar_datos")
 def analizar_datos(datos: DatosDeAnalisisTactico):
     try:
@@ -75,7 +73,6 @@ def analizar_datos(datos: DatosDeAnalisisTactico):
     except Exception as e:
         return {"error": str(e)}
 
-# Endpoint enviar señal
 @app.post("/enviar/")
 def enviar_senal_directa(datos: DatosDeAnalisisTactico):
     try:
@@ -84,23 +81,19 @@ def enviar_senal_directa(datos: DatosDeAnalisisTactico):
     except Exception as e:
         return {"status": "error", "detalle": str(e)}
 
-# Routers externos
 if live_router:
     app.include_router(live_router)
 
 if fixtures_router:
     app.include_router(fixtures_router)
 
-# Routers tácticos
 app.include_router(partidos_router)
 app.include_router(footapi_router)
 
-# Status
 @app.get("/status")
 def get_status():
     return {"status": "ok", "mensaje": "Backend táctico operativo"}
 
-# Test HTML
 @app.get("/html-test", response_class=HTMLResponse)
 def html_test():
     return """
@@ -112,7 +105,6 @@ def html_test():
     </html>
     """
 
-# Ejecutar
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     import uvicorn
