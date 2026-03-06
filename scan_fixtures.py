@@ -1,11 +1,13 @@
 from fastapi import APIRouter
+from pydantic import BaseModel
 from providers import obtener_partidos_demo
 from scanner import filtrar_partidos
 from signals import generar_senales
 from history_store import (
     guardar_senales_en_historial,
     cargar_historial,
-    obtener_estadisticas_historial
+    obtener_estadisticas_historial,
+    actualizar_resultado_senal
 )
 import asyncio
 from datetime import datetime
@@ -17,6 +19,12 @@ CACHE_SENALES = []
 AUTO_SCAN_ACTIVO = False
 ULTIMO_SCAN = None
 INTERVALO_SEGUNDOS = 30
+
+
+class ResolverResultadoRequest(BaseModel):
+    index: int
+    estado_resultado: str
+    resultado_real: str | None = None
 
 
 def ejecutar_scan(max_partidos: int = 40):
@@ -70,6 +78,15 @@ def history():
 @router.get("/learning-stats")
 def learning_stats():
     return obtener_estadisticas_historial()
+
+
+@router.post("/history/resolve")
+def history_resolve(payload: ResolverResultadoRequest):
+    return actualizar_resultado_senal(
+        index=payload.index,
+        estado_resultado=payload.estado_resultado,
+        resultado_real=payload.resultado_real
+    )
 
 
 @router.post("/auto-scan/start")
