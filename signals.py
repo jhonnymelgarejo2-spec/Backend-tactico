@@ -1,38 +1,58 @@
 # signals.py
 from typing import List, Dict
-from scanner import predecir_next15
+from signal_engine import generar_senal
 
 def generar_senales(partidos: List[Dict]) -> List[Dict]:
     """
-    Genera señales de apuesta basadas en predicción (DEMO).
-    Luego conectamos Odds API real.
+    Genera señales multi-mercado usando signal_engine.py
     """
+
     senales = []
 
     for p in partidos:
-        pred = predecir_next15(p)
-        prob = float(pred.get("pred_next15_more_goals", 0))
+        # armamos los datos como los espera el engine
+        datos = {
+            "id": p.get("id", ""),
+            "momentum": p.get("momentum", "MEDIO"),
+            "xG": p.get("xG", 0),
+            "prob_real": p.get("prob_real", 0.75),
+            "prob_implicita": p.get("prob_implicita", 0.54),
+            "cuota": p.get("cuota", 1.85),
+            "minuto": p.get("minuto", 0)
+        }
 
-        # ✅ regla simple: si prob >= 0.62 => señal OVER 0.5 next 15
-        if prob >= 0.62:
-            odd = round(1.60 + (1 - prob) * 1.4, 2)  # demo
-            value = round((prob * odd - 1) * 100, 2)
+        senal = generar_senal(datos)
 
-            senales.append({
-                "match_id": p.get("id", ""),
-                "home": p.get("local", ""),
-                "away": p.get("visitante", ""),
-                "minute": p.get("minuto", 0),
-                "score": f'{p.get("marcador_local", 0)}-{p.get("marcador_visitante", 0)}',
-                "market": "OVER_UNDER_0.5_NEXT_15",
-                "selection": "OVER",
-                "odd": odd,
-                "prob": round(prob, 3),
-                "value": value,
-                "confidence": int(prob * 100),
-                "reason": "Probabilidad alta de gol en próximos 15 minutos (demo)"
-            })
+        # Si el engine no detecta oportunidad clara, igual podemos ignorarla
+        if senal.get("mercado") == "SIN_SEÑAL":
+            continue
 
-    # ✅ ordena por mayor value primero
-    senales.sort(key=lambda x: x["value"], reverse=True)
+        # Convertimos a formato estándar del dashboard
+        senales.append({
+            "match_id": senal.get("id", ""),
+            "home": senal.get("equipoA", ""),
+            "away": senal.get("equipoB", ""),
+            "league": senal.get("liga", ""),
+            "event_type": senal.get("tipo_evento", ""),
+            "minute": senal.get("minuto", 0),
+
+            # En demo no tenemos marcador real por engine, así que lo tomamos del partido
+            "score": f'{p.get("marcador_local", 0)}-{p.get("marcador_visitante", 0)}',
+
+            "market": senal.get("mercado", ""),
+            "selection": senal.get("apuesta", ""),
+            "odd": senal.get("cuota", 1.85),
+            "prob": senal.get("prob_real", 0.0),
+            "value": senal.get("valor", 0.0),
+            "confidence": senal.get("confianza", 0),
+            "reason": senal.get("razon", ""),
+            "all_signals": senal.get("senales_posibles", [])
+        })
+
+    # ordenar por confianza y luego por value
+    senales.sort(
+        key=lambda s: (s.get("confidence", 0), s.get("value", 0)),
+        reverse=True
+    )
+
     return senales
