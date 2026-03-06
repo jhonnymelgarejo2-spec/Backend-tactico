@@ -10,10 +10,6 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-# NUEVO: para escaneo automático
-import asyncio
-from providers import MockProvider
-
 # Módulos internos
 from signal_engine import generar_senal
 from notifier import enviar_notificacion
@@ -42,22 +38,10 @@ app = FastAPI(
     version="1.0"
 )
 
-# Inicializar scanner
-scanner = Scanner(provider=MockProvider(), max_matches=60)
-
-# Arrancar escáner automático
-@app.on_event("startup")
-async def startup_event():
-    asyncio.create_task(scanner.loop(interval_sec=60))
-
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://69.14.103.144:3000",
-        "http://69.14.103.144:3001",
-        "http://69.14.103.144:3002"
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -111,20 +95,6 @@ if fixtures_router:
 app.include_router(partidos_router)
 app.include_router(footapi_router)
 
-# ENDPOINT SCANNER
-@app.get("/scan")
-def get_scan():
-    return scanner.last_snapshot
-
-@app.post("/scan/now")
-async def scan_now():
-    snap = await scanner.run_once()
-    return snap
-
-@app.get("/signals")
-def get_signals():
-    return {"signals": scanner.last_snapshot.get("signals", [])}
-
 # Status
 @app.get("/status")
 def get_status():
@@ -137,7 +107,7 @@ def html_test():
     <html>
         <head><title>Test HTML</title></head>
         <body style="background-color:#111;color:#0f0;font-family:sans-serif;">
-            <h1>Backend táctico operativo</h1>
+            <h1>✅ Backend táctico operativo</h1>
         </body>
     </html>
     """
@@ -146,5 +116,4 @@ def html_test():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=port)        
-
+    uvicorn.run(app, host="0.0.0.0", port=port)
