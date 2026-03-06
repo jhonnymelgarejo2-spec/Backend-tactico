@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JHONNY_ELITE V8.0</title>
+  <title>JHONNY_ELITE V8.1</title>
   <style>
     * {
       box-sizing: border-box;
@@ -23,7 +23,7 @@
     }
 
     .sidebar {
-      width: 240px;
+      width: 250px;
       background: #0b1728;
       border-right: 1px solid rgba(255,255,255,0.08);
       padding: 24px 18px;
@@ -61,6 +61,7 @@
       text-align: left;
       cursor: pointer;
       transition: 0.2s;
+      font-weight: bold;
     }
 
     .menu button:hover {
@@ -74,7 +75,7 @@
 
     .topbar {
       display: grid;
-      grid-template-columns: 1.2fr 1fr 1fr 1fr;
+      grid-template-columns: repeat(5, 1fr);
       gap: 16px;
       margin-bottom: 20px;
     }
@@ -94,15 +95,22 @@
     }
 
     .metric-value {
-      font-size: 30px;
+      font-size: 28px;
       font-weight: bold;
       color: #ffffff;
     }
 
+    .small {
+      font-size: 13px;
+      color: #9bc1e8;
+      margin-top: 6px;
+    }
+
     .grid {
       display: grid;
-      grid-template-columns: 1.4fr 1fr;
+      grid-template-columns: 1.25fr 1fr;
       gap: 20px;
+      margin-top: 20px;
     }
 
     .section-title {
@@ -144,12 +152,19 @@
       border: 1px solid #2d7a4b;
     }
 
+    .status-badge.off {
+      background: #4a1a1a;
+      color: #ff9999;
+      border: 1px solid #a94444;
+    }
+
     .match-list,
-    .signal-list {
+    .signal-list,
+    .history-list {
       display: flex;
       flex-direction: column;
       gap: 14px;
-      max-height: 75vh;
+      max-height: 70vh;
       overflow-y: auto;
       padding-right: 4px;
     }
@@ -207,7 +222,7 @@
     }
 
     .signal-market {
-      font-size: 24px;
+      font-size: 20px;
       font-weight: bold;
       color: #ffd66e;
     }
@@ -239,9 +254,11 @@
       font-size: 12px;
     }
 
-    .small {
-      font-size: 13px;
-      color: #9bc1e8;
+    .history-item {
+      background: #0b1625;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      padding: 14px;
     }
 
     .empty {
@@ -253,15 +270,44 @@
       color: #ff7b7b;
     }
 
-    @media (max-width: 980px) {
-      .layout {
-        flex-direction: column;
-      }
+    .green {
+      color: #65ff9b;
+    }
 
-      .sidebar {
-        width: 100%;
-      }
+    .yellow {
+      color: #ffd66e;
+    }
 
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      background: #12233b;
+      color: #dbeaff;
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .tab-btn.active {
+      background: #245487;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    @media (max-width: 1100px) {
       .topbar {
         grid-template-columns: 1fr 1fr;
       }
@@ -271,17 +317,17 @@
       }
     }
 
-    @media (max-width: 600px) {
+    @media (max-width: 700px) {
+      .layout {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+      }
+
       .topbar {
         grid-template-columns: 1fr;
-      }
-
-      .teams {
-        font-size: 17px;
-      }
-
-      .signal-market {
-        font-size: 20px;
       }
     }
   </style>
@@ -289,23 +335,25 @@
 <body>
   <div class="layout">
     <aside class="sidebar">
-      <div class="logo">JHONNY_<span>ELITE V8.0</span></div>
-      <div class="subtitle">AUTOSCAN DE APUESTAS EN VIVO · DETECCIÓN DE VALUE</div>
+      <div class="logo">JHONNY_<span>ELITE V8.1</span></div>
+      <div class="subtitle">SCANNER AUTOMÁTICO · SEÑALES · MEMORIA DE APRENDIZAJE</div>
 
       <div class="menu">
-        <button onclick="cargarTodo()">📡 Panel en vivo</button>
-        <button onclick="cargarScan()">⚽ Partidos escaneados</button>
-        <button onclick="cargarSignals()">🚨 Señales detectadas</button>
-        <button onclick="verEstado()">✅ Estado backend</button>
+        <button onclick="cargarTodo()">📡 Actualizar panel</button>
+        <button onclick="iniciarAutoScan()">▶️ Iniciar auto-scan</button>
+        <button onclick="detenerAutoScan()">⏹️ Detener auto-scan</button>
+        <button onclick="cargarScan()">⚽ Recargar partidos</button>
+        <button onclick="cargarSignals()">🚨 Recargar señales</button>
+        <button onclick="cargarHistory()">🧠 Recargar historial</button>
       </div>
     </aside>
 
     <main class="main">
       <div class="topbar">
         <div class="card">
-          <div class="metric-title">Estado del sistema</div>
+          <div class="metric-title">Estado backend</div>
           <div id="backendStatus" class="metric-value">...</div>
-          <div class="small" id="backendMessage">Cargando...</div>
+          <div id="backendMessage" class="small">Cargando...</div>
         </div>
 
         <div class="card">
@@ -317,31 +365,45 @@
         <div class="card">
           <div class="metric-title">Señales detectadas</div>
           <div id="totalSignals" class="metric-value">0</div>
-          <div class="small">Oportunidades encontradas</div>
+          <div class="small">Oportunidades activas</div>
         </div>
 
         <div class="card">
-          <div class="metric-title">Modo actual</div>
-          <div class="metric-value" style="font-size:24px;">DEMO</div>
-          <div class="small">Pendiente conectar API real</div>
+          <div class="metric-title">Historial total</div>
+          <div id="historyTotal" class="metric-value">0</div>
+          <div class="small">Señales guardadas en memoria</div>
+        </div>
+
+        <div class="card">
+          <div class="metric-title">Auto-scan</div>
+          <div id="autoScanValue" class="metric-value">...</div>
+          <div id="autoScanMessage" class="small">Cargando...</div>
         </div>
       </div>
 
       <div class="toolbar">
         <button onclick="cargarTodo()">Actualizar panel</button>
-        <button onclick="cargarScan()">Recargar partidos</button>
-        <button onclick="cargarSignals()">Recargar señales</button>
-        <span class="status-badge" id="statusBadge">Esperando...</span>
+        <button onclick="iniciarAutoScan()">Iniciar</button>
+        <button onclick="detenerAutoScan()">Detener</button>
+        <span id="statusBadge" class="status-badge">Esperando...</span>
       </div>
 
-      <div class="grid">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('tab-partidos', this)">Partidos</button>
+        <button class="tab-btn" onclick="showTab('tab-signals', this)">Señales</button>
+        <button class="tab-btn" onclick="showTab('tab-history', this)">Historial</button>
+      </div>
+
+      <div id="tab-partidos" class="tab-panel active">
         <section class="card">
           <div class="section-title">PARTIDOS EN VIVO</div>
           <div id="matchList" class="match-list">
             <div class="empty">Cargando partidos...</div>
           </div>
         </section>
+      </div>
 
+      <div id="tab-signals" class="tab-panel">
         <section class="card">
           <div class="section-title">SEÑALES DETECTADAS</div>
           <div id="signalList" class="signal-list">
@@ -349,26 +411,49 @@
           </div>
         </section>
       </div>
+
+      <div id="tab-history" class="tab-panel">
+        <div class="grid">
+          <section class="card">
+            <div class="section-title">HISTORIAL</div>
+            <div id="historyList" class="history-list">
+              <div class="empty">Cargando historial...</div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="section-title">ESTADÍSTICAS DE APRENDIZAJE</div>
+            <div id="learningStats">
+              <div class="empty">Cargando estadísticas...</div>
+            </div>
+          </section>
+        </div>
+      </div>
     </main>
   </div>
 
   <script>
     const BACKEND = "https://backend-tactico-9lld.onrender.com";
+    let autoRefreshInterval = null;
 
-    async function fetchJSON(url) {
-      const res = await fetch(url);
-      if (!res.ok) {
-        throw new Error(`Error ${res.status}`);
-      }
+    function showTab(tabId, btn) {
+      document.querySelectorAll(".tab-panel").forEach(el => el.classList.remove("active"));
+      document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
+
+      document.getElementById(tabId).classList.add("active");
+      btn.classList.add("active");
+    }
+
+    async function fetchJSON(url, options = {}) {
+      const res = await fetch(url, options);
+      if (!res.ok) throw new Error(`Error ${res.status}`);
       return await res.json();
     }
 
     function setStatus(texto, ok = true) {
       const badge = document.getElementById("statusBadge");
       badge.textContent = texto;
-      badge.style.background = ok ? "#173a24" : "#4a1a1a";
-      badge.style.color = ok ? "#70ffab" : "#ff9999";
-      badge.style.border = ok ? "1px solid #2d7a4b" : "1px solid #a94444";
+      badge.className = ok ? "status-badge" : "status-badge off";
     }
 
     async function verEstado() {
@@ -391,7 +476,6 @@
       try {
         const data = await fetchJSON(`${BACKEND}/scan`);
         const partidos = data.partidos || [];
-
         document.getElementById("totalMatches").textContent = data.scanned ?? partidos.length;
 
         if (!partidos.length) {
@@ -410,6 +494,7 @@
               <div>📊 xG: <strong>${p.xG ?? 0}</strong></div>
               <div>⚽ Marcador: <strong>${p.marcador_local ?? 0}-${p.marcador_visitante ?? 0}</strong></div>
               <div>🆔 ID: <strong>${p.id ?? "-"}</strong></div>
+              <div>🔥 Momentum: <strong>${p.momentum ?? "MEDIO"}</strong></div>
             </div>
           </div>
         `).join("");
@@ -421,6 +506,13 @@
       }
     }
 
+    function colorPorValor(value) {
+      const num = Number(value || 0);
+      if (num >= 15) return "green";
+      if (num >= 8) return "yellow";
+      return "";
+    }
+
     async function cargarSignals() {
       const contenedor = document.getElementById("signalList");
       contenedor.innerHTML = `<div class="empty">Cargando señales...</div>`;
@@ -428,7 +520,6 @@
       try {
         const data = await fetchJSON(`${BACKEND}/signals`);
         const senales = Array.isArray(data) ? data : (data.signals || []);
-
         document.getElementById("totalSignals").textContent = senales.length;
 
         if (!senales.length) {
@@ -440,7 +531,7 @@
           <div class="signal-item">
             <div class="signal-head">
               <div class="signal-market">${s.selection || "SEÑAL"} ${s.market ? "· " + s.market : ""}</div>
-              <div class="signal-value">+${s.value ?? 0}%</div>
+              <div class="signal-value ${colorPorValor(s.value)}">+${s.value ?? 0}%</div>
             </div>
 
             <div class="signal-sub">
@@ -453,9 +544,9 @@
 
             <div class="signal-meta">
               <span class="pill">Cuota: ${s.odd ?? "-"}</span>
-              <span class="pill">Prob: ${s.prob ?? s.prob_goal_next15 ?? "-"}</span>
+              <span class="pill">Prob: ${s.prob ?? "-"}</span>
               <span class="pill">Confianza: ${s.confidence ?? "-"}%</span>
-              <span class="pill">ID: ${s.match_id ?? "-"}</span>
+              <span class="pill">Liga: ${s.league || "-"}</span>
             </div>
           </div>
         `).join("");
@@ -467,13 +558,99 @@
       }
     }
 
+    async function cargarHistory() {
+      const contenedor = document.getElementById("historyList");
+      const statsBox = document.getElementById("learningStats");
+
+      contenedor.innerHTML = `<div class="empty">Cargando historial...</div>`;
+      statsBox.innerHTML = `<div class="empty">Cargando estadísticas...</div>`;
+
+      try {
+        const history = await fetchJSON(`${BACKEND}/history`);
+        const stats = await fetchJSON(`${BACKEND}/learning-stats`);
+
+        document.getElementById("historyTotal").textContent = stats.total_senales ?? 0;
+
+        if (!history.length) {
+          contenedor.innerHTML = `<div class="empty">No hay historial todavía.</div>`;
+        } else {
+          contenedor.innerHTML = history.slice(-30).reverse().map(h => `
+            <div class="history-item">
+              <div><strong>${h.home || "Local"} vs ${h.away || "Visitante"}</strong></div>
+              <div class="small">Mercado: ${h.market || "-"} | Selección: ${h.selection || "-"}</div>
+              <div class="small">Min ${h.minute ?? 0} · Cuota ${h.odd ?? "-"} · Value ${h.value ?? "-"}%</div>
+              <div class="small">Estado: ${h.estado_resultado || "pendiente"} · ${h.timestamp || ""}</div>
+            </div>
+          `).join("");
+        }
+
+        statsBox.innerHTML = `
+          <div class="match-stats" style="flex-direction:column; gap:12px;">
+            <div>📚 Total señales: <strong>${stats.total_senales ?? 0}</strong></div>
+            <div>⏳ Pendientes: <strong>${stats.pendientes ?? 0}</strong></div>
+            <div>✅ Resueltas: <strong>${stats.resueltas ?? 0}</strong></div>
+            <div>🎯 Confianza promedio: <strong>${stats.confidence_promedio ?? 0}%</strong></div>
+            <div>📈 Value promedio: <strong>${stats.value_promedio ?? 0}%</strong></div>
+          </div>
+        `;
+      } catch (err) {
+        contenedor.innerHTML = `<div class="empty danger">Error cargando historial: ${err.message}</div>`;
+        statsBox.innerHTML = `<div class="empty danger">Error cargando estadísticas: ${err.message}</div>`;
+      }
+    }
+
+    async function cargarAutoScanStatus() {
+      try {
+        const data = await fetchJSON(`${BACKEND}/auto-scan/status`);
+        document.getElementById("autoScanValue").textContent = data.auto_scan_activo ? "ACTIVO" : "OFF";
+        document.getElementById("autoScanMessage").textContent =
+          `Cada ${data.intervalo_segundos ?? 30}s · Último scan: ${data.ultimo_scan || "N/A"}`;
+
+        if (data.auto_scan_activo) {
+          setStatus("AUTO-SCAN activo", true);
+        }
+      } catch (err) {
+        document.getElementById("autoScanValue").textContent = "ERROR";
+        document.getElementById("autoScanMessage").textContent = err.message;
+      }
+    }
+
+    async function iniciarAutoScan() {
+      try {
+        await fetchJSON(`${BACKEND}/auto-scan/start`, { method: "POST" });
+        await cargarAutoScanStatus();
+        await cargarTodo();
+      } catch (err) {
+        setStatus("No se pudo iniciar AUTO-SCAN", false);
+      }
+    }
+
+    async function detenerAutoScan() {
+      try {
+        await fetchJSON(`${BACKEND}/auto-scan/stop`, { method: "POST" });
+        await cargarAutoScanStatus();
+      } catch (err) {
+        setStatus("No se pudo detener AUTO-SCAN", false);
+      }
+    }
+
     async function cargarTodo() {
       await verEstado();
+      await cargarAutoScanStatus();
       await cargarScan();
       await cargarSignals();
+      await cargarHistory();
+    }
+
+    function activarAutoRefresh() {
+      if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+      autoRefreshInterval = setInterval(() => {
+        cargarTodo();
+      }, 30000);
     }
 
     cargarTodo();
+    activarAutoRefresh();
   </script>
 </body>
-        </html>
+  </html>
