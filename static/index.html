@@ -2,173 +2,478 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>JHONNY_ELITE V7.0</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JHONNY_ELITE V8.0</title>
   <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
-      background-color: #111;
-      color: #0f0;
-      font-family: sans-serif;
+      font-family: Arial, sans-serif;
+      background: #07111f;
+      color: #eaf6ff;
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 240px;
+      background: #0b1728;
+      border-right: 1px solid rgba(255,255,255,0.08);
+      padding: 24px 18px;
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      color: #ffffff;
+      margin-bottom: 10px;
+    }
+
+    .logo span {
+      color: #3ddc97;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #7cb8ff;
+      margin-bottom: 30px;
+    }
+
+    .menu {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .menu button {
+      background: #12233b;
+      color: #dbeaff;
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 12px 14px;
+      border-radius: 12px;
+      text-align: left;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .menu button:hover {
+      background: #18304f;
+    }
+
+    .main {
+      flex: 1;
       padding: 20px;
     }
-    input, button {
-      margin: 5px;
-      padding: 8px;
-      font-size: 14px;
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
     }
-    .tarjeta-senal {
-      border: 1px solid #0f0;
-      padding: 10px;
-      margin: 10px 0;
-      background-color: #222;
-      border-radius: 10px;
+
+    .card {
+      background: linear-gradient(180deg, #0d1b2d, #0a1423);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
     }
-    .bandera {
-      width: 40px;
-      height: auto;
+
+    .metric-title {
+      font-size: 13px;
+      color: #8eb8e8;
+      margin-bottom: 8px;
     }
-    .encabezado {
+
+    .metric-value {
+      font-size: 30px;
+      font-weight: bold;
+      color: #ffffff;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 20px;
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 14px;
+      color: #ffffff;
+    }
+
+    .toolbar {
       display: flex;
-      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar button {
+      background: #1b3b63;
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .toolbar button:hover {
+      background: #245487;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+      background: #173a24;
+      color: #70ffab;
+      border: 1px solid #2d7a4b;
+    }
+
+    .match-list,
+    .signal-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-height: 75vh;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .match-item {
+      background: #0b1625;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .match-top {
+      display: flex;
       justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .league {
+      color: #7cc4ff;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .teams {
+      font-size: 20px;
+      font-weight: bold;
+      color: #ffffff;
+      margin-bottom: 10px;
+    }
+
+    .match-stats {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      font-size: 14px;
+      color: #c8ddf7;
+    }
+
+    .signal-item {
+      background: linear-gradient(180deg, #102235, #0a1522);
+      border: 1px solid rgba(61,220,151,0.22);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .signal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
       gap: 10px;
     }
-    .momentum-alto { color: #0ff; }
-    .confianza-alta { color: #ff0; }
-  </style>
-</head>
 
-<body>
-  <h1>🎯 JHONNY_ELITE V7.0</h1>
-
-  <form id="formulario">
-    <input name="id" placeholder="ID" required>
-    <input name="momentum" placeholder="Momentum" required>
-    <input name="xG" type="number" step="0.01" placeholder="xG" required>
-    <input name="prob_real" type="number" step="0.01" placeholder="Prob Real" required>
-    <input name="prob_implicita" type="number" step="0.01" placeholder="Prob Implícita" required>
-    <input name="cuota" type="number" step="0.01" placeholder="Cuota" required>
-    <input name="minuto" type="number" placeholder="Minuto" required>
-    <button type="submit">Analizar</button>
-  </form>
-
-  <div id="resultado"></div>
-
-  <h2>📡 Partidos en Vivo</h2>
-  <button type="button" onclick="verPartidos()">Ver Partidos</button>
-  <div id="lista-partidos"></div>
-
-  <script>
-    // Cambia acá si cambias tu backend:
-    const BACKEND = "https://backend-tactico-9lld.onrender.com";
-
-    function detectarBandera(texto) {
-      const t = (texto || "").toLowerCase();
-      if (t.includes("arg")) return "ar";
-      if (t.includes("bra")) return "br";
-      if (t.includes("esp") || t.includes("spain")) return "es";
-      if (t.includes("ita")) return "it";
-      if (t.includes("fra")) return "fr";
-      if (t.includes("ger") || t.includes("alem")) return "de";
-      if (t.includes("port")) return "pt";
-      if (t.includes("ing") || t.includes("eng")) return "gb";
-      return "xx";
+    .signal-market {
+      font-size: 24px;
+      font-weight: bold;
+      color: #ffd66e;
     }
 
-    // ✅ ANALIZAR (ruta correcta: /analizar_datos)
-    document.getElementById("formulario").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const resultado = document.getElementById("resultado");
-      resultado.innerHTML = "<p>Procesando...</p>";
+    .signal-value {
+      font-size: 22px;
+      font-weight: bold;
+      color: #65ff9b;
+    }
 
-      const form = new FormData(e.target);
-      const datos = {
-        id: form.get("id").trim(),
-        momentum: form.get("momentum").trim(),
-        xG: parseFloat(form.get("xG")),
-        prob_real: parseFloat(form.get("prob_real")),
-        prob_implicita: parseFloat(form.get("prob_implicita")),
-        cuota: parseFloat(form.get("cuota")),
-        minuto: parseInt(form.get("minuto"))
-      };
+    .signal-sub {
+      color: #cde2ff;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
 
-      try {
-        const respuesta = await fetch(`${BACKEND}/analizar_datos`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(datos),
-        });
+    .signal-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
 
-        if (!respuesta.ok) {
-          const txt = await respuesta.text();
-          throw new Error(`Error ${respuesta.status}: ${txt}`);
-        }
+    .pill {
+      background: #18314f;
+      color: #dcecff;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
 
-        const json = await respuesta.json();
+    .small {
+      font-size: 13px;
+      color: #9bc1e8;
+    }
 
-        const banderaA = detectarBandera(json.equipoA);
-        const banderaB = detectarBandera(json.equipoB);
+    .empty {
+      color: #9eb7d4;
+      padding: 10px 0;
+    }
 
-        resultado.innerHTML = `
-          <div class="tarjeta-senal">
-            <div class="encabezado">
-              <img src="https://flagcdn.com/w320/${banderaA}.png" class="bandera" />
-              <h2>${json.equipoA || "Equipo A"} vs ${json.equipoB || "Equipo B"}</h2>
-              <img src="https://flagcdn.com/w320/${banderaB}.png" class="bandera" />
-            </div>
-            <p><strong>⚽ ${json.liga || "Liga desconocida"} — Min ${json.minuto ?? datos.minuto}°</strong></p>
-            <p>📈 <strong>Momentum:</strong> <span class="momentum-alto">${datos.momentum}</span></p>
-            <p>💡 <strong>APUESTA:</strong> ${json.apuesta || "—"} @${json.cuota ?? datos.cuota}</p>
-            <p>🎯 <strong>CONFIANZA:</strong> <span class="confianza-alta">${json.confianza ?? 0}%</span></p>
-            <p>🔍 <strong>RAZÓN:</strong> ${json.razon || "—"}</p>
-            <p>📈 <strong>VALOR:</strong> ${json.valor ?? 0}%</p>
-          </div>
-        `;
-      } catch (error) {
-        resultado.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+    .danger {
+      color: #ff7b7b;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        flex-direction: column;
       }
-    });
 
-    // ✅ PARTIDOS EN VIVO (ruta correcta: /partidos-en-vivo)
-    async function verPartidos() {
-      const contenedor = document.getElementById("lista-partidos");
-      contenedor.innerHTML = "<p>Cargando partidos...</p>";
+      .sidebar {
+        width: 100%;
+      }
+
+      .topbar {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+
+      .teams {
+        font-size: 17px;
+      }
+
+      .signal-market {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo">JHONNY_<span>ELITE V8.0</span></div>
+      <div class="subtitle">AUTOSCAN DE APUESTAS EN VIVO · DETECCIÓN DE VALUE</div>
+
+      <div class="menu">
+        <button onclick="cargarTodo()">📡 Panel en vivo</button>
+        <button onclick="cargarScan()">⚽ Partidos escaneados</button>
+        <button onclick="cargarSignals()">🚨 Señales detectadas</button>
+        <button onclick="verEstado()">✅ Estado backend</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="card">
+          <div class="metric-title">Estado del sistema</div>
+          <div id="backendStatus" class="metric-value">...</div>
+          <div class="small" id="backendMessage">Cargando...</div>
+        </div>
+
+        <div class="card">
+          <div class="metric-title">Partidos escaneados</div>
+          <div id="totalMatches" class="metric-value">0</div>
+          <div class="small">Partidos analizados por el scanner</div>
+        </div>
+
+        <div class="card">
+          <div class="metric-title">Señales detectadas</div>
+          <div id="totalSignals" class="metric-value">0</div>
+          <div class="small">Oportunidades encontradas</div>
+        </div>
+
+        <div class="card">
+          <div class="metric-title">Modo actual</div>
+          <div class="metric-value" style="font-size:24px;">DEMO</div>
+          <div class="small">Pendiente conectar API real</div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <button onclick="cargarTodo()">Actualizar panel</button>
+        <button onclick="cargarScan()">Recargar partidos</button>
+        <button onclick="cargarSignals()">Recargar señales</button>
+        <span class="status-badge" id="statusBadge">Esperando...</span>
+      </div>
+
+      <div class="grid">
+        <section class="card">
+          <div class="section-title">PARTIDOS EN VIVO</div>
+          <div id="matchList" class="match-list">
+            <div class="empty">Cargando partidos...</div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-title">SEÑALES DETECTADAS</div>
+          <div id="signalList" class="signal-list">
+            <div class="empty">Cargando señales...</div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const BACKEND = "https://backend-tactico-9lld.onrender.com";
+
+    async function fetchJSON(url) {
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error(`Error ${res.status}`);
+      }
+      return await res.json();
+    }
+
+    function setStatus(texto, ok = true) {
+      const badge = document.getElementById("statusBadge");
+      badge.textContent = texto;
+      badge.style.background = ok ? "#173a24" : "#4a1a1a";
+      badge.style.color = ok ? "#70ffab" : "#ff9999";
+      badge.style.border = ok ? "1px solid #2d7a4b" : "1px solid #a94444";
+    }
+
+    async function verEstado() {
+      try {
+        const data = await fetchJSON(`${BACKEND}/status`);
+        document.getElementById("backendStatus").textContent = data.status || "ok";
+        document.getElementById("backendMessage").textContent = data.mensaje || "Backend operativo";
+        setStatus("Backend conectado", true);
+      } catch (err) {
+        document.getElementById("backendStatus").textContent = "error";
+        document.getElementById("backendMessage").textContent = err.message;
+        setStatus("Error de conexión", false);
+      }
+    }
+
+    async function cargarScan() {
+      const contenedor = document.getElementById("matchList");
+      contenedor.innerHTML = `<div class="empty">Cargando partidos...</div>`;
 
       try {
-        const res = await fetch(`${BACKEND}/partidos-en-vivo`);
-        if (!res.ok) throw new Error("No se pudo conectar con el servidor");
+        const data = await fetchJSON(`${BACKEND}/scan`);
+        const partidos = data.partidos || [];
 
-        const json = await res.json();
+        document.getElementById("totalMatches").textContent = data.scanned ?? partidos.length;
 
-        if (json.estado !== "OK") throw new Error(json.detalle || "Error desconocido");
-
-        if (!json.partidos || json.partidos.length === 0) {
-          contenedor.innerHTML = "<p>No hay partidos en vivo ahora mismo.</p>";
+        if (!partidos.length) {
+          contenedor.innerHTML = `<div class="empty">No hay partidos disponibles.</div>`;
           return;
         }
 
-        contenedor.innerHTML = json.partidos.map(p => {
-          const banderaLocal = detectarBandera(p.equipo_local);
-          const banderaVisitante = detectarBandera(p.equipo_visitante);
-
-          return `
-            <div class="tarjeta-senal">
-              <div class="encabezado">
-                <img src="https://flagcdn.com/w320/${banderaLocal}.png" alt="${p.equipo_local}" class="bandera">
-                <h2>${p.equipo_local} vs ${p.equipo_visitante}</h2>
-                <img src="https://flagcdn.com/w320/${banderaVisitante}.png" alt="${p.equipo_visitante}" class="bandera">
-              </div>
-              <p><strong>🏆 ${p.torneo}</strong></p>
-              <p>⏱️ <strong>Minuto:</strong> ${p.minuto} — <strong>Marcador:</strong> ${p.score}</p>
-              <p><strong>Estado:</strong> ${p.estado}</p>
+        contenedor.innerHTML = partidos.map(p => `
+          <div class="match-item">
+            <div class="match-top">
+              <div class="league">${p.liga || "Liga"} · ${p.pais || "País"}</div>
+              <div class="pill">Min ${p.minuto ?? 0}</div>
             </div>
-          `;
-        }).join("");
+            <div class="teams">${p.local || "Local"} vs ${p.visitante || "Visitante"}</div>
+            <div class="match-stats">
+              <div>📊 xG: <strong>${p.xG ?? 0}</strong></div>
+              <div>⚽ Marcador: <strong>${p.marcador_local ?? 0}-${p.marcador_visitante ?? 0}</strong></div>
+              <div>🆔 ID: <strong>${p.id ?? "-"}</strong></div>
+            </div>
+          </div>
+        `).join("");
 
-      } catch (error) {
-        contenedor.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+        setStatus("Partidos actualizados", true);
+      } catch (err) {
+        contenedor.innerHTML = `<div class="empty danger">Error cargando partidos: ${err.message}</div>`;
+        setStatus("Error en /scan", false);
       }
     }
+
+    async function cargarSignals() {
+      const contenedor = document.getElementById("signalList");
+      contenedor.innerHTML = `<div class="empty">Cargando señales...</div>`;
+
+      try {
+        const data = await fetchJSON(`${BACKEND}/signals`);
+        const senales = Array.isArray(data) ? data : (data.signals || []);
+
+        document.getElementById("totalSignals").textContent = senales.length;
+
+        if (!senales.length) {
+          contenedor.innerHTML = `<div class="empty">No se detectaron señales.</div>`;
+          return;
+        }
+
+        contenedor.innerHTML = senales.map(s => `
+          <div class="signal-item">
+            <div class="signal-head">
+              <div class="signal-market">${s.selection || "SEÑAL"} ${s.market ? "· " + s.market : ""}</div>
+              <div class="signal-value">+${s.value ?? 0}%</div>
+            </div>
+
+            <div class="signal-sub">
+              <strong>${s.home || "Local"} vs ${s.away || "Visitante"}</strong> · Min ${s.minute ?? 0} · Marcador ${s.score || "0-0"}
+            </div>
+
+            <div class="signal-sub">
+              ${s.reason || "Señal generada por el sistema"}
+            </div>
+
+            <div class="signal-meta">
+              <span class="pill">Cuota: ${s.odd ?? "-"}</span>
+              <span class="pill">Prob: ${s.prob ?? s.prob_goal_next15 ?? "-"}</span>
+              <span class="pill">Confianza: ${s.confidence ?? "-"}%</span>
+              <span class="pill">ID: ${s.match_id ?? "-"}</span>
+            </div>
+          </div>
+        `).join("");
+
+        setStatus("Señales actualizadas", true);
+      } catch (err) {
+        contenedor.innerHTML = `<div class="empty danger">Error cargando señales: ${err.message}</div>`;
+        setStatus("Error en /signals", false);
+      }
+    }
+
+    async function cargarTodo() {
+      await verEstado();
+      await cargarScan();
+      await cargarSignals();
+    }
+
+    cargarTodo();
   </script>
 </body>
-</html>
+        </html>
