@@ -384,6 +384,35 @@
       font-size: 13px;
     }
 
+    .signal-tier {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .tier-premium {
+      background: linear-gradient(180deg, #4a3410, #2f2008);
+      color: #ffd66e;
+      border-color: #b78a22;
+    }
+
+    .tier-fuerte {
+      background: linear-gradient(180deg, #102b4a, #0a1d33);
+      color: #7cc4ff;
+      border-color: #2f6ea3;
+    }
+
+    .tier-normal {
+      background: linear-gradient(180deg, #18351f, #102515);
+      color: #8ff0b3;
+      border-color: #2f8a57;
+    }
+
     @media (max-width: 1100px) {
       .topbar {
         grid-template-columns: 1fr 1fr;
@@ -546,6 +575,30 @@
       return "pressure-badge pressure-baja";
     }
 
+    function getSignalTier(confidence, value) {
+      const c = Number(confidence || 0);
+      const v = Number(value || 0);
+
+      if (c >= 90 && v >= 12) {
+        return {
+          label: "🔥 PREMIUM",
+          className: "signal-tier tier-premium"
+        };
+      }
+
+      if (c >= 80 && v >= 6) {
+        return {
+          label: "⚡ FUERTE",
+          className: "signal-tier tier-fuerte"
+        };
+      }
+
+      return {
+        label: "📊 NORMAL",
+        className: "signal-tier tier-normal"
+      };
+    }
+
     function detectarBanderaEquipo(nombre) {
       const n = String(nombre || "").toLowerCase();
 
@@ -687,29 +740,39 @@
           return;
         }
 
-        contenedor.innerHTML = senales.map(s => `
-          <div class="signal-item">
-            <div class="signal-head">
-              <div class="signal-market">${s.selection || "SEÑAL"} ${s.market ? "· " + s.market : ""}</div>
-              <div class="signal-value ${colorPorValor(s.value)}">+${s.value ?? 0}%</div>
-            </div>
+        contenedor.innerHTML = senales.map(s => {
+          const tier = getSignalTier(s.confidence, s.value);
 
-            <div class="signal-sub">
-              <strong>${s.home || "Local"} vs ${s.away || "Visitante"}</strong> · Min ${s.minute ?? 0} · Marcador ${s.score || "0-0"}
-            </div>
+          return `
+            <div class="signal-item">
+              <div class="signal-head">
+                <div>
+                  <div class="${tier.className}">${tier.label}</div>
+                  <div class="signal-market" style="margin-top:10px;">
+                    ${s.selection || "SEÑAL"} ${s.market ? "· " + s.market : ""}
+                  </div>
+                </div>
 
-            <div class="signal-sub">
-              ${s.reason || "Señal generada por el sistema"}
-            </div>
+                <div class="signal-value ${colorPorValor(s.value)}">+${s.value ?? 0}%</div>
+              </div>
 
-            <div class="signal-meta">
-              <span class="pill">Cuota: ${s.odd ?? "-"}</span>
-              <span class="pill">Prob: ${s.prob ?? "-"}</span>
-              <span class="pill">Confianza: ${s.confidence ?? "-"}%</span>
-              <span class="pill">Liga: ${s.league || "-"}</span>
+              <div class="signal-sub">
+                <strong>${s.home || "Local"} vs ${s.away || "Visitante"}</strong> · Min ${s.minute ?? 0} · Marcador ${s.score || "0-0"}
+              </div>
+
+              <div class="signal-sub">
+                ${s.reason || "Señal generada por el sistema"}
+              </div>
+
+              <div class="signal-meta">
+                <span class="pill">Cuota: ${s.odd ?? "-"}</span>
+                <span class="pill">Prob: ${s.prob ?? "-"}</span>
+                <span class="pill">Confianza: ${s.confidence ?? "-"}%</span>
+                <span class="pill">Liga: ${s.league || "-"}</span>
+              </div>
             </div>
-          </div>
-        `).join("");
+          `;
+        }).join("");
 
         setStatus("Señales actualizadas", true);
       } catch (err) {
