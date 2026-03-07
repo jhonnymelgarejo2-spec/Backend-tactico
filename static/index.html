@@ -483,21 +483,44 @@
           return;
         }
 
-        contenedor.innerHTML = partidos.map(p => `
-          <div class="match-item">
-            <div class="match-top">
-              <div class="league">${p.liga || "Liga"} · ${p.pais || "País"}</div>
-              <div class="pill">Min ${p.minuto ?? 0}</div>
+        contenedor.innerHTML = partidos.map(p => {
+          const gp = p.goal_pressure || {};
+          const pressureLevel = gp.pressure_level || "BAJA";
+          const pressureScore = gp.pressure_score ?? 0;
+          const goal37 = gp.goal_likely_3_7_min ? "SÍ" : "NO";
+          const goal1015 = gp.goal_likely_10_15_min ? "SÍ" : "NO";
+          const pressureReason = gp.reason || "Sin presión destacada";
+          const scannerScore = p._scanner_score ?? 0;
+
+          return `
+            <div class="match-item">
+              <div class="match-top">
+                <div class="league">${p.liga || "Liga"} · ${p.pais || "País"}</div>
+                <div class="pill">Min ${p.minuto ?? 0}</div>
+              </div>
+
+              <div class="teams">${p.local || "Local"} vs ${p.visitante || "Visitante"}</div>
+
+              <div class="match-stats">
+                <div>📊 xG: <strong>${p.xG ?? 0}</strong></div>
+                <div>⚽ Marcador: <strong>${p.marcador_local ?? 0}-${p.marcador_visitante ?? 0}</strong></div>
+                <div>🆔 ID: <strong>${p.id ?? "-"}</strong></div>
+                <div>🔥 Momentum: <strong>${p.momentum ?? "MEDIO"}</strong></div>
+              </div>
+
+              <div class="match-stats" style="margin-top:10px;">
+                <div>🚨 Pressure: <strong>${pressureLevel}</strong></div>
+                <div>📈 Score scanner: <strong>${scannerScore}</strong></div>
+                <div>⚡ Gol 3-7 min: <strong>${goal37}</strong></div>
+                <div>⏱ Gol 10-15 min: <strong>${goal1015}</strong></div>
+              </div>
+
+              <div class="small" style="margin-top:10px;">
+                🔍 ${pressureReason}
+              </div>
             </div>
-            <div class="teams">${p.local || "Local"} vs ${p.visitante || "Visitante"}</div>
-            <div class="match-stats">
-              <div>📊 xG: <strong>${p.xG ?? 0}</strong></div>
-              <div>⚽ Marcador: <strong>${p.marcador_local ?? 0}-${p.marcador_visitante ?? 0}</strong></div>
-              <div>🆔 ID: <strong>${p.id ?? "-"}</strong></div>
-              <div>🔥 Momentum: <strong>${p.momentum ?? "MEDIO"}</strong></div>
-            </div>
-          </div>
-        `).join("");
+          `;
+        }).join("");
 
         setStatus("Partidos actualizados", true);
       } catch (err) {
