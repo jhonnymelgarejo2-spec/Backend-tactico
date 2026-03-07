@@ -19,12 +19,56 @@ CACHE_SENALES = []
 AUTO_SCAN_ACTIVO = False
 ULTIMO_SCAN = None
 INTERVALO_SEGUNDOS = 30
+MAX_TOP_SIGNALS = 12
 
 
 class ResolverResultadoRequest(BaseModel):
     index: int
     estado_resultado: str
     resultado_real: str | None = None
+
+
+def limpiar_senal_para_api(s):
+    """
+    Devuelve una versión limpia de la señal para el dashboard/API.
+    """
+    return {
+        "match_id": s.get("match_id", ""),
+        "home": s.get("home", ""),
+        "away": s.get("away", ""),
+        "league": s.get("league", ""),
+        "event_type": s.get("event_type", ""),
+        "minute": s.get("minute", 0),
+        "score": s.get("score", "0-0"),
+        "market": s.get("market", ""),
+        "selection": s.get("selection", ""),
+        "odd": s.get("odd", 0),
+        "prob": s.get("prob", 0),
+        "value": s.get("value", 0),
+        "confidence": s.get("confidence", 0),
+        "reason": s.get("reason", "")
+    }
+
+
+def obtener_top_senales(senales, limite=MAX_TOP_SIGNALS):
+    """
+    Ordena y selecciona las mejores señales.
+    """
+    if not senales:
+        return []
+
+    ordenadas = sorted(
+        senales,
+        key=lambda s: (
+            float(s.get("confidence", 0) or 0),
+            float(s.get("value", 0) or 0),
+            float(s.get("prob", 0) or 0)
+        ),
+        reverse=True
+    )
+
+    limpias = [limpiar_senal_para_api(s) for s in ordenadas[:limite]]
+    return limpias
 
 
 def ejecutar_scan(max_partidos: int = 40):
@@ -34,10 +78,20 @@ def ejecutar_scan(max_partidos: int = 40):
     partidos = filtrar_partidos(partidos, max_partidos=max_partidos)
 
     CACHE_PARTIDOS = partidos
-    CACHE_SENALES = generar_senales(partidos)
+
+    try:
+        senales_generadas = generar_senales(partidos)
+        CACHE_SENALES = obtener_top_senales(senales_generadas, limite=MAX_TOP_SIGNALS)
+    except Exception as e:
+        print(f"⚠️ Error generando señales: {e}")
+        CACHE_SENALES = []
+
     ULTIMO_SCAN = datetime.utcnow().isoformat()
 
-    guardar_senales_en_historial(CACHE_SENALES)
+    try:
+        guardar_senales_en_historial(CACHE_SENALES)
+    except Exception as e:
+        print(f"⚠️ Error guardando historial: {e}")
 
     return {
         "status": "ok",
@@ -67,7 +121,14 @@ def scan():
 
 @router.get("/signals")
 def signals():
-    return CACHE_SENALES
+    try:
+        return CACHE_SENALES if CACHE_SENALES is not None else []
+    except Exception as e:
+        return {
+            "status": "error",
+            "detalle": str(e),
+            "signals": []
+        }
 
 
 @router.get("/history")
