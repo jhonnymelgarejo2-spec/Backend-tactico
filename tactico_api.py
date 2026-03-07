@@ -47,6 +47,17 @@ async def startup_event():
     except Exception as e:
         print(f"⚠️ No se pudo iniciar AUTO-SCAN: {e}")
 
+# 🧠 AUTO RESULT ENGINE al iniciar el backend
+@app.on_event("startup")
+async def start_auto_result_engine():
+    try:
+        from auto_result_engine import loop_auto_result
+        import asyncio
+        asyncio.create_task(loop_auto_result())
+        print("🧠 AUTO RESULT ENGINE iniciado")
+    except Exception as e:
+        print(f"⚠️ Error iniciando AUTO RESULT ENGINE: {e}")
+
 
 app.add_middleware(
     CORSMiddleware,
