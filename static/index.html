@@ -307,6 +307,83 @@
       display: block;
     }
 
+    .pressure-badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .pressure-extrema {
+      background: #4a1010;
+      color: #ff8d8d;
+      border-color: #a33a3a;
+    }
+
+    .pressure-alta {
+      background: #4a2f10;
+      color: #ffbf70;
+      border-color: #a36b2e;
+    }
+
+    .pressure-media {
+      background: #4a4410;
+      color: #ffe670;
+      border-color: #a39a2e;
+    }
+
+    .pressure-baja {
+      background: #10351f;
+      color: #7dffb0;
+      border-color: #2f8a57;
+    }
+
+    .team-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .team-side {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .team-flag {
+      width: 28px;
+      height: 20px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: #0f1d30;
+    }
+
+    .team-name {
+      font-size: 20px;
+      font-weight: bold;
+      color: #ffffff;
+    }
+
+    .vs-text {
+      color: #8eb8e8;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .match-reason {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      color: #9bc1e8;
+      font-size: 13px;
+    }
+
     @media (max-width: 1100px) {
       .topbar {
         grid-template-columns: 1fr 1fr;
@@ -328,6 +405,11 @@
 
       .topbar {
         grid-template-columns: 1fr;
+      }
+
+      .team-row {
+        flex-direction: column;
+        align-items: flex-start;
       }
     }
   </style>
@@ -456,6 +538,44 @@
       badge.className = ok ? "status-badge" : "status-badge off";
     }
 
+    function getPressureClass(level) {
+      const t = String(level || "").toUpperCase();
+      if (t === "EXTREMA") return "pressure-badge pressure-extrema";
+      if (t === "ALTA") return "pressure-badge pressure-alta";
+      if (t === "MEDIA") return "pressure-badge pressure-media";
+      return "pressure-badge pressure-baja";
+    }
+
+    function detectarBanderaEquipo(nombre) {
+      const n = String(nombre || "").toLowerCase();
+
+      if (n.includes("river")) return "ar";
+      if (n.includes("boca")) return "ar";
+      if (n.includes("flamengo")) return "br";
+      if (n.includes("palmeiras")) return "br";
+      if (n.includes("benfica")) return "pt";
+      if (n.includes("porto")) return "pt";
+      if (n.includes("barcelona")) return "es";
+      if (n.includes("real madrid")) return "es";
+      if (n.includes("liverpool")) return "gb";
+      if (n.includes("manchester")) return "gb";
+      if (n.includes("arsenal")) return "gb";
+      if (n.includes("chelsea")) return "gb";
+      if (n.includes("inter")) return "it";
+      if (n.includes("milan")) return "it";
+      if (n.includes("juventus")) return "it";
+      if (n.includes("bayern")) return "de";
+      if (n.includes("psg")) return "fr";
+      if (n.includes("ajax")) return "nl";
+
+      return "un";
+    }
+
+    function flagUrl(code) {
+      if (code === "un") return "https://flagcdn.com/w40/un.png";
+      return `https://flagcdn.com/w40/${code}.png`;
+    }
+
     async function verEstado() {
       try {
         const data = await fetchJSON(`${BACKEND}/status`);
@@ -491,6 +611,10 @@
           const goal1015 = gp.goal_likely_10_15_min ? "SÍ" : "NO";
           const pressureReason = gp.reason || "Sin presión destacada";
           const scannerScore = p._scanner_score ?? 0;
+          const pressureClass = getPressureClass(pressureLevel);
+
+          const homeFlag = flagUrl(detectarBanderaEquipo(p.local));
+          const awayFlag = flagUrl(detectarBanderaEquipo(p.visitante));
 
           return `
             <div class="match-item">
@@ -499,7 +623,19 @@
                 <div class="pill">Min ${p.minuto ?? 0}</div>
               </div>
 
-              <div class="teams">${p.local || "Local"} vs ${p.visitante || "Visitante"}</div>
+              <div class="team-row">
+                <div class="team-side">
+                  <img src="${homeFlag}" alt="${p.local || "Local"}" class="team-flag">
+                  <div class="team-name">${p.local || "Local"}</div>
+                </div>
+
+                <div class="vs-text">vs</div>
+
+                <div class="team-side">
+                  <div class="team-name">${p.visitante || "Visitante"}</div>
+                  <img src="${awayFlag}" alt="${p.visitante || "Visitante"}" class="team-flag">
+                </div>
+              </div>
 
               <div class="match-stats">
                 <div>📊 xG: <strong>${p.xG ?? 0}</strong></div>
@@ -509,13 +645,14 @@
               </div>
 
               <div class="match-stats" style="margin-top:10px;">
-                <div>🚨 Pressure: <strong>${pressureLevel}</strong></div>
+                <div><span class="${pressureClass}">🚨 ${pressureLevel}</span></div>
                 <div>📈 Score scanner: <strong>${scannerScore}</strong></div>
                 <div>⚡ Gol 3-7 min: <strong>${goal37}</strong></div>
                 <div>⏱ Gol 10-15 min: <strong>${goal1015}</strong></div>
+                <div>🎯 Pressure score: <strong>${pressureScore}</strong></div>
               </div>
 
-              <div class="small" style="margin-top:10px;">
+              <div class="match-reason">
                 🔍 ${pressureReason}
               </div>
             </div>
@@ -676,4 +813,4 @@
     activarAutoRefresh();
   </script>
 </body>
-  </html>
+        </html>
