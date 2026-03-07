@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pathlib import Path
 import os
+import asyncio
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -30,11 +31,10 @@ except Exception as e:
 from partidos_en_vivo import router as partidos_router
 from footapi import router as footapi_router
 
-
 app = FastAPI(
-    title="JHONNY_ELITE V7.0",
+    title="JHONNY_ELITE V8.1",
     description="Backend táctico para análisis de apuestas deportivas",
-    version="1.0"
+    version="8.1"
 )
 
 # 🚀 AUTO-SCAN al iniciar el backend
@@ -52,12 +52,10 @@ async def startup_event():
 async def start_auto_result_engine():
     try:
         from auto_result_engine import loop_auto_result
-        import asyncio
         asyncio.create_task(loop_auto_result())
         print("🧠 AUTO RESULT ENGINE iniciado")
     except Exception as e:
         print(f"⚠️ Error iniciando AUTO RESULT ENGINE: {e}")
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -69,18 +67,14 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-
 @app.get("/")
 def read_index():
     ruta = Path(__file__).parent / "static" / "index.html"
     return FileResponse(ruta)
 
-
-# evita error 405 cuando Render hace chequeo HEAD
 @app.head("/")
 def head_index():
     return
-
 
 class DatosDeAnalisisTactico(BaseModel):
     id: str
@@ -91,7 +85,6 @@ class DatosDeAnalisisTactico(BaseModel):
     cuota: float
     minuto: int
 
-
 @app.post("/analizar_datos")
 def analizar_datos(datos: DatosDeAnalisisTactico):
     try:
@@ -100,7 +93,6 @@ def analizar_datos(datos: DatosDeAnalisisTactico):
     except Exception as e:
         return {"error": str(e)}
 
-
 @app.post("/enviar/")
 def enviar_senal_directa(datos: DatosDeAnalisisTactico):
     try:
@@ -108,7 +100,6 @@ def enviar_senal_directa(datos: DatosDeAnalisisTactico):
         return {"status": "enviada"}
     except Exception as e:
         return {"status": "error", "detalle": str(e)}
-
 
 if live_router:
     app.include_router(live_router)
@@ -119,11 +110,9 @@ if fixtures_router:
 app.include_router(partidos_router)
 app.include_router(footapi_router)
 
-
 @app.get("/status")
 def get_status():
     return {"status": "ok", "mensaje": "Backend táctico operativo"}
-
 
 @app.get("/html-test", response_class=HTMLResponse)
 def html_test():
@@ -135,7 +124,6 @@ def html_test():
         </body>
     </html>
     """
-
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
