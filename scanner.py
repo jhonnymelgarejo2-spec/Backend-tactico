@@ -15,16 +15,84 @@ LIGAS_FUERTES = {
     "MLS",
 }
 
-def filtrar_partidos(partidos: List[Dict], max_partidos: int = 60) -> List[Dict]:
-    fuertes = [p for p in partidos if p.get("liga") in LIGAS_FUERTES]
-    return fuertes[:max_partidos]
+
+def calcular_score_partido(p: Dict) -> float:
+    """
+    Calcula qué tan interesante es un partido.
+    Cuanto mayor el score, más interesante para buscar señales.
+    """
+
+    score = 0
+
+    minuto = p.get("minuto", 0)
+    xg = float(p.get("xG", p.get("xg", 0)) or 0)
+    ml = int(p.get("marcador_local", 0))
+    mv = int(p.get("marcador_visitante", 0))
+    momentum = str(p.get("momentum", "medio")).lower()
+
+    # ⚽ minuto ideal para detectar goles
+    if 18 <= minuto <= 35:
+        score += 3
+    elif 36 <= minuto <= 75:
+        score += 4
+    elif 76 <= minuto <= 88:
+        score += 2
+
+    # 📈 xG acumulado
+    if xg >= 2.2:
+        score += 4
+    elif xg >= 1.5:
+        score += 3
+    elif xg >= 0.8:
+        score += 2
+
+    # 🔥 momentum
+    if "muy alto" in momentum:
+        score += 3
+    elif "alto" in momentum:
+        score += 2
+    elif "medio" in momentum:
+        score += 1
+
+    # ⚖️ marcador apretado
+    diff = abs(ml - mv)
+    if diff == 0:
+        score += 2
+    elif diff == 1:
+        score += 1
+
+    # 🏆 liga fuerte
+    if p.get("liga") in LIGAS_FUERTES:
+        score += 2
+
+    return score
+
+
+def filtrar_partidos(partidos: List[Dict], max_partidos: int = 40) -> List[Dict]:
+    """
+    Filtra y ordena partidos por nivel de interés.
+    """
+
+    candidatos = []
+
+    for p in partidos:
+        score = calcular_score_partido(p)
+
+        if score >= 4:  # mínimo interés
+            p["_scanner_score"] = score
+            candidatos.append(p)
+
+    # ordenar por score descendente
+    candidatos.sort(key=lambda x: x["_scanner_score"], reverse=True)
+
+    return candidatos[:max_partidos]
 
 
 def predecir_next15(partido: Dict) -> Dict:
     """
-    Ahora usa el motor real (prediction_engine.py)
-    y devuelve un formato simple compatible con signals.py.
+    Usa el motor real de predicción.
     """
+
     bundle = run_prediction_bundle({
         "minuto": partido.get("minuto", 0),
         "local": partido.get("local", "Equipo A"),
@@ -39,8 +107,9 @@ def predecir_next15(partido: Dict) -> Dict:
     })
 
     p1plus = float(bundle["pred_next15"]["p_1plus_goals"])
+
     return {
         "pred_next15_more_goals": p1plus,
         "pred_next15_no_goal": 1 - p1plus,
-        "bundle": bundle,  # si luego quieres mostrar todo
+        "bundle": bundle
     }
