@@ -339,8 +339,22 @@ def generar_senal(datos):
             "senales_posibles": []
         }
 
-    mejor["senales_posibles"] = senales
-    return mejor
+    senales_limpias = []
+
+    for s in senales:
+        senales_limpias.append({
+            "mercado": s.get("mercado"),
+            "apuesta": s.get("apuesta"),
+            "confianza": s.get("confianza"),
+            "valor": s.get("valor"),
+            "cuota": s.get("cuota"),
+            "razon": s.get("razon")
+        })
+
+    resultado = dict(mejor)
+    resultado["senales_posibles"] = senales_limpias
+
+    return resultado
 
 
 # ------------------------------
