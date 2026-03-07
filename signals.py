@@ -1,4 +1,3 @@
-# signals.py
 from typing import List, Dict
 from signal_engine import generar_senal
 
@@ -23,8 +22,15 @@ def generar_senales(partidos: List[Dict]) -> List[Dict]:
 
         senal = generar_senal(datos)
 
-        # Si el engine no detecta oportunidad clara, igual podemos ignorarla
+        if not senal:
+            continue
+
+        # ignorar señales sin oportunidad clara
         if senal.get("mercado") == "SIN_SEÑAL":
+            continue
+
+        # 🔴 NUEVO FILTRO: ignorar value negativo o cero
+        if senal.get("valor", 0) <= 0:
             continue
 
         # Convertimos a formato estándar del dashboard
@@ -36,7 +42,7 @@ def generar_senales(partidos: List[Dict]) -> List[Dict]:
             "event_type": senal.get("tipo_evento", ""),
             "minute": senal.get("minuto", 0),
 
-            # En demo no tenemos marcador real por engine, así que lo tomamos del partido
+            # marcador tomado del partido
             "score": f'{p.get("marcador_local", 0)}-{p.get("marcador_visitante", 0)}',
 
             "market": senal.get("mercado", ""),
