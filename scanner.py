@@ -1,6 +1,7 @@
 # scanner.py
 from typing import List, Dict
 from prediction_engine import run_prediction_bundle
+from goal_pressure_engine import calcular_goal_pressure
 
 LIGAS_FUERTES = {
     "Premier League",
@@ -17,11 +18,6 @@ LIGAS_FUERTES = {
 
 
 def calcular_score_partido(p: Dict) -> float:
-    """
-    Calcula qué tan interesante es un partido.
-    Cuanto mayor el score, más interesante para buscar señales.
-    """
-
     score = 0
 
     minuto = p.get("minuto", 0)
@@ -30,7 +26,6 @@ def calcular_score_partido(p: Dict) -> float:
     mv = int(p.get("marcador_visitante", 0))
     momentum = str(p.get("momentum", "medio")).lower()
 
-    # ⚽ minuto ideal para detectar goles
     if 18 <= minuto <= 35:
         score += 3
     elif 36 <= minuto <= 75:
@@ -38,7 +33,6 @@ def calcular_score_partido(p: Dict) -> float:
     elif 76 <= minuto <= 88:
         score += 2
 
-    # 📈 xG acumulado
     if xg >= 2.2:
         score += 4
     elif xg >= 1.5:
@@ -46,7 +40,6 @@ def calcular_score_partido(p: Dict) -> float:
     elif xg >= 0.8:
         score += 2
 
-    # 🔥 momentum
     if "muy alto" in momentum:
         score += 3
     elif "alto" in momentum:
@@ -54,45 +47,41 @@ def calcular_score_partido(p: Dict) -> float:
     elif "medio" in momentum:
         score += 1
 
-    # ⚖️ marcador apretado
     diff = abs(ml - mv)
     if diff == 0:
         score += 2
     elif diff == 1:
         score += 1
 
-    # 🏆 liga fuerte
     if p.get("liga") in LIGAS_FUERTES:
         score += 2
+
+    # Goal Pressure Engine suma inteligencia extra
+    pressure = calcular_goal_pressure(p)
+    score += pressure["pressure_score"] * 0.5
 
     return score
 
 
 def filtrar_partidos(partidos: List[Dict], max_partidos: int = 40) -> List[Dict]:
-    """
-    Filtra y ordena partidos por nivel de interés.
-    """
-
     candidatos = []
 
     for p in partidos:
+        pressure = calcular_goal_pressure(p)
+        p["goal_pressure"] = pressure
+
         score = calcular_score_partido(p)
 
-        if score >= 4:  # mínimo interés
-            p["_scanner_score"] = score
+        if score >= 5:
+            p["_scanner_score"] = round(score, 2)
             candidatos.append(p)
 
-    # ordenar por score descendente
     candidatos.sort(key=lambda x: x["_scanner_score"], reverse=True)
 
     return candidatos[:max_partidos]
 
 
 def predecir_next15(partido: Dict) -> Dict:
-    """
-    Usa el motor real de predicción.
-    """
-
     bundle = run_prediction_bundle({
         "minuto": partido.get("minuto", 0),
         "local": partido.get("local", "Equipo A"),
@@ -111,5 +100,5 @@ def predecir_next15(partido: Dict) -> Dict:
     return {
         "pred_next15_more_goals": p1plus,
         "pred_next15_no_goal": 1 - p1plus,
-        "bundle": bundle
-    }
+        "bundle": bundle,
+        }
