@@ -18,8 +18,28 @@ def cargar_historial():
 
 
 def guardar_historial(historial):
-    with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-        json.dump(historial, f, ensure_ascii=False, indent=2)
+    try:
+        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+            json.dump(historial, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception as e:
+        print(f"⚠️ Error guardando historial: {e}")
+        return False
+
+
+def existe_senal_parecida(historial, senal):
+    """
+    Evita duplicados muy parecidos en el historial.
+    """
+    for h in historial[-200:]:
+        if (
+            h.get("match_id") == senal.get("match_id")
+            and h.get("market") == senal.get("market")
+            and h.get("selection") == senal.get("selection")
+            and h.get("minute") == senal.get("minute")
+        ):
+            return True
+    return False
 
 
 def guardar_senales_en_historial(senales):
@@ -45,7 +65,9 @@ def guardar_senales_en_historial(senales):
             "resultado_real": None,
             "estado_resultado": "pendiente"
         }
-        historial.append(registro)
+
+        if not existe_senal_parecida(historial, registro):
+            historial.append(registro)
 
     guardar_historial(historial)
 
@@ -122,7 +144,10 @@ def obtener_estadisticas_historial():
         sum(float(x.get("value", 0) or 0) for x in historial) / total, 2
     )
 
-    profit_units = round(sum(calcular_beneficio_unitario(x) for x in historial if x.get("estado_resultado") != "pendiente"), 2)
+    profit_units = round(
+        sum(calcular_beneficio_unitario(x) for x in historial if x.get("estado_resultado") != "pendiente"),
+        2
+    )
 
     if resueltas > 0:
         win_rate = round((ganadas / resueltas) * 100, 2)
@@ -131,8 +156,8 @@ def obtener_estadisticas_historial():
         win_rate = 0
         roi_percent = 0
 
-    ligas = defaultdict(lambda: {"ganadas": 0, "perdidas": 0, "profit": 0.0})
-    mercados = defaultdict(lambda: {"ganadas": 0, "perdidas": 0, "profit": 0.0})
+    ligas = defaultdict(lambda: {"ganadas": 0, "perdidas": 0, "nulas": 0, "profit": 0.0})
+    mercados = defaultdict(lambda: {"ganadas": 0, "perdidas": 0, "nulas": 0, "profit": 0.0})
 
     for s in historial:
         if s.get("estado_resultado") == "pendiente":
@@ -141,13 +166,17 @@ def obtener_estadisticas_historial():
         liga = s.get("league") or "Sin liga"
         mercado = s.get("market") or "Sin mercado"
         profit = calcular_beneficio_unitario(s)
+        estado = s.get("estado_resultado")
 
-        if s.get("estado_resultado") == "ganada":
+        if estado == "ganada":
             ligas[liga]["ganadas"] += 1
             mercados[mercado]["ganadas"] += 1
-        elif s.get("estado_resultado") == "perdida":
+        elif estado == "perdida":
             ligas[liga]["perdidas"] += 1
             mercados[mercado]["perdidas"] += 1
+        elif estado == "nula":
+            ligas[liga]["nulas"] += 1
+            mercados[mercado]["nulas"] += 1
 
         ligas[liga]["profit"] += profit
         mercados[mercado]["profit"] += profit
@@ -178,4 +207,4 @@ def obtener_estadisticas_historial():
         "value_promedio": value_promedio,
         "ligas_top": ligas_top,
         "mercados_top": mercados_top,
-    }
+        }
