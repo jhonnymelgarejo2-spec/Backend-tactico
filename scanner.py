@@ -1,8 +1,8 @@
-# scanner.py 
 from typing import List, Dict
 from prediction_engine import run_prediction_bundle
 from goal_pressure_engine import calcular_goal_pressure
 from goal_predictor import predecir_gol_inminente
+from chaos_engine import calcular_chaos
 
 LIGAS_FUERTES = {
     "Premier League",
@@ -57,9 +57,14 @@ def calcular_score_partido(p: Dict) -> float:
     if p.get("liga") in LIGAS_FUERTES:
         score += 2
 
-    # Goal Pressure Engine suma inteligencia extra
+    # Goal Pressure suma inteligencia extra
     pressure = p.get("goal_pressure") or calcular_goal_pressure(p)
     score += pressure["pressure_score"] * 0.5
+
+    # Chaos engine suma señal contextual de ruptura
+    chaos = p.get("chaos") or {}
+    chaos_score = float(chaos.get("chaos_score", 0) or 0)
+    score += chaos_score * 0.25
 
     return score
 
@@ -72,22 +77,27 @@ def filtrar_partidos(partidos: List[Dict], max_partidos: int = 40) -> List[Dict]
         pressure = calcular_goal_pressure(p)
         p["goal_pressure"] = pressure
 
-        # 2) score del scanner
-        score = calcular_score_partido(p)
-        p["_scanner_score"] = round(score, 2)
-
-        # 3) predictor de gol inminente
+        # 2) predictor de gol inminente
         predictor = predecir_gol_inminente(p)
         p["goal_predictor"] = predictor
 
-        # 4) filtro mínimo
+        # 3) chaos engine
+        chaos = calcular_chaos(p)
+        p["chaos"] = chaos
+
+        # 4) score del scanner
+        score = calcular_score_partido(p)
+        p["_scanner_score"] = round(score, 2)
+
+        # 5) filtro mínimo
         if score >= 5:
             candidatos.append(p)
 
-    # ordena por scanner score y luego por probabilidad de gol en 5 min
+    # ordena por scanner score, chaos score y luego por probabilidad de gol en 5 min
     candidatos.sort(
         key=lambda x: (
             x.get("_scanner_score", 0),
+            x.get("chaos", {}).get("chaos_score", 0),
             x.get("goal_predictor", {}).get("goal_next_5_prob", 0)
         ),
         reverse=True
