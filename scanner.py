@@ -2,6 +2,7 @@
 from typing import List, Dict
 from prediction_engine import run_prediction_bundle
 from goal_pressure_engine import calcular_goal_pressure
+from goal_predictor import predecir_gol_inminente
 
 LIGAS_FUERTES = {
     "Premier League",
@@ -57,7 +58,7 @@ def calcular_score_partido(p: Dict) -> float:
         score += 2
 
     # Goal Pressure Engine suma inteligencia extra
-    pressure = calcular_goal_pressure(p)
+    pressure = p.get("goal_pressure") or calcular_goal_pressure(p)
     score += pressure["pressure_score"] * 0.5
 
     return score
@@ -67,16 +68,30 @@ def filtrar_partidos(partidos: List[Dict], max_partidos: int = 40) -> List[Dict]
     candidatos = []
 
     for p in partidos:
+        # 1) calcular pressure
         pressure = calcular_goal_pressure(p)
         p["goal_pressure"] = pressure
 
+        # 2) score del scanner
         score = calcular_score_partido(p)
+        p["_scanner_score"] = round(score, 2)
 
+        # 3) predictor de gol inminente
+        predictor = predecir_gol_inminente(p)
+        p["goal_predictor"] = predictor
+
+        # 4) filtro mínimo
         if score >= 5:
-            p["_scanner_score"] = round(score, 2)
             candidatos.append(p)
 
-    candidatos.sort(key=lambda x: x["_scanner_score"], reverse=True)
+    # ordena por scanner score y luego por probabilidad de gol en 5 min
+    candidatos.sort(
+        key=lambda x: (
+            x.get("_scanner_score", 0),
+            x.get("goal_predictor", {}).get("goal_next_5_prob", 0)
+        ),
+        reverse=True
+    )
 
     return candidatos[:max_partidos]
 
@@ -101,4 +116,4 @@ def predecir_next15(partido: Dict) -> Dict:
         "pred_next15_more_goals": p1plus,
         "pred_next15_no_goal": 1 - p1plus,
         "bundle": bundle,
-        }
+    }
