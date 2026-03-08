@@ -797,6 +797,81 @@
       margin-top: 8px;
     }
 
+    .signal-inline-box {
+      margin-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 14px;
+    }
+
+    .signal-inline-toggle {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      background: #12233b;
+      color: #dbeaff;
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 12px 14px;
+      border-radius: 14px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .signal-inline-toggle:hover {
+      background: #18304f;
+    }
+
+    .signal-inline-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .signal-inline-chevron {
+      transition: transform 0.2s ease;
+    }
+
+    .signal-inline-box.open .signal-inline-chevron {
+      transform: rotate(180deg);
+    }
+
+    .signal-inline-content {
+      display: none;
+      margin-top: 12px;
+      background: linear-gradient(180deg, #102235, #0a1522);
+      border: 1px solid rgba(61,220,151,0.22);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .signal-inline-box.open .signal-inline-content {
+      display: block;
+    }
+
+    .signal-inline-market {
+      font-size: 19px;
+      font-weight: bold;
+      color: #ffd66e;
+      line-height: 1.3;
+      margin-bottom: 10px;
+    }
+
+    .signal-inline-sub {
+      font-size: 14px;
+      color: #d7e8ff;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    .signal-inline-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
     @media (max-width: 1400px) {
       .page {
         grid-template-columns: 260px 1fr 320px;
@@ -995,10 +1070,12 @@
     const BACKEND = "https://backend-tactico-9lld.onrender.com";
     let autoRefreshInterval = null;
     let cachePartidos = [];
+    let cacheSignals = [];
     let ligaSeleccionada = "ALL";
     let equipoBuscado = "";
     let alertaSeleccionada = "ALL";
     let countriesCollapsed = {};
+    let inlineSignalsOpen = {};
 
     const LIGAS_TOP = [
       "La Liga",
@@ -1311,6 +1388,15 @@
       renderMatchList(cachePartidos);
     }
 
+    function toggleInlineSignal(matchId) {
+      inlineSignalsOpen[matchId] = !inlineSignalsOpen[matchId];
+      renderMatchList(cachePartidos);
+    }
+
+    function getSignalForMatch(matchId) {
+      return cacheSignals.find(s => String(s.match_id) === String(matchId)) || null;
+    }
+
     function aplicarFiltros() {
       renderHotMatches(cachePartidos);
       renderMatchList(cachePartidos);
@@ -1476,6 +1562,9 @@
                         const awayLogo = getTeamLogo(p, "away");
 
                         const estado = Number(p.minuto || 0) >= 90 ? "Finalizado" : `Min ${p.minuto ?? 0}`;
+                        const signal = getSignalForMatch(p.id);
+                        const signalOpen = !!inlineSignalsOpen[p.id];
+                        const signalTier = signal ? getSignalTier(signal.confidence, signal.value) : null;
 
                         return `
                           <div class="match-clean">
@@ -1513,6 +1602,38 @@
                               <span class="event-pill">Chaos ${chaosLevel} · ${chaosScore}</span>
                               <span class="event-pill">ID ${p.id ?? "-"}</span>
                             </div>
+
+                            ${signal ? `
+                              <div class="signal-inline-box ${signalOpen ? "open" : ""}">
+                                <button class="signal-inline-toggle" type="button" onclick="event.stopPropagation(); toggleInlineSignal('${p.id}')">
+                                  <span class="signal-inline-title">
+                                    <span class="${signalTier.className}">${signalTier.label}</span>
+                                    <span>Señal recomendada</span>
+                                  </span>
+                                  <span class="signal-inline-chevron">⌄</span>
+                                </button>
+
+                                <div class="signal-inline-content">
+                                  <div class="signal-inline-market">${marketLabelDinamico(signal)}</div>
+
+                                  <div class="signal-inline-sub">
+                                    <strong>${signal.home || "Local"} vs ${signal.away || "Visitante"}</strong>
+                                    · Min ${signal.minute ?? 0}
+                                    · Marcador ${signal.score || "0-0"}
+                                  </div>
+
+                                  <div class="signal-inline-sub">${signal.reason || "Señal generada por el sistema"}</div>
+
+                                  <div class="signal-inline-meta">
+                                    <span class="pill">Cuota ${signal.odd ?? "-"}</span>
+                                    <span class="pill">Prob ${signal.prob ?? "-"}</span>
+                                    <span class="pill">Confianza ${signal.confidence ?? "-"}%</span>
+                                    <span class="pill">Value +${signal.value ?? 0}%</span>
+                                    <span class="pill">${signal.league || "Liga desconocida"}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ` : ""}
                           </div>
                         `;
                       }).join("")}
@@ -1586,12 +1707,14 @@
       try {
         const data = await fetchJSON(`${BACKEND}/signals`);
         const senales = Array.isArray(data) ? data : (data.signals || []);
-        document.getElementById("totalSignals").textContent = senales.length;
+        cacheSignals = senales;
 
+        document.getElementById("totalSignals").textContent = senales.length;
         renderMiniSignals(senales);
 
         if (!senales.length) {
           contenedor.innerHTML = `<div class="empty">No se detectaron señales.</div>`;
+          renderMatchList(cachePartidos);
           return;
         }
 
@@ -1626,6 +1749,7 @@
         }).join("");
 
         setStatus("Señales actualizadas", true);
+        renderMatchList(cachePartidos);
       } catch (err) {
         document.getElementById("miniSignalList").innerHTML = `<div class="empty danger">Error cargando señales rápidas: ${err.message}</div>`;
         contenedor.innerHTML = `<div class="empty danger">Error cargando señales: ${err.message}</div>`;
