@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from providers import obtener_partidos_demo
+from providers import obtener_partidos
 from scanner import filtrar_partidos
 from signals import generar_senales
 from history_store import (
@@ -74,7 +74,7 @@ def obtener_top_senales(senales, limite=MAX_TOP_SIGNALS):
 def ejecutar_scan(max_partidos: int = 40):
     global CACHE_PARTIDOS, CACHE_SENALES, ULTIMO_SCAN
 
-    partidos = obtener_partidos_demo()
+    partidos = obtener_partidos()
     partidos = filtrar_partidos(partidos, max_partidos=max_partidos)
 
     CACHE_PARTIDOS = partidos
