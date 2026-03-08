@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JHONNY_ELITE V9</title>
+  <title>JHONNY_ELITE V9.1</title>
   <style>
     * {
       box-sizing: border-box;
@@ -213,6 +213,15 @@
       font-size: 12px;
     }
 
+    .metric-pill-soft {
+      background: rgba(255,255,255,0.06);
+      color: #dcecff;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
     .signal-tier {
       display: inline-flex;
       align-items: center;
@@ -252,25 +261,29 @@
       border: 1px solid rgba(255,255,255,0.12);
     }
 
-    .pressure-extrema, .alert-roja {
+    .pressure-extrema,
+    .alert-roja {
       background: #4a1010;
       color: #ff8d8d;
       border-color: #a33a3a;
     }
 
-    .pressure-alta, .alert-naranja {
+    .pressure-alta,
+    .alert-naranja {
       background: #4a2f10;
       color: #ffbf70;
       border-color: #a36b2e;
     }
 
-    .pressure-media, .alert-amarilla {
+    .pressure-media,
+    .alert-amarilla {
       background: #4a4410;
       color: #ffe670;
       border-color: #a39a2e;
     }
 
-    .pressure-baja, .alert-baja {
+    .pressure-baja,
+    .alert-baja {
       background: #10351f;
       color: #7dffb0;
       border-color: #2f8a57;
@@ -300,9 +313,9 @@
     }
 
     .hot-teams {
-      font-size: 20px;
+      font-size: 22px;
       font-weight: bold;
-      line-height: 1.3;
+      line-height: 1.25;
       margin-bottom: 10px;
     }
 
@@ -328,7 +341,7 @@
       background: linear-gradient(180deg, #0f1d30, #091321);
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 18px;
-      padding: 16px;
+      padding: 18px;
     }
 
     .match-header {
@@ -351,7 +364,7 @@
       grid-template-columns: 1fr auto 1fr auto;
       align-items: center;
       gap: 14px;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
 
     .team-box {
@@ -375,7 +388,7 @@
     }
 
     .team-name {
-      font-size: 22px;
+      font-size: 24px;
       font-weight: bold;
       color: #ffffff;
       white-space: nowrap;
@@ -389,8 +402,8 @@
     }
 
     .score {
-      font-size: 34px;
-      font-weight: bold;
+      font-size: 42px;
+      font-weight: 900;
       color: #ffffff;
       line-height: 1;
     }
@@ -406,6 +419,21 @@
       text-align: center;
     }
 
+    .match-group {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .match-group-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #7fa7d6;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
     .match-stats {
       display: flex;
       gap: 10px;
@@ -413,6 +441,17 @@
       font-size: 14px;
       color: #c8ddf7;
       margin-bottom: 10px;
+    }
+
+    .predictor-highlight {
+      background: linear-gradient(180deg, #16314b, #0d2236);
+      border: 1px solid rgba(124,196,255,0.25);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .predictor-highlight strong {
+      color: #9bd0ff;
     }
 
     .reason-box {
@@ -588,7 +627,7 @@
 <body>
   <div class="layout">
     <aside class="sidebar">
-      <div class="logo">JHONNY_<span>ELITE V9</span></div>
+      <div class="logo">JHONNY_<span>ELITE V9.1</span></div>
       <div class="subtitle">SCANNER AUTOMÁTICO · SEÑALES · MEMORIA DE APRENDIZAJE · PREDICTOR DE GOL</div>
 
       <div class="menu">
@@ -807,7 +846,7 @@
           <div class="hot-card">
             <div class="hot-head">
               <div class="league">${p.liga || "Liga"} · ${p.pais || "País"}</div>
-              <span class="${alertClass}">${alertLevel}</span>
+              <span class="${alertClass}">🧠 ${alertLevel}</span>
             </div>
 
             <div class="hot-teams">${p.local || "Local"} vs ${p.visitante || "Visitante"}</div>
@@ -821,7 +860,7 @@
             <div class="hot-line">
               <span class="pill">Gol 5 min ${goal5}%</span>
               <span class="pill">Gol 10 min ${goal10}%</span>
-              <span class="pill">Score ${predictor.predictor_score ?? 0}</span>
+              <span class="pill">Predictor ${predictor.predictor_score ?? 0}</span>
             </div>
 
             <div class="reason-box">🧠 ${predictor.alert_reason || "Sin alerta especial"}</div>
@@ -902,25 +941,37 @@
                   <img src="${awayFlag}" alt="${p.visitante || "Visitante"}" class="team-flag">
                 </div>
 
-                <div class="minute-badge">${alertLevel}</div>
+                <div><span class="${alertClass}">🧠 ${alertLevel}</span></div>
               </div>
 
-              <div class="match-stats">
-                <span class="pill">📊 xG ${p.xG ?? 0}</span>
-                <span class="pill">🆔 ${p.id ?? "-"}</span>
-                <span class="pill">🔥 ${p.momentum ?? "MEDIO"}</span>
-                <span class="${pressureClass}">🚨 ${pressureLevel}</span>
-                <span class="${alertClass}">🧠 ALERTA ${alertLevel}</span>
+              <div class="match-group">
+                <div class="match-group-title">Datos base</div>
+                <div class="match-stats">
+                  <span class="metric-pill-soft">📊 xG ${p.xG ?? 0}</span>
+                  <span class="metric-pill-soft">🆔 ${p.id ?? "-"}</span>
+                  <span class="metric-pill-soft">🔥 ${p.momentum ?? "MEDIO"}</span>
+                </div>
               </div>
 
-              <div class="match-stats">
-                <span class="pill">📈 Score scanner ${scannerScore}</span>
-                <span class="pill">🎯 Pressure ${pressureScore}</span>
-                <span class="pill">⚡ Gol 3-7 min ${goal37}</span>
-                <span class="pill">⏱ Gol 10-15 min ${goal1015}</span>
-                <span class="pill">⚽ Gol 5 min ${goal5}%</span>
-                <span class="pill">⚽ Gol 10 min ${goal10}%</span>
-                <span class="pill">🧮 Predictor ${predictorScore}</span>
+              <div class="match-group">
+                <div class="match-group-title">Presión táctica</div>
+                <div class="match-stats">
+                  <span class="${pressureClass}">🚨 ${pressureLevel}</span>
+                  <span class="metric-pill-soft">📈 Scanner ${scannerScore}</span>
+                  <span class="metric-pill-soft">🎯 Pressure ${pressureScore}</span>
+                  <span class="metric-pill-soft">⚡ Gol 3-7 ${goal37}</span>
+                  <span class="metric-pill-soft">⏱ Gol 10-15 ${goal1015}</span>
+                </div>
+              </div>
+
+              <div class="match-group predictor-highlight">
+                <div class="match-group-title">Predictor de gol</div>
+                <div class="match-stats">
+                  <span class="${alertClass}">🧠 ${alertLevel}</span>
+                  <span class="metric-pill-soft"><strong>Gol 5 min ${goal5}%</strong></span>
+                  <span class="metric-pill-soft"><strong>Gol 10 min ${goal10}%</strong></span>
+                  <span class="metric-pill-soft"><strong>Predictor ${predictorScore}</strong></span>
+                </div>
               </div>
 
               <div class="reason-box">🔍 ${pressureReason}</div>
