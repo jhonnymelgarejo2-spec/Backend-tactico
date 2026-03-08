@@ -607,6 +607,135 @@
       color: #ffd66e;
     }
 
+    .matches-group {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .league-block {
+      background: linear-gradient(180deg, #0f1c2d, #0a1423);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .league-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .league-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: bold;
+      color: #ffffff;
+    }
+
+    .league-header-right {
+      font-size: 13px;
+      color: #9bc1e8;
+    }
+
+    .match-clean {
+      padding: 20px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .match-clean:last-child {
+      border-bottom: none;
+    }
+
+    .match-clean-top {
+      display: grid;
+      grid-template-columns: 1fr 180px 1fr;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .team-clean {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      text-align: center;
+    }
+
+    .team-clean img {
+      width: 46px;
+      height: 46px;
+      object-fit: contain;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 4px;
+    }
+
+    .team-clean-name {
+      font-size: 18px;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .score-clean-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .score-clean {
+      font-size: 54px;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1;
+    }
+
+    .score-separator {
+      opacity: 0.7;
+      padding: 0 8px;
+    }
+
+    .match-status-clean {
+      font-size: 13px;
+      color: #9bc1e8;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .match-clean-bottom {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .event-pill {
+      display: inline-block;
+      background: #18314f;
+      color: #dcecff;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+
+    .match-extra-row {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
     @media (max-width: 1400px) {
       .page {
         grid-template-columns: 260px 1fr 320px;
@@ -652,6 +781,14 @@
 
       .filter-control {
         min-width: 100%;
+      }
+
+      .match-clean-top {
+        grid-template-columns: 1fr;
+      }
+
+      .score-clean {
+        font-size: 42px;
       }
     }
   </style>
@@ -1173,104 +1310,102 @@
         return;
       }
 
-      contenedor.innerHTML = partidos.map(p => {
-        const gp = p.goal_pressure || {};
-        const pressureLevel = gp.pressure_level || "BAJA";
-        const pressureScore = gp.pressure_score ?? 0;
-        const goal37 = gp.goal_likely_3_7_min ? "SÍ" : "NO";
-        const goal1015 = gp.goal_likely_10_15_min ? "SÍ" : "NO";
-        const pressureReason = gp.reason || "Sin presión destacada";
-        const scannerScore = p._scanner_score ?? 0;
-        const pressureClass = getPressureClass(pressureLevel);
+      const agrupados = {};
 
-        const predictor = p.goal_predictor || {};
-        const alertLevel = predictor.alert_level || "BAJA";
-        const alertReason = predictor.alert_reason || "Sin alerta especial";
-        const goal5 = Math.round((predictor.goal_next_5_prob || 0) * 100);
-        const goal10 = Math.round((predictor.goal_next_10_prob || 0) * 100);
-        const predictorScore = predictor.predictor_score ?? 0;
-        const alertClass = getAlertClass(alertLevel);
+      partidos.forEach(p => {
+        const pais = p.pais || "País desconocido";
+        const liga = p.liga || "Liga desconocida";
+        const clave = `${pais}|||${liga}`;
 
-        const chaos = p.chaos || {};
-        const chaosLevel = chaos.chaos_level || "BAJO";
-        const chaosScore = chaos.chaos_score ?? 0;
-        const chaosWindow = chaos.chaos_window_open ? "OPEN" : "CLOSED";
-        const chaosReason = chaos.chaos_reason || "Sin caos detectado";
-        const chaosClass = getChaosClass(chaosLevel);
+        if (!agrupados[clave]) {
+          agrupados[clave] = {
+            pais,
+            liga,
+            partidos: []
+          };
+        }
 
-        const homeLogo = getTeamLogo(p, "home");
-        const awayLogo = getTeamLogo(p, "away");
+        agrupados[clave].partidos.push(p);
+      });
 
-        return `
-          <div class="match-item">
-            <div class="match-header">
-              <div class="league">${p.liga || "Liga"} · ${p.pais || "País"}</div>
-              <div class="minute-badge">Min ${p.minuto ?? 0}</div>
+      const bloques = Object.values(agrupados).sort((a, b) =>
+        a.liga.localeCompare(b.liga)
+      );
+
+      contenedor.innerHTML = `
+        <div class="matches-group">
+          ${bloques.map(grupo => `
+            <div class="league-block">
+              <div class="league-header">
+                <div class="league-header-left">
+                  <img src="${flagUrlByLeague(grupo.liga)}" class="liga-flag" alt="${grupo.pais}">
+                  <span>${grupo.pais} · ${grupo.liga}</span>
+                </div>
+                <div class="league-header-right">${grupo.partidos.length} partido(s)</div>
+              </div>
+
+              ${grupo.partidos.map(p => {
+                const predictor = p.goal_predictor || {};
+                const alertLevel = predictor.alert_level || "BAJA";
+                const goal5 = Math.round((predictor.goal_next_5_prob || 0) * 100);
+                const goal10 = Math.round((predictor.goal_next_10_prob || 0) * 100);
+
+                const gp = p.goal_pressure || {};
+                const pressureLevel = gp.pressure_level || "BAJA";
+                const pressureScore = gp.pressure_score ?? 0;
+
+                const chaos = p.chaos || {};
+                const chaosLevel = chaos.chaos_level || "BAJO";
+                const chaosScore = chaos.chaos_score ?? 0;
+
+                const homeLogo = getTeamLogo(p, "home");
+                const awayLogo = getTeamLogo(p, "away");
+
+                const estado = Number(p.minuto || 0) >= 90 ? "Finalizado" : `Min ${p.minuto ?? 0}`;
+
+                return `
+                  <div class="match-clean">
+                    <div class="match-clean-top">
+                      <div class="team-clean">
+                        <img src="${homeLogo}" alt="${p.local || "Local"}">
+                        <div class="team-clean-name">${p.local || "Local"}</div>
+                      </div>
+
+                      <div class="score-clean-box">
+                        <div class="match-status-clean">${estado}</div>
+                        <div class="score-clean">
+                          ${p.marcador_local ?? 0}
+                          <span class="score-separator">-</span>
+                          ${p.marcador_visitante ?? 0}
+                        </div>
+                      </div>
+
+                      <div class="team-clean">
+                        <img src="${awayLogo}" alt="${p.visitante || "Visitante"}">
+                        <div class="team-clean-name">${p.visitante || "Visitante"}</div>
+                      </div>
+                    </div>
+
+                    <div class="match-clean-bottom">
+                      <span class="event-pill">xG ${p.xG ?? 0}</span>
+                      <span class="event-pill">Momentum ${p.momentum ?? "MEDIO"}</span>
+                      <span class="event-pill">Alerta ${alertLevel}</span>
+                      <span class="event-pill">Gol 5 min ${goal5}%</span>
+                      <span class="event-pill">Gol 10 min ${goal10}%</span>
+                    </div>
+
+                    <div class="match-extra-row">
+                      <span class="event-pill">Pressure ${pressureLevel} · ${pressureScore}</span>
+                      <span class="event-pill">Chaos ${chaosLevel} · ${chaosScore}</span>
+                      <span class="event-pill">ID ${p.id ?? "-"}</span>
+                    </div>
+                  </div>
+                `;
+              }).join("")}
             </div>
-
-            <div class="match-main">
-              <div class="team-box">
-                <img src="${homeLogo}" alt="${p.local || "Local"}" class="team-logo">
-                <div class="team-name">${p.local || "Local"}</div>
-              </div>
-
-              <div class="score-box">
-                <div class="score">${p.marcador_local ?? 0}-${p.marcador_visitante ?? 0}</div>
-              </div>
-
-              <div class="team-box right">
-                <div class="team-name">${p.visitante || "Visitante"}</div>
-                <img src="${awayLogo}" alt="${p.visitante || "Visitante"}" class="team-logo">
-              </div>
-
-              <div><span class="${alertClass}">${alertLevel}</span></div>
-            </div>
-
-            <div class="match-group">
-              <div class="match-group-title">Datos base</div>
-              <div class="match-stats">
-                <span class="metric-pill-soft">📊 xG ${p.xG ?? 0}</span>
-                <span class="metric-pill-soft">🆔 ${p.id ?? "-"}</span>
-                <span class="metric-pill-soft">🔥 ${p.momentum ?? "MEDIO"}</span>
-              </div>
-            </div>
-
-            <div class="match-group">
-              <div class="match-group-title">Presión táctica</div>
-              <div class="match-stats">
-                <span class="${pressureClass}">${pressureLevel}</span>
-                <span class="metric-pill-soft">📈 Scanner ${scannerScore}</span>
-                <span class="metric-pill-soft">🎯 Pressure ${pressureScore}</span>
-                <span class="metric-pill-soft">⚡ Gol 3-7 ${goal37}</span>
-                <span class="metric-pill-soft">⏱ Gol 10-15 ${goal1015}</span>
-              </div>
-            </div>
-
-            <div class="match-group predictor-highlight">
-              <div class="match-group-title">Predictor de gol</div>
-              <div class="match-stats">
-                <span class="${alertClass}">${alertLevel}</span>
-                <span class="metric-pill-soft"><strong>Gol 5 min ${goal5}%</strong></span>
-                <span class="metric-pill-soft"><strong>Gol 10 min ${goal10}%</strong></span>
-                <span class="metric-pill-soft"><strong>Predictor ${predictorScore}</strong></span>
-              </div>
-            </div>
-
-            <div class="match-group">
-              <div class="match-group-title">Chaos engine</div>
-              <div class="match-stats">
-                <span class="${chaosClass}">🌪 ${chaosLevel}</span>
-                <span class="metric-pill-soft">🧮 Chaos ${chaosScore}</span>
-                <span class="metric-pill-soft">🚪 Window ${chaosWindow}</span>
-              </div>
-            </div>
-
-            <div class="reason-box">🔍 ${pressureReason}</div>
-            <div class="reason-box">🧠 ${alertReason}</div>
-            <div class="reason-box">🌪 ${chaosReason}</div>
-          </div>
-        `;
-      }).join("");
+          `).join("")}
+        </div>
+      `;
     }
 
     async function cargarScan() {
