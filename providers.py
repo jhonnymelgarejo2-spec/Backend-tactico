@@ -51,7 +51,6 @@ def obtener_partidos_api():
                 "marcador_local": int(marcador_local or 0),
                 "marcador_visitante": int(marcador_visitante or 0),
 
-                # temporales mientras luego metemos stats reales
                 "xG": round(random.uniform(0.5, 3.0), 2),
                 "momentum": random.choice(["BAJO", "MEDIO", "ALTO", "MUY ALTO"]),
                 "prob_real": round(random.uniform(0.45, 0.75), 2),
@@ -59,7 +58,11 @@ def obtener_partidos_api():
                 "cuota": round(random.uniform(1.5, 3.2), 2)
             })
 
-        return partidos
+        if partidos:
+            return partidos
+
+        print("⚠️ API-Football no devolvió partidos live, usando DEMO")
+        return obtener_partidos_demo()
 
     except Exception as e:
         print(f"⚠️ Error obteniendo partidos API-Football: {e}")
