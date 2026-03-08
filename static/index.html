@@ -413,6 +413,39 @@
       border-color: #2f8a57;
     }
 
+    .alert-badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .alert-roja {
+      background: #4a1010;
+      color: #ff8d8d;
+      border-color: #b33f3f;
+    }
+
+    .alert-naranja {
+      background: #4a2f10;
+      color: #ffbf70;
+      border-color: #b5792f;
+    }
+
+    .alert-amarilla {
+      background: #4a4410;
+      color: #ffe670;
+      border-color: #a39a2e;
+    }
+
+    .alert-baja {
+      background: #10351f;
+      color: #7dffb0;
+      border-color: #2f8a57;
+    }
+
     @media (max-width: 1100px) {
       .topbar {
         grid-template-columns: 1fr 1fr;
@@ -599,6 +632,14 @@
       };
     }
 
+    function getAlertClass(level) {
+      const t = String(level || "").toUpperCase();
+      if (t === "ROJA") return "alert-badge alert-roja";
+      if (t === "NARANJA") return "alert-badge alert-naranja";
+      if (t === "AMARILLA") return "alert-badge alert-amarilla";
+      return "alert-badge alert-baja";
+    }
+
     function detectarBanderaEquipo(nombre) {
       const n = String(nombre || "").toLowerCase();
 
@@ -666,6 +707,14 @@
           const scannerScore = p._scanner_score ?? 0;
           const pressureClass = getPressureClass(pressureLevel);
 
+          const predictor = p.goal_predictor || {};
+          const alertLevel = predictor.alert_level || "BAJA";
+          const alertReason = predictor.alert_reason || "Sin alerta especial";
+          const goal5 = Math.round((predictor.goal_next_5_prob || 0) * 100);
+          const goal10 = Math.round((predictor.goal_next_10_prob || 0) * 100);
+          const predictorScore = predictor.predictor_score ?? 0;
+          const alertClass = getAlertClass(alertLevel);
+
           const homeFlag = flagUrl(detectarBanderaEquipo(p.local));
           const awayFlag = flagUrl(detectarBanderaEquipo(p.visitante));
 
@@ -705,8 +754,19 @@
                 <div>🎯 Pressure score: <strong>${pressureScore}</strong></div>
               </div>
 
+              <div class="match-stats" style="margin-top:10px;">
+                <div><span class="${alertClass}">🧠 ALERTA ${alertLevel}</span></div>
+                <div>⚽ Gol 5 min: <strong>${goal5}%</strong></div>
+                <div>⏱ Gol 10 min: <strong>${goal10}%</strong></div>
+                <div>📊 Predictor score: <strong>${predictorScore}</strong></div>
+              </div>
+
               <div class="match-reason">
                 🔍 ${pressureReason}
+              </div>
+
+              <div class="match-reason">
+                🧠 ${alertReason}
               </div>
             </div>
           `;
@@ -876,4 +936,4 @@
     activarAutoRefresh();
   </script>
 </body>
-        </html>
+  </html>
