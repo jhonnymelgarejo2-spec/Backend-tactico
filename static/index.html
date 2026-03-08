@@ -198,6 +198,40 @@
       outline: none;
     }
 
+    .liga-badge-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .liga-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #12233b;
+      color: #dbeaff;
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .liga-badge:hover {
+      background: #18304f;
+    }
+
+    .liga-flag {
+      width: 18px;
+      height: 13px;
+      object-fit: cover;
+      border-radius: 2px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: #0f1d30;
+    }
+
     .status-badge {
       display: inline-block;
       padding: 8px 12px;
@@ -689,6 +723,7 @@
 
       <div class="card subsection">
         <div class="section-title">🔎 FILTROS RÁPIDOS</div>
+
         <div class="filters-row">
           <select id="ligaFiltro" class="filter-control" onchange="aplicarFiltros()">
             <option value="ALL">Todas las ligas</option>
@@ -710,6 +745,8 @@
             <option value="BAJA">Solo BAJA</option>
           </select>
         </div>
+
+        <div id="ligasTopBar" class="liga-badge-list"></div>
       </div>
 
       <section class="card">
@@ -758,6 +795,49 @@
     let ligaSeleccionada = "ALL";
     let equipoBuscado = "";
     let alertaSeleccionada = "ALL";
+
+    const LIGAS_TOP = [
+      "La Liga",
+      "Premier League",
+      "Serie A",
+      "Bundesliga",
+      "Ligue 1",
+      "Eredivisie",
+      "Jupiler Pro League",
+      "Primeira Liga",
+      "Liga Portugal",
+      "MLS",
+      "Championship",
+      "Super Lig",
+      "Belgian Pro League",
+      "Superliga",
+      "Czech Liga",
+      "Ekstraklasa"
+    ];
+
+    const LIGAS_OCULTAS = [
+      "U19",
+      "U20",
+      "U21",
+      "U23",
+      "Women",
+      "Fem",
+      "Feminina",
+      "Reserve",
+      "Reserves",
+      "Youth",
+      "Juvenil",
+      "Amateur",
+      "Regional",
+      "Division 2",
+      "Division 3",
+      "A4",
+      "Paulista - A4",
+      "Goiano - 1",
+      "Paranaense - 2",
+      "II Liga - East",
+      "MLS Next Pro"
+    ];
 
     async function fetchJSON(url, options = {}) {
       const res = await fetch(url, options);
@@ -810,6 +890,10 @@
       return "chaos-badge chaos-bajo";
     }
 
+    function normalizarTexto(valor) {
+      return String(valor || "").trim().toLowerCase();
+    }
+
     function detectarBanderaEquipo(nombre) {
       const n = String(nombre || "").toLowerCase();
       if (n.includes("river")) return "ar";
@@ -833,10 +917,53 @@
       return "un";
     }
 
+    function detectarCodigoPaisDesdeLiga(liga) {
+      const l = normalizarTexto(liga);
+
+      if (l.includes("la liga") || l.includes("segunda división") || l.includes("rfef") || l.includes("tercera") || l.includes("spain")) return "es";
+      if (l.includes("serie a") || l.includes("serie b") || l.includes("italy")) return "it";
+      if (l.includes("premier league") || l.includes("championship") || l.includes("league one") || l.includes("league two") || l.includes("england")) return "gb";
+      if (l.includes("bundesliga") || l.includes("germany") || l.includes("3. liga")) return "de";
+      if (l.includes("ligue 1") || l.includes("ligue 2") || l.includes("france")) return "fr";
+      if (l.includes("eredivisie") || l.includes("netherlands")) return "nl";
+      if (l.includes("primeira liga") || l.includes("liga portugal") || l.includes("portugal")) return "pt";
+      if (l.includes("jupiler") || l.includes("belg")) return "be";
+      if (l.includes("super lig") || l.includes("turk")) return "tr";
+      if (l.includes("superliga") && l.includes("rom")) return "ro";
+      if (l.includes("czech")) return "cz";
+      if (l.includes("ekstraklasa") || l.includes("poland")) return "pl";
+      if (l.includes("hungary") || l.includes("nb i")) return "hu";
+      if (l.includes("greece")) return "gr";
+      if (l.includes("serbia")) return "rs";
+      if (l.includes("norway")) return "no";
+      if (l.includes("slovakia")) return "sk";
+      if (l.includes("usa") || l.includes("mls")) return "us";
+      if (l.includes("brazil") || l.includes("brasile") || l.includes("paulista") || l.includes("goiano") || l.includes("paranaense") || l.includes("carioca")) return "br";
+      if (l.includes("argentina")) return "ar";
+      if (l.includes("croatia")) return "hr";
+      if (l.includes("denmark")) return "dk";
+      if (l.includes("sweden")) return "se";
+      if (l.includes("finland")) return "fi";
+      if (l.includes("ivory-coast")) return "ci";
+
+      return "un";
+    }
+
     function fallbackLogo(nombre) {
       const code = detectarBanderaEquipo(nombre);
       if (code === "un") return "https://flagcdn.com/w40/un.png";
       return `https://flagcdn.com/w40/${code}.png`;
+    }
+
+    function flagUrlByLeague(liga) {
+      const code = detectarCodigoPaisDesdeLiga(liga);
+      if (code === "un") return "https://flagcdn.com/w40/un.png";
+      return `https://flagcdn.com/w40/${code}.png`;
+    }
+
+    function esLigaOculta(liga) {
+      const l = normalizarTexto(liga);
+      return LIGAS_OCULTAS.some(x => l.includes(normalizarTexto(x)));
     }
 
     function getTeamLogo(p, side) {
@@ -852,26 +979,72 @@
       return "";
     }
 
+    function setLigaFiltro(valor) {
+      const select = document.getElementById("ligaFiltro");
+      if (!select) return;
+      select.value = valor;
+      aplicarFiltros();
+    }
+
     function poblarFiltroLigas(partidos) {
       const select = document.getElementById("ligaFiltro");
       const valorActual = select ? select.value : "ALL";
 
-      const ligas = [...new Set(
+      const ligasDetectadas = [...new Set(
         partidos
-          .map(p => p.liga || "")
+          .map(p => (p.liga || "").trim())
           .filter(Boolean)
-          .sort((a, b) => a.localeCompare(b))
+          .filter(l => !esLigaOculta(l))
       )];
+
+      const topPresentes = LIGAS_TOP.filter(t =>
+        ligasDetectadas.some(l => normalizarTexto(l) === normalizarTexto(t))
+      );
+
+      const resto = ligasDetectadas
+        .filter(l => !topPresentes.some(t => normalizarTexto(t) === normalizarTexto(l)))
+        .sort((a, b) => a.localeCompare(b));
+
+      const ligasFinales = [...topPresentes, ...resto];
 
       select.innerHTML =
         `<option value="ALL">Todas las ligas</option>` +
-        ligas.map(l => `<option value="${l}">${l}</option>`).join("");
+        ligasFinales.map(l => `<option value="${l}">${l}</option>`).join("");
 
-      if (ligas.includes(valorActual)) {
+      if (ligasFinales.includes(valorActual)) {
         select.value = valorActual;
       } else {
         select.value = "ALL";
       }
+
+      renderLigasTopBar(ligasFinales);
+    }
+
+    function renderLigasTopBar(ligas) {
+      const box = document.getElementById("ligasTopBar");
+      if (!box) return;
+
+      const topPresentes = ligas.filter(l =>
+        LIGAS_TOP.some(t => normalizarTexto(t) === normalizarTexto(l))
+      );
+
+      if (!topPresentes.length) {
+        box.innerHTML = "";
+        return;
+      }
+
+      box.innerHTML = `
+        <div class="liga-badge" onclick="setLigaFiltro('ALL')">
+          <img src="https://flagcdn.com/w40/un.png" class="liga-flag" alt="Todas">
+          <span>Todas</span>
+        </div>
+        ${topPresentes.map(l => `
+          <div class="liga-badge" onclick="setLigaFiltro('${String(l).replace(/'/g, "\\'")}')">
+            <img src="${flagUrlByLeague(l)}" class="liga-flag" alt="${l}">
+            <span>${l}</span>
+          </div>
+        `).join("")}
+      `;
     }
 
     function filtrarPartidos(partidos) {
@@ -880,9 +1053,15 @@
       alertaSeleccionada = document.getElementById("alertaFiltro")?.value || "ALL";
 
       return partidos.filter(p => {
+        const ligaNombre = p.liga || "";
+
+        if (esLigaOculta(ligaNombre)) {
+          return false;
+        }
+
         const ligaOk =
           ligaSeleccionada === "ALL" ||
-          (p.liga || "") === ligaSeleccionada;
+          ligaNombre === ligaSeleccionada;
 
         const local = (p.local || "").toLowerCase();
         const visitante = (p.visitante || "").toLowerCase();
