@@ -248,7 +248,8 @@
 
     .alert-badge,
     .pressure-badge,
-    .signal-tier {
+    .signal-tier,
+    .chaos-badge {
       display: inline-block;
       padding: 6px 10px;
       border-radius: 999px;
@@ -280,6 +281,30 @@
 
     .alert-baja,
     .pressure-baja {
+      background: #10351f;
+      color: #7dffb0;
+      border-color: #2f8a57;
+    }
+
+    .chaos-extremo {
+      background: #5a1028;
+      color: #ff9dc2;
+      border-color: #b34775;
+    }
+
+    .chaos-alto {
+      background: #4a2f10;
+      color: #ffbf70;
+      border-color: #a36b2e;
+    }
+
+    .chaos-medio {
+      background: #4a4410;
+      color: #ffe670;
+      border-color: #a39a2e;
+    }
+
+    .chaos-bajo {
       background: #10351f;
       color: #7dffb0;
       border-color: #2f8a57;
@@ -728,6 +753,14 @@
       return "alert-badge alert-baja";
     }
 
+    function getChaosClass(level) {
+      const t = String(level || "").toUpperCase();
+      if (t === "EXTREMO") return "chaos-badge chaos-extremo";
+      if (t === "ALTO") return "chaos-badge chaos-alto";
+      if (t === "MEDIO") return "chaos-badge chaos-medio";
+      return "chaos-badge chaos-bajo";
+    }
+
     function detectarBanderaEquipo(nombre) {
       const n = String(nombre || "").toLowerCase();
       if (n.includes("river")) return "ar";
@@ -788,8 +821,12 @@
 
       const calientes = [...partidos]
         .sort((a, b) => {
-          const pa = (a.goal_predictor || {}).predictor_score || 0;
-          const pb = (b.goal_predictor || {}).predictor_score || 0;
+          const pa =
+            ((a.goal_predictor || {}).predictor_score || 0) +
+            ((a.chaos || {}).chaos_score || 0) * 0.6;
+          const pb =
+            ((b.goal_predictor || {}).predictor_score || 0) +
+            ((b.chaos || {}).chaos_score || 0) * 0.6;
           return pb - pa;
         })
         .slice(0, 3);
@@ -805,6 +842,11 @@
         const alertClass = getAlertClass(alertLevel);
         const goal5 = Math.round((predictor.goal_next_5_prob || 0) * 100);
         const goal10 = Math.round((predictor.goal_next_10_prob || 0) * 100);
+
+        const chaos = p.chaos || {};
+        const chaosLevel = chaos.chaos_level || "BAJO";
+        const chaosScore = chaos.chaos_score ?? 0;
+        const chaosClass = getChaosClass(chaosLevel);
 
         return `
           <div class="hot-card">
@@ -827,7 +869,13 @@
               <span class="pill">Predictor ${predictor.predictor_score ?? 0}</span>
             </div>
 
+            <div class="hot-line">
+              <span class="${chaosClass}">🌪 ${chaosLevel}</span>
+              <span class="pill">Chaos ${chaosScore}</span>
+            </div>
+
             <div class="reason-box">🧠 ${predictor.alert_reason || "Sin alerta especial"}</div>
+            <div class="reason-box">🌪 ${chaos.chaos_reason || "Sin caos detectado"}</div>
           </div>
         `;
       }).join("");
@@ -866,6 +914,13 @@
           const goal10 = Math.round((predictor.goal_next_10_prob || 0) * 100);
           const predictorScore = predictor.predictor_score ?? 0;
           const alertClass = getAlertClass(alertLevel);
+
+          const chaos = p.chaos || {};
+          const chaosLevel = chaos.chaos_level || "BAJO";
+          const chaosScore = chaos.chaos_score ?? 0;
+          const chaosWindow = chaos.chaos_window_open ? "OPEN" : "CLOSED";
+          const chaosReason = chaos.chaos_reason || "Sin caos detectado";
+          const chaosClass = getChaosClass(chaosLevel);
 
           const homeLogo = getTeamLogo(p, "home");
           const awayLogo = getTeamLogo(p, "away");
@@ -925,8 +980,18 @@
                 </div>
               </div>
 
+              <div class="match-group">
+                <div class="match-group-title">Chaos engine</div>
+                <div class="match-stats">
+                  <span class="${chaosClass}">🌪 ${chaosLevel}</span>
+                  <span class="metric-pill-soft">🧮 Chaos ${chaosScore}</span>
+                  <span class="metric-pill-soft">🚪 Window ${chaosWindow}</span>
+                </div>
+              </div>
+
               <div class="reason-box">🔍 ${pressureReason}</div>
               <div class="reason-box">🧠 ${alertReason}</div>
+              <div class="reason-box">🌪 ${chaosReason}</div>
             </div>
           `;
         }).join("");
