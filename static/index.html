@@ -182,6 +182,22 @@
       margin-bottom: 16px;
     }
 
+    .filters-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .filter-control {
+      background: #12233b;
+      color: #dbeaff;
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 12px 14px;
+      border-radius: 12px;
+      min-width: 220px;
+      outline: none;
+    }
+
     .status-badge {
       display: inline-block;
       padding: 8px 12px;
@@ -599,6 +615,10 @@
       .score-box {
         text-align: left;
       }
+
+      .filter-control {
+        min-width: 100%;
+      }
     }
   </style>
 </head>
@@ -667,6 +687,31 @@
         <span id="statusBadge" class="status-badge">Esperando...</span>
       </div>
 
+      <div class="card subsection">
+        <div class="section-title">🔎 FILTROS RÁPIDOS</div>
+        <div class="filters-row">
+          <select id="ligaFiltro" class="filter-control" onchange="aplicarFiltros()">
+            <option value="ALL">Todas las ligas</option>
+          </select>
+
+          <input
+            id="equipoFiltro"
+            class="filter-control"
+            type="text"
+            placeholder="Buscar equipo..."
+            oninput="aplicarFiltros()"
+          />
+
+          <select id="alertaFiltro" class="filter-control" onchange="aplicarFiltros()">
+            <option value="ALL">Todas las alertas</option>
+            <option value="ROJA">Solo ROJA</option>
+            <option value="NARANJA">Solo NARANJA</option>
+            <option value="AMARILLA">Solo AMARILLA</option>
+            <option value="BAJA">Solo BAJA</option>
+          </select>
+        </div>
+      </div>
+
       <section class="card">
         <div class="section-title">🔥 PARTIDOS CALIENTES</div>
         <div id="hotMatches" class="hot-grid">
@@ -709,6 +754,10 @@
   <script>
     const BACKEND = "https://backend-tactico-9lld.onrender.com";
     let autoRefreshInterval = null;
+    let cachePartidos = [];
+    let ligaSeleccionada = "ALL";
+    let equipoBuscado = "";
+    let alertaSeleccionada = "ALL";
 
     async function fetchJSON(url, options = {}) {
       const res = await fetch(url, options);
@@ -803,6 +852,61 @@
       return "";
     }
 
+    function poblarFiltroLigas(partidos) {
+      const select = document.getElementById("ligaFiltro");
+      const valorActual = select ? select.value : "ALL";
+
+      const ligas = [...new Set(
+        partidos
+          .map(p => p.liga || "")
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b))
+      )];
+
+      select.innerHTML =
+        `<option value="ALL">Todas las ligas</option>` +
+        ligas.map(l => `<option value="${l}">${l}</option>`).join("");
+
+      if (ligas.includes(valorActual)) {
+        select.value = valorActual;
+      } else {
+        select.value = "ALL";
+      }
+    }
+
+    function filtrarPartidos(partidos) {
+      ligaSeleccionada = document.getElementById("ligaFiltro")?.value || "ALL";
+      equipoBuscado = (document.getElementById("equipoFiltro")?.value || "").toLowerCase().trim();
+      alertaSeleccionada = document.getElementById("alertaFiltro")?.value || "ALL";
+
+      return partidos.filter(p => {
+        const ligaOk =
+          ligaSeleccionada === "ALL" ||
+          (p.liga || "") === ligaSeleccionada;
+
+        const local = (p.local || "").toLowerCase();
+        const visitante = (p.visitante || "").toLowerCase();
+
+        const equipoOk =
+          !equipoBuscado ||
+          local.includes(equipoBuscado) ||
+          visitante.includes(equipoBuscado);
+
+        const alertLevel = String((p.goal_predictor || {}).alert_level || "BAJA").toUpperCase();
+
+        const alertaOk =
+          alertaSeleccionada === "ALL" ||
+          alertLevel === alertaSeleccionada;
+
+        return ligaOk && equipoOk && alertaOk;
+      });
+    }
+
+    function aplicarFiltros() {
+      renderHotMatches(cachePartidos);
+      renderMatchList(cachePartidos);
+    }
+
     async function verEstado() {
       try {
         const data = await fetchJSON(`${BACKEND}/status`);
@@ -819,7 +923,7 @@
     function renderHotMatches(partidos) {
       const hotBox = document.getElementById("hotMatches");
 
-      const calientes = [...partidos]
+      const calientes = [...filtrarPartidos(partidos)]
         .sort((a, b) => {
           const pa =
             ((a.goal_predictor || {}).predictor_score || 0) +
@@ -881,6 +985,115 @@
       }).join("");
     }
 
+    function renderMatchList(partidosBase) {
+      const contenedor = document.getElementById("matchList");
+      const partidos = filtrarPartidos(partidosBase);
+
+      if (!partidos.length) {
+        contenedor.innerHTML = `<div class="empty">No hay partidos que coincidan con el filtro.</div>`;
+        return;
+      }
+
+      contenedor.innerHTML = partidos.map(p => {
+        const gp = p.goal_pressure || {};
+        const pressureLevel = gp.pressure_level || "BAJA";
+        const pressureScore = gp.pressure_score ?? 0;
+        const goal37 = gp.goal_likely_3_7_min ? "SÍ" : "NO";
+        const goal1015 = gp.goal_likely_10_15_min ? "SÍ" : "NO";
+        const pressureReason = gp.reason || "Sin presión destacada";
+        const scannerScore = p._scanner_score ?? 0;
+        const pressureClass = getPressureClass(pressureLevel);
+
+        const predictor = p.goal_predictor || {};
+        const alertLevel = predictor.alert_level || "BAJA";
+        const alertReason = predictor.alert_reason || "Sin alerta especial";
+        const goal5 = Math.round((predictor.goal_next_5_prob || 0) * 100);
+        const goal10 = Math.round((predictor.goal_next_10_prob || 0) * 100);
+        const predictorScore = predictor.predictor_score ?? 0;
+        const alertClass = getAlertClass(alertLevel);
+
+        const chaos = p.chaos || {};
+        const chaosLevel = chaos.chaos_level || "BAJO";
+        const chaosScore = chaos.chaos_score ?? 0;
+        const chaosWindow = chaos.chaos_window_open ? "OPEN" : "CLOSED";
+        const chaosReason = chaos.chaos_reason || "Sin caos detectado";
+        const chaosClass = getChaosClass(chaosLevel);
+
+        const homeLogo = getTeamLogo(p, "home");
+        const awayLogo = getTeamLogo(p, "away");
+
+        return `
+          <div class="match-item">
+            <div class="match-header">
+              <div class="league">${p.liga || "Liga"} · ${p.pais || "País"}</div>
+              <div class="minute-badge">Min ${p.minuto ?? 0}</div>
+            </div>
+
+            <div class="match-main">
+              <div class="team-box">
+                <img src="${homeLogo}" alt="${p.local || "Local"}" class="team-logo">
+                <div class="team-name">${p.local || "Local"}</div>
+              </div>
+
+              <div class="score-box">
+                <div class="score">${p.marcador_local ?? 0}-${p.marcador_visitante ?? 0}</div>
+              </div>
+
+              <div class="team-box right">
+                <div class="team-name">${p.visitante || "Visitante"}</div>
+                <img src="${awayLogo}" alt="${p.visitante || "Visitante"}" class="team-logo">
+              </div>
+
+              <div><span class="${alertClass}">${alertLevel}</span></div>
+            </div>
+
+            <div class="match-group">
+              <div class="match-group-title">Datos base</div>
+              <div class="match-stats">
+                <span class="metric-pill-soft">📊 xG ${p.xG ?? 0}</span>
+                <span class="metric-pill-soft">🆔 ${p.id ?? "-"}</span>
+                <span class="metric-pill-soft">🔥 ${p.momentum ?? "MEDIO"}</span>
+              </div>
+            </div>
+
+            <div class="match-group">
+              <div class="match-group-title">Presión táctica</div>
+              <div class="match-stats">
+                <span class="${pressureClass}">${pressureLevel}</span>
+                <span class="metric-pill-soft">📈 Scanner ${scannerScore}</span>
+                <span class="metric-pill-soft">🎯 Pressure ${pressureScore}</span>
+                <span class="metric-pill-soft">⚡ Gol 3-7 ${goal37}</span>
+                <span class="metric-pill-soft">⏱ Gol 10-15 ${goal1015}</span>
+              </div>
+            </div>
+
+            <div class="match-group predictor-highlight">
+              <div class="match-group-title">Predictor de gol</div>
+              <div class="match-stats">
+                <span class="${alertClass}">${alertLevel}</span>
+                <span class="metric-pill-soft"><strong>Gol 5 min ${goal5}%</strong></span>
+                <span class="metric-pill-soft"><strong>Gol 10 min ${goal10}%</strong></span>
+                <span class="metric-pill-soft"><strong>Predictor ${predictorScore}</strong></span>
+              </div>
+            </div>
+
+            <div class="match-group">
+              <div class="match-group-title">Chaos engine</div>
+              <div class="match-stats">
+                <span class="${chaosClass}">🌪 ${chaosLevel}</span>
+                <span class="metric-pill-soft">🧮 Chaos ${chaosScore}</span>
+                <span class="metric-pill-soft">🚪 Window ${chaosWindow}</span>
+              </div>
+            </div>
+
+            <div class="reason-box">🔍 ${pressureReason}</div>
+            <div class="reason-box">🧠 ${alertReason}</div>
+            <div class="reason-box">🌪 ${chaosReason}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
     async function cargarScan() {
       const contenedor = document.getElementById("matchList");
       contenedor.innerHTML = `<div class="empty">Cargando partidos...</div>`;
@@ -890,112 +1103,16 @@
         const partidos = data.partidos || [];
         document.getElementById("totalMatches").textContent = data.scanned ?? partidos.length;
 
-        renderHotMatches(partidos);
+        cachePartidos = partidos;
+        poblarFiltroLigas(cachePartidos);
+        renderHotMatches(cachePartidos);
 
-        if (!partidos.length) {
+        if (!cachePartidos.length) {
           contenedor.innerHTML = `<div class="empty">No hay partidos disponibles.</div>`;
           return;
         }
 
-        contenedor.innerHTML = partidos.map(p => {
-          const gp = p.goal_pressure || {};
-          const pressureLevel = gp.pressure_level || "BAJA";
-          const pressureScore = gp.pressure_score ?? 0;
-          const goal37 = gp.goal_likely_3_7_min ? "SÍ" : "NO";
-          const goal1015 = gp.goal_likely_10_15_min ? "SÍ" : "NO";
-          const pressureReason = gp.reason || "Sin presión destacada";
-          const scannerScore = p._scanner_score ?? 0;
-          const pressureClass = getPressureClass(pressureLevel);
-
-          const predictor = p.goal_predictor || {};
-          const alertLevel = predictor.alert_level || "BAJA";
-          const alertReason = predictor.alert_reason || "Sin alerta especial";
-          const goal5 = Math.round((predictor.goal_next_5_prob || 0) * 100);
-          const goal10 = Math.round((predictor.goal_next_10_prob || 0) * 100);
-          const predictorScore = predictor.predictor_score ?? 0;
-          const alertClass = getAlertClass(alertLevel);
-
-          const chaos = p.chaos || {};
-          const chaosLevel = chaos.chaos_level || "BAJO";
-          const chaosScore = chaos.chaos_score ?? 0;
-          const chaosWindow = chaos.chaos_window_open ? "OPEN" : "CLOSED";
-          const chaosReason = chaos.chaos_reason || "Sin caos detectado";
-          const chaosClass = getChaosClass(chaosLevel);
-
-          const homeLogo = getTeamLogo(p, "home");
-          const awayLogo = getTeamLogo(p, "away");
-
-          return `
-            <div class="match-item">
-              <div class="match-header">
-                <div class="league">${p.liga || "Liga"} · ${p.pais || "País"}</div>
-                <div class="minute-badge">Min ${p.minuto ?? 0}</div>
-              </div>
-
-              <div class="match-main">
-                <div class="team-box">
-                  <img src="${homeLogo}" alt="${p.local || "Local"}" class="team-logo">
-                  <div class="team-name">${p.local || "Local"}</div>
-                </div>
-
-                <div class="score-box">
-                  <div class="score">${p.marcador_local ?? 0}-${p.marcador_visitante ?? 0}</div>
-                </div>
-
-                <div class="team-box right">
-                  <div class="team-name">${p.visitante || "Visitante"}</div>
-                  <img src="${awayLogo}" alt="${p.visitante || "Visitante"}" class="team-logo">
-                </div>
-
-                <div><span class="${alertClass}">${alertLevel}</span></div>
-              </div>
-
-              <div class="match-group">
-                <div class="match-group-title">Datos base</div>
-                <div class="match-stats">
-                  <span class="metric-pill-soft">📊 xG ${p.xG ?? 0}</span>
-                  <span class="metric-pill-soft">🆔 ${p.id ?? "-"}</span>
-                  <span class="metric-pill-soft">🔥 ${p.momentum ?? "MEDIO"}</span>
-                </div>
-              </div>
-
-              <div class="match-group">
-                <div class="match-group-title">Presión táctica</div>
-                <div class="match-stats">
-                  <span class="${pressureClass}">${pressureLevel}</span>
-                  <span class="metric-pill-soft">📈 Scanner ${scannerScore}</span>
-                  <span class="metric-pill-soft">🎯 Pressure ${pressureScore}</span>
-                  <span class="metric-pill-soft">⚡ Gol 3-7 ${goal37}</span>
-                  <span class="metric-pill-soft">⏱ Gol 10-15 ${goal1015}</span>
-                </div>
-              </div>
-
-              <div class="match-group predictor-highlight">
-                <div class="match-group-title">Predictor de gol</div>
-                <div class="match-stats">
-                  <span class="${alertClass}">${alertLevel}</span>
-                  <span class="metric-pill-soft"><strong>Gol 5 min ${goal5}%</strong></span>
-                  <span class="metric-pill-soft"><strong>Gol 10 min ${goal10}%</strong></span>
-                  <span class="metric-pill-soft"><strong>Predictor ${predictorScore}</strong></span>
-                </div>
-              </div>
-
-              <div class="match-group">
-                <div class="match-group-title">Chaos engine</div>
-                <div class="match-stats">
-                  <span class="${chaosClass}">🌪 ${chaosLevel}</span>
-                  <span class="metric-pill-soft">🧮 Chaos ${chaosScore}</span>
-                  <span class="metric-pill-soft">🚪 Window ${chaosWindow}</span>
-                </div>
-              </div>
-
-              <div class="reason-box">🔍 ${pressureReason}</div>
-              <div class="reason-box">🧠 ${alertReason}</div>
-              <div class="reason-box">🌪 ${chaosReason}</div>
-            </div>
-          `;
-        }).join("");
-
+        renderMatchList(cachePartidos);
         setStatus("Partidos actualizados", true);
       } catch (err) {
         document.getElementById("hotMatches").innerHTML = `<div class="empty danger">Error cargando partidos calientes: ${err.message}</div>`;
@@ -1070,7 +1187,7 @@
                 <span class="pill">Cuota ${s.odd ?? "-"}</span>
                 <span class="pill">Prob ${s.prob ?? "-"}</span>
                 <span class="pill">Confianza ${s.confidence ?? "-"}%</span>
-                <span class="pill">Liga ${s.league || "-"}</span>
+                <span class="pill">${s.league || "Liga desconocida"}</span>
               </div>
             </div>
           `;
