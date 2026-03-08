@@ -1,9 +1,5 @@
 # signal_engine.py
 
-# ------------------------------
-# Utilidades base
-# ------------------------------
-
 def normalizar_texto(valor):
     return str(valor or "").strip().upper()
 
@@ -11,10 +7,6 @@ def normalizar_texto(valor):
 def clamp(valor, minimo, maximo):
     return max(minimo, min(valor, maximo))
 
-
-# ------------------------------
-# Confianza táctica
-# ------------------------------
 
 def calcular_confianza_base(datos):
     momentum = normalizar_texto(datos.get("momentum"))
@@ -52,10 +44,6 @@ def calcular_valor(datos):
     prob_implicita = float(datos.get("prob_implicita", 0.54) or 0)
     return round((prob_real - prob_implicita) * 100, 2)
 
-
-# ------------------------------
-# Detectores por ID
-# ------------------------------
 
 def detectar_liga(id_partido):
     texto = normalizar_texto(id_partido)
@@ -131,15 +119,22 @@ def detectar_evento(id_partido):
         return "Partido regular"
 
 
-# ------------------------------
-# Mercados tácticos
-# ------------------------------
-
 def generar_senales_posibles(datos):
     id_partido = datos.get("id", "000")
-    liga = detectar_liga(id_partido)
-    equipoA, equipoB = detectar_equipos(id_partido)
-    tipo_evento = detectar_evento(id_partido)
+
+    liga_real = datos.get("liga")
+    equipoA_real = datos.get("equipoA")
+    equipoB_real = datos.get("equipoB")
+    tipo_evento_real = datos.get("tipo_evento")
+
+    liga = liga_real if liga_real else detectar_liga(id_partido)
+
+    if equipoA_real and equipoB_real:
+        equipoA, equipoB = equipoA_real, equipoB_real
+    else:
+        equipoA, equipoB = detectar_equipos(id_partido)
+
+    tipo_evento = tipo_evento_real if tipo_evento_real else detectar_evento(id_partido)
 
     minuto = int(datos.get("minuto", 0) or 0)
     xg = float(datos.get("xG", 0) or 0)
@@ -152,7 +147,6 @@ def generar_senales_posibles(datos):
     base = calcular_confianza_base(datos)
     senales = []
 
-    # 1) OVER 0.5 NEXT 15
     confianza_over15 = base
     if xg >= 1.2:
         confianza_over15 += 8
@@ -181,7 +175,6 @@ def generar_senales_posibles(datos):
             "razon": "Momentum alto + presión ofensiva + ventana favorable"
         })
 
-    # 2) OVER 1.5 MATCH
     confianza_over_match = base
     if xg >= 1.5:
         confianza_over_match += 10
@@ -208,7 +201,6 @@ def generar_senales_posibles(datos):
             "razon": "xG acumulado favorable para más goles en el partido"
         })
 
-    # 3) HOME WIN
     confianza_home = base
     if valor > 0:
         confianza_home += 5
@@ -235,7 +227,6 @@ def generar_senales_posibles(datos):
             "razon": "Ventaja táctica del local + value positivo"
         })
 
-    # 4) AWAY WIN
     confianza_away = base - 2
     if valor > 3:
         confianza_away += 7
@@ -260,7 +251,6 @@ def generar_senales_posibles(datos):
             "razon": "Visitante con condiciones de valor y presión competitiva"
         })
 
-    # 5) RESULTADO SE MANTIENE
     confianza_hold = 50
     if momentum in ("BAJO", "MEDIO"):
         confianza_hold += 10
@@ -292,10 +282,6 @@ def generar_senales_posibles(datos):
     return senales
 
 
-# ------------------------------
-# Escoger mejor señal
-# ------------------------------
-
 def elegir_mejor_senal(senales):
     if not senales:
         return None
@@ -308,20 +294,26 @@ def elegir_mejor_senal(senales):
     return senales_ordenadas[0]
 
 
-# ------------------------------
-# Motor principal
-# ------------------------------
-
 def generar_senal(datos):
     senales = generar_senales_posibles(datos)
     mejor = elegir_mejor_senal(senales)
 
-    if mejor is None:
-        id_partido = datos.get("id", "000")
-        liga = detectar_liga(id_partido)
-        equipoA, equipoB = detectar_equipos(id_partido)
-        tipo_evento = detectar_evento(id_partido)
+    id_partido = datos.get("id", "000")
+    liga_real = datos.get("liga")
+    equipoA_real = datos.get("equipoA")
+    equipoB_real = datos.get("equipoB")
+    tipo_evento_real = datos.get("tipo_evento")
 
+    liga = liga_real if liga_real else detectar_liga(id_partido)
+
+    if equipoA_real and equipoB_real:
+        equipoA, equipoB = equipoA_real, equipoB_real
+    else:
+        equipoA, equipoB = detectar_equipos(id_partido)
+
+    tipo_evento = tipo_evento_real if tipo_evento_real else detectar_evento(id_partido)
+
+    if mejor is None:
         return {
             "id": id_partido,
             "liga": liga,
@@ -356,10 +348,6 @@ def generar_senal(datos):
 
     return resultado
 
-
-# ------------------------------
-# Narrativa táctica
-# ------------------------------
 
 def formatear_senal_narrativa(senal, hora_local="19:59 BOL", numero=1):
     equipoA = senal.get("equipoA", "Equipo A")
