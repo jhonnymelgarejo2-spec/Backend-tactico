@@ -736,6 +736,67 @@
       gap: 8px;
     }
 
+    .country-group {
+      background: linear-gradient(180deg, #0f1c2d, #0a1423);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .country-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 18px;
+      cursor: pointer;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .country-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .country-header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #9bc1e8;
+      font-size: 13px;
+    }
+
+    .country-chevron {
+      font-size: 16px;
+      transition: transform 0.2s ease;
+    }
+
+    .country-group.collapsed .country-chevron {
+      transform: rotate(-90deg);
+    }
+
+    .country-content {
+      padding: 14px;
+    }
+
+    .country-group.collapsed .country-content {
+      display: none;
+    }
+
+    .market-dynamic {
+      font-size: 20px;
+      font-weight: bold;
+      color: #ffd66e;
+      line-height: 1.3;
+      margin-top: 8px;
+    }
+
     @media (max-width: 1400px) {
       .page {
         grid-template-columns: 260px 1fr 320px;
@@ -789,6 +850,11 @@
 
       .score-clean {
         font-size: 42px;
+      }
+
+      .country-header {
+        flex-direction: column;
+        align-items: flex-start;
       }
     }
   </style>
@@ -932,6 +998,7 @@
     let ligaSeleccionada = "ALL";
     let equipoBuscado = "";
     let alertaSeleccionada = "ALL";
+    let countriesCollapsed = {};
 
     const LIGAS_TOP = [
       "La Liga",
@@ -1082,6 +1149,8 @@
       if (l.includes("sweden")) return "se";
       if (l.includes("finland")) return "fi";
       if (l.includes("ivory-coast")) return "ci";
+      if (l.includes("morocco") || l.includes("botola")) return "ma";
+      if (l.includes("dominican") || l.includes("cibao")) return "do";
 
       return "un";
     }
@@ -1218,6 +1287,30 @@
       });
     }
 
+    function obtenerTotalGolesDesdeScore(score) {
+      const partes = String(score || "0-0").split("-");
+      return Number(partes[0] || 0) + Number(partes[1] || 0);
+    }
+
+    function marketLabelDinamico(s) {
+      const total = obtenerTotalGolesDesdeScore(s.score || "0-0");
+
+      if (s.market === "OVER_0_5_NEXT_15") {
+        return `Over ${total + 0.5} próximos 15 min`;
+      }
+
+      if (s.market === "OVER_1_5_MATCH") {
+        return `Over ${Math.max(total + 0.5, 1.5)} partido`;
+      }
+
+      return s.selection || s.market || "SEÑAL";
+    }
+
+    function toggleCountry(countryKey) {
+      countriesCollapsed[countryKey] = !countriesCollapsed[countryKey];
+      renderMatchList(cachePartidos);
+    }
+
     function aplicarFiltros() {
       renderHotMatches(cachePartidos);
       renderMatchList(cachePartidos);
@@ -1310,100 +1403,125 @@
         return;
       }
 
-      const agrupados = {};
+      const agrupadosPorPais = {};
 
       partidos.forEach(p => {
         const pais = p.pais || "País desconocido";
         const liga = p.liga || "Liga desconocida";
-        const clave = `${pais}|||${liga}`;
 
-        if (!agrupados[clave]) {
-          agrupados[clave] = {
-            pais,
-            liga,
-            partidos: []
-          };
+        if (!agrupadosPorPais[pais]) {
+          agrupadosPorPais[pais] = {};
         }
 
-        agrupados[clave].partidos.push(p);
+        if (!agrupadosPorPais[pais][liga]) {
+          agrupadosPorPais[pais][liga] = [];
+        }
+
+        agrupadosPorPais[pais][liga].push(p);
       });
 
-      const bloques = Object.values(agrupados).sort((a, b) =>
-        a.liga.localeCompare(b.liga)
-      );
+      const paises = Object.keys(agrupadosPorPais).sort((a, b) => a.localeCompare(b));
 
       contenedor.innerHTML = `
         <div class="matches-group">
-          ${bloques.map(grupo => `
-            <div class="league-block">
-              <div class="league-header">
-                <div class="league-header-left">
-                  <img src="${flagUrlByLeague(grupo.liga)}" class="liga-flag" alt="${grupo.pais}">
-                  <span>${grupo.pais} · ${grupo.liga}</span>
-                </div>
-                <div class="league-header-right">${grupo.partidos.length} partido(s)</div>
-              </div>
+          ${paises.map(pais => {
+            const ligasObj = agrupadosPorPais[pais];
+            const ligas = Object.keys(ligasObj).sort((a, b) => a.localeCompare(b));
+            const totalPartidosPais = ligas.reduce((acc, liga) => acc + ligasObj[liga].length, 0);
+            const countryKey = pais.replace(/[^a-zA-Z0-9]/g, "_");
+            const collapsed = !!countriesCollapsed[countryKey];
+            const banderaPais = flagUrlByLeague(ligas[0] || pais);
 
-              ${grupo.partidos.map(p => {
-                const predictor = p.goal_predictor || {};
-                const alertLevel = predictor.alert_level || "BAJA";
-                const goal5 = Math.round((predictor.goal_next_5_prob || 0) * 100);
-                const goal10 = Math.round((predictor.goal_next_10_prob || 0) * 100);
-
-                const gp = p.goal_pressure || {};
-                const pressureLevel = gp.pressure_level || "BAJA";
-                const pressureScore = gp.pressure_score ?? 0;
-
-                const chaos = p.chaos || {};
-                const chaosLevel = chaos.chaos_level || "BAJO";
-                const chaosScore = chaos.chaos_score ?? 0;
-
-                const homeLogo = getTeamLogo(p, "home");
-                const awayLogo = getTeamLogo(p, "away");
-
-                const estado = Number(p.minuto || 0) >= 90 ? "Finalizado" : `Min ${p.minuto ?? 0}`;
-
-                return `
-                  <div class="match-clean">
-                    <div class="match-clean-top">
-                      <div class="team-clean">
-                        <img src="${homeLogo}" alt="${p.local || "Local"}">
-                        <div class="team-clean-name">${p.local || "Local"}</div>
-                      </div>
-
-                      <div class="score-clean-box">
-                        <div class="match-status-clean">${estado}</div>
-                        <div class="score-clean">
-                          ${p.marcador_local ?? 0}
-                          <span class="score-separator">-</span>
-                          ${p.marcador_visitante ?? 0}
-                        </div>
-                      </div>
-
-                      <div class="team-clean">
-                        <img src="${awayLogo}" alt="${p.visitante || "Visitante"}">
-                        <div class="team-clean-name">${p.visitante || "Visitante"}</div>
-                      </div>
-                    </div>
-
-                    <div class="match-clean-bottom">
-                      <span class="event-pill">xG ${p.xG ?? 0}</span>
-                      <span class="event-pill">Momentum ${p.momentum ?? "MEDIO"}</span>
-                      <span class="event-pill">Alerta ${alertLevel}</span>
-                      <span class="event-pill">Gol 5 min ${goal5}%</span>
-                      <span class="event-pill">Gol 10 min ${goal10}%</span>
-                    </div>
-
-                    <div class="match-extra-row">
-                      <span class="event-pill">Pressure ${pressureLevel} · ${pressureScore}</span>
-                      <span class="event-pill">Chaos ${chaosLevel} · ${chaosScore}</span>
-                      <span class="event-pill">ID ${p.id ?? "-"}</span>
-                    </div>
+            return `
+              <div class="country-group ${collapsed ? "collapsed" : ""}">
+                <div class="country-header" onclick="toggleCountry('${countryKey}')">
+                  <div class="country-header-left">
+                    <img src="${banderaPais}" class="liga-flag" alt="${pais}">
+                    <span>${pais}</span>
                   </div>
-                `;
-              }).join("")}
-            </div>
-          `).join("")}
+
+                  <div class="country-header-right">
+                    <span>${ligas.length} liga(s)</span>
+                    <span>${totalPartidosPais} partido(s)</span>
+                    <span class="country-chevron">⌄</span>
+                  </div>
+                </div>
+
+                <div class="country-content">
+                  ${ligas.map(liga => `
+                    <div class="league-block">
+                      <div class="league-header">
+                        <div class="league-header-left">
+                          <img src="${flagUrlByLeague(liga)}" class="liga-flag" alt="${liga}">
+                          <span>${liga}</span>
+                        </div>
+                        <div class="league-header-right">${ligasObj[liga].length} partido(s)</div>
+                      </div>
+
+                      ${ligasObj[liga].map(p => {
+                        const predictor = p.goal_predictor || {};
+                        const alertLevel = predictor.alert_level || "BAJA";
+                        const goal5 = Math.round((predictor.goal_next_5_prob || 0) * 100);
+                        const goal10 = Math.round((predictor.goal_next_10_prob || 0) * 100);
+
+                        const gp = p.goal_pressure || {};
+                        const pressureLevel = gp.pressure_level || "BAJA";
+                        const pressureScore = gp.pressure_score ?? 0;
+
+                        const chaos = p.chaos || {};
+                        const chaosLevel = chaos.chaos_level || "BAJO";
+                        const chaosScore = chaos.chaos_score ?? 0;
+
+                        const homeLogo = getTeamLogo(p, "home");
+                        const awayLogo = getTeamLogo(p, "away");
+
+                        const estado = Number(p.minuto || 0) >= 90 ? "Finalizado" : `Min ${p.minuto ?? 0}`;
+
+                        return `
+                          <div class="match-clean">
+                            <div class="match-clean-top">
+                              <div class="team-clean">
+                                <img src="${homeLogo}" alt="${p.local || "Local"}">
+                                <div class="team-clean-name">${p.local || "Local"}</div>
+                              </div>
+
+                              <div class="score-clean-box">
+                                <div class="match-status-clean">${estado}</div>
+                                <div class="score-clean">
+                                  ${p.marcador_local ?? 0}
+                                  <span class="score-separator">-</span>
+                                  ${p.marcador_visitante ?? 0}
+                                </div>
+                              </div>
+
+                              <div class="team-clean">
+                                <img src="${awayLogo}" alt="${p.visitante || "Visitante"}">
+                                <div class="team-clean-name">${p.visitante || "Visitante"}</div>
+                              </div>
+                            </div>
+
+                            <div class="match-clean-bottom">
+                              <span class="event-pill">xG ${p.xG ?? 0}</span>
+                              <span class="event-pill">Momentum ${p.momentum ?? "MEDIO"}</span>
+                              <span class="event-pill">Alerta ${alertLevel}</span>
+                              <span class="event-pill">Gol 5 min ${goal5}%</span>
+                              <span class="event-pill">Gol 10 min ${goal10}%</span>
+                            </div>
+
+                            <div class="match-extra-row">
+                              <span class="event-pill">Pressure ${pressureLevel} · ${pressureScore}</span>
+                              <span class="event-pill">Chaos ${chaosLevel} · ${chaosScore}</span>
+                              <span class="event-pill">ID ${p.id ?? "-"}</span>
+                            </div>
+                          </div>
+                        `;
+                      }).join("")}
+                    </div>
+                  `).join("")}
+                </div>
+              </div>
+            `;
+          }).join("")}
         </div>
       `;
     }
@@ -1453,7 +1571,7 @@
               <span class="${tier.className}">${tier.label}</span>
             </div>
             <div class="mini-signal-sub"><strong>${s.home || "Local"} vs ${s.away || "Visitante"}</strong></div>
-            <div class="mini-signal-sub">${s.selection || "SEÑAL"} ${s.market ? "· " + s.market : ""}</div>
+            <div class="mini-signal-sub">${marketLabelDinamico(s)}</div>
             <div class="mini-signal-sub">Min ${s.minute ?? 0} · Marcador ${s.score || "0-0"}</div>
             <div class="mini-signal-sub">Cuota ${s.odd ?? "-"} · Value <span class="${colorPorValor(s.value)}">+${s.value ?? 0}%</span></div>
           </div>
@@ -1485,7 +1603,7 @@
               <div class="signal-head">
                 <div>
                   <div class="${tier.className}">${tier.label}</div>
-                  <div class="signal-market">${s.selection || "SEÑAL"} ${s.market ? "· " + s.market : ""}</div>
+                  <div class="signal-market">${marketLabelDinamico(s)}</div>
                 </div>
 
                 <div class="signal-value ${colorPorValor(s.value)}">+${s.value ?? 0}%</div>
