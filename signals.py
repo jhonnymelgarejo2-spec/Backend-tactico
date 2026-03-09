@@ -19,7 +19,7 @@ def generar_senales(partidos: List[Dict]) -> List[Dict]:
     senales = []
 
     for p in partidos:
-        ok, motivo = partido_es_apostable(p)
+        ok, _motivo = partido_es_apostable(p)
         if not ok:
             continue
 
@@ -67,12 +67,29 @@ def generar_senales(partidos: List[Dict]) -> List[Dict]:
             "confidence": senal.get("confianza", 0),
             "reason": senal.get("razon", ""),
             "tier": senal.get("tier", "NORMAL"),
+
+            # Estado táctico
             "estado_partido": senal.get("estado_partido", {}),
             "gol_inminente": senal.get("gol_inminente", {}),
             "signal_status": senal.get("signal_status", "OPEN"),
+
+            # Probabilidades de gol
             "goal_prob_5": senal.get("goal_prob_5", 0),
             "goal_prob_10": senal.get("goal_prob_10", 0),
             "goal_prob_15": senal.get("goal_prob_15", 0),
+
+            # Predicción del encuentro
+            "resultado_probable": senal.get("resultado_probable", ""),
+            "ganador_probable": senal.get("ganador_probable", ""),
+            "doble_oportunidad_probable": senal.get("doble_oportunidad_probable", ""),
+            "total_goles_estimado": senal.get("total_goles_estimado", 0),
+            "linea_goles_probable": senal.get("linea_goles_probable", ""),
+            "over_under_probable": senal.get("over_under_probable", ""),
+            "confianza_prediccion": senal.get("confianza_prediccion", 0),
+            "recomendacion_final": senal.get("recomendacion_final", "OBSERVAR"),
+            "riesgo_operativo": senal.get("riesgo_operativo", "MEDIO"),
+
+            # Señales alternativas
             "all_signals": senal.get("senales_posibles", []),
         })
 
@@ -80,7 +97,8 @@ def generar_senales(partidos: List[Dict]) -> List[Dict]:
         key=lambda s: (
             {"PREMIUM": 3, "FUERTE": 2, "NORMAL": 1}.get(s.get("tier", "NORMAL"), 0),
             float(s.get("confidence", 0) or 0),
-            float(s.get("value", 0) or 0)
+            float(s.get("value", 0) or 0),
+            float(s.get("confianza_prediccion", 0) or 0)
         ),
         reverse=True
     )
