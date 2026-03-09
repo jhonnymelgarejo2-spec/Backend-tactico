@@ -8,6 +8,12 @@ def clamp(valor, minimo, maximo):
     return max(minimo, min(valor, maximo))
 
 
+def calcular_valor(datos):
+    prob_real = float(datos.get("prob_real", 0.75) or 0)
+    prob_implicita = float(datos.get("prob_implicita", 0.54) or 0)
+    return round((prob_real - prob_implicita) * 100, 2)
+
+
 def calcular_confianza_base(datos):
     momentum = normalizar_texto(datos.get("momentum"))
     xg = float(datos.get("xG", 0) or 0)
@@ -15,127 +21,186 @@ def calcular_confianza_base(datos):
 
     confianza = 50
 
-    if momentum == "ALTO":
-        confianza += 12
-    elif momentum == "MUY ALTO":
+    if momentum == "MUY ALTO":
         confianza += 18
+    elif momentum == "ALTO":
+        confianza += 12
     elif momentum == "MEDIO":
         confianza += 5
 
-    if xg >= 2.0:
-        confianza += 15
+    if xg >= 2.5:
+        confianza += 18
+    elif xg >= 1.8:
+        confianza += 12
     elif xg >= 1.2:
-        confianza += 10
+        confianza += 8
     elif xg >= 0.8:
-        confianza += 5
+        confianza += 4
 
     if 15 <= minuto <= 35:
         confianza += 4
     elif 36 <= minuto <= 75:
-        confianza += 7
-    elif minuto > 75:
-        confianza += 3
+        confianza += 8
+    elif 76 <= minuto <= 88:
+        confianza += 5
 
     return clamp(confianza, 40, 95)
 
 
-def calcular_valor(datos):
-    prob_real = float(datos.get("prob_real", 0.75) or 0)
-    prob_implicita = float(datos.get("prob_implicita", 0.54) or 0)
-    return round((prob_real - prob_implicita) * 100, 2)
+def clasificar_partido(datos):
+    xg = float(datos.get("xG", 0) or 0)
+    momentum = normalizar_texto(datos.get("momentum"))
+    minuto = int(datos.get("minuto", 0) or 0)
+    ml = int(datos.get("marcador_local", 0) or 0)
+    mv = int(datos.get("marcador_visitante", 0) or 0)
+    diff = abs(ml - mv)
 
+    pressure_score = float((datos.get("goal_pressure") or {}).get("pressure_score", 0) or 0)
+    chaos_score = float((datos.get("chaos") or {}).get("chaos_score", 0) or 0)
+    goal5 = float((datos.get("goal_predictor") or {}).get("goal_next_5_prob", 0) or 0)
+    goal10 = float((datos.get("goal_predictor") or {}).get("goal_next_10_prob", 0) or 0)
 
-def detectar_liga(id_partido):
-    texto = normalizar_texto(id_partido)
+    score = 0
 
-    if "UEFA" in texto:
-        return "Champions League"
-    elif "CONMEBOL" in texto:
-        return "Copa Libertadores"
-    elif "FIFA" in texto:
-        return "Fútbol Internacional"
-    elif "ATP" in texto:
-        return "ATP Tour"
-    elif "NBA" in texto:
-        return "NBA"
-    else:
-        return "Liga desconocida"
+    if xg >= 2.5:
+        score += 4
+    elif xg >= 1.8:
+        score += 3
+    elif xg >= 1.2:
+        score += 2
 
+    if momentum == "MUY ALTO":
+        score += 4
+    elif momentum == "ALTO":
+        score += 3
+    elif momentum == "MEDIO":
+        score += 1
 
-def detectar_equipos(id_partido: str):
-    texto = normalizar_texto(id_partido).replace("_", "-").replace(" ", "-")
+    if pressure_score >= 10:
+        score += 4
+    elif pressure_score >= 8:
+        score += 3
+    elif pressure_score >= 5:
+        score += 2
 
-    ligas = {
-        "FIFA": {
-            "FINAL-2025": ("Brasil", "Argentina"),
-            "GRUPO-2025": ("Francia", "Alemania"),
-            "SEMIS-2025": ("España", "Inglaterra")
-        },
-        "UEFA": {
-            "FINAL-2025": ("Real Madrid", "Manchester City"),
-            "SF-2025": ("Bayern Munich", "PSG"),
-            "QF-2025": ("Chelsea", "Barcelona"),
-            "2025": ("España", "Italia")
-        },
-        "CONMEBOL": {
-            "FINAL-2025": ("Boca Juniors", "Palmeiras"),
-            "SF-2025": ("Flamengo", "River Plate"),
-            "GRUPO-2025": ("Colo-Colo", "Atlético Nacional")
-        },
-        "ATP": {
-            "2025-001": ("Djokovic", "Alcaraz"),
-            "2025-002": ("Medvedev", "Sinner")
-        },
-        "NBA": {
-            "2025-001": ("Lakers", "Warriors"),
-            "2025-002": ("Celtics", "Heat")
+    if chaos_score >= 12:
+        score += 4
+    elif chaos_score >= 9:
+        score += 3
+    elif chaos_score >= 6:
+        score += 2
+
+    if goal5 >= 0.80:
+        score += 4
+    elif goal5 >= 0.65:
+        score += 3
+    elif goal5 >= 0.50:
+        score += 2
+
+    if goal10 >= 0.85:
+        score += 2
+    elif goal10 >= 0.70:
+        score += 1
+
+    if diff == 0:
+        score += 2
+    elif diff == 1:
+        score += 1
+
+    if minuto >= 85 and xg < 1.0 and momentum in ("BAJO", "MEDIO"):
+        return {
+            "estado": "MUERTO",
+            "score_estado": score,
+            "razon": "Ritmo bajo y poco potencial ofensivo en tramo final"
         }
+
+    if score >= 16:
+        return {
+            "estado": "EXPLOSIVO",
+            "score_estado": score,
+            "razon": "Alta probabilidad de cambio fuerte en el marcador o de otro gol pronto"
+        }
+
+    if score >= 11:
+        return {
+            "estado": "CALIENTE",
+            "score_estado": score,
+            "razon": "Presión ofensiva y dinámica favorable para movimientos en el marcador"
+        }
+
+    if score >= 7:
+        return {
+            "estado": "CONTROLADO",
+            "score_estado": score,
+            "razon": "Partido con actividad moderada pero sin explosión clara"
+        }
+
+    return {
+        "estado": "FRIO",
+        "score_estado": score,
+        "razon": "Pocas señales ofensivas relevantes"
     }
 
-    partes = texto.split("-", 1)
-    if len(partes) != 2:
-        return ("Equipo A", "Equipo B")
 
-    prefijo, sufijo = partes
-    liga = ligas.get(prefijo)
-    if liga:
-        return liga.get(sufijo, ("Equipo A", "Equipo B"))
+def detectar_gol_inminente(datos):
+    pressure_score = float((datos.get("goal_pressure") or {}).get("pressure_score", 0) or 0)
+    chaos_score = float((datos.get("chaos") or {}).get("chaos_score", 0) or 0)
+    goal5 = float((datos.get("goal_predictor") or {}).get("goal_next_5_prob", 0) or 0)
+    goal10 = float((datos.get("goal_predictor") or {}).get("goal_next_10_prob", 0) or 0)
+    momentum = normalizar_texto(datos.get("momentum"))
+    xg = float(datos.get("xG", 0) or 0)
 
-    return ("Equipo A", "Equipo B")
+    score = 0
+
+    if goal5 >= 0.85:
+        score += 5
+    elif goal5 >= 0.75:
+        score += 4
+    elif goal5 >= 0.65:
+        score += 3
+
+    if goal10 >= 0.90:
+        score += 3
+    elif goal10 >= 0.80:
+        score += 2
+
+    if pressure_score >= 10:
+        score += 3
+    elif pressure_score >= 8:
+        score += 2
+
+    if chaos_score >= 12:
+        score += 3
+    elif chaos_score >= 9:
+        score += 2
+
+    if momentum in ("ALTO", "MUY ALTO"):
+        score += 2
+
+    if xg >= 2.2:
+        score += 2
+
+    es_gol = score >= 10
+
+    return {
+        "gol_inminente": es_gol,
+        "score_gol_inminente": score,
+        "label": "GOL MUY PROBABLE" if es_gol else "SIN ALERTA",
+        "razon": "Probabilidad inmediata elevada por predictor + presión + caos" if es_gol else "No se detecta gol inminente claro"
+    }
 
 
-def detectar_evento(id_partido):
-    texto = normalizar_texto(id_partido)
-
-    if "FINAL" in texto:
-        return "Final"
-    elif "SEMIS" in texto or "SF" in texto:
-        return "Semifinal"
-    elif "QF" in texto or "CUARTOS" in texto:
-        return "Cuartos de final"
-    elif "GRUPO" in texto:
-        return "Fase de grupos"
-    else:
-        return "Partido regular"
+def clasificar_tier(confianza, valor):
+    if confianza >= 90 and valor >= 10:
+        return "PREMIUM"
+    if confianza >= 80 and valor >= 6:
+        return "FUERTE"
+    if confianza >= 70 and valor >= 2:
+        return "NORMAL"
+    return "DESCARTAR"
 
 
 def generar_senales_posibles(datos):
-    id_partido = datos.get("id", "000")
-
-    liga_real = datos.get("liga")
-    equipoA_real = datos.get("equipoA")
-    equipoB_real = datos.get("equipoB")
-    tipo_evento_real = datos.get("tipo_evento")
-
-    liga = liga_real if liga_real else detectar_liga(id_partido)
-
-    if equipoA_real and equipoB_real:
-        equipoA, equipoB = equipoA_real, equipoB_real
-    else:
-        equipoA, equipoB = detectar_equipos(id_partido)
-
-    tipo_evento = tipo_evento_real if tipo_evento_real else detectar_evento(id_partido)
-
     minuto = int(datos.get("minuto", 0) or 0)
     xg = float(datos.get("xG", 0) or 0)
     cuota = float(datos.get("cuota", 1.85) or 1.85)
@@ -143,141 +208,106 @@ def generar_senales_posibles(datos):
     prob_real = float(datos.get("prob_real", 0.75) or 0.75)
     prob_implicita = float(datos.get("prob_implicita", 0.54) or 0.54)
     momentum = normalizar_texto(datos.get("momentum"))
+    ml = int(datos.get("marcador_local", 0) or 0)
+    mv = int(datos.get("marcador_visitante", 0) or 0)
+    total_goles = ml + mv
 
+    estado = clasificar_partido(datos)
+    gol_inminente = detectar_gol_inminente(datos)
     base = calcular_confianza_base(datos)
+
     senales = []
 
-    confianza_over15 = base
+    # OVER DINAMICO PROX 15
+    confianza_next15 = base
     if xg >= 1.2:
-        confianza_over15 += 8
+        confianza_next15 += 7
     if momentum in ("ALTO", "MUY ALTO"):
-        confianza_over15 += 6
-    if 20 <= minuto <= 80:
-        confianza_over15 += 5
+        confianza_next15 += 6
+    if estado["estado"] in ("EXPLOSIVO", "CALIENTE"):
+        confianza_next15 += 6
+    if gol_inminente["gol_inminente"]:
+        confianza_next15 += 8
+    if 20 <= minuto <= 88:
+        confianza_next15 += 5
 
-    confianza_over15 = clamp(confianza_over15, 45, 95)
+    confianza_next15 = clamp(confianza_next15, 45, 95)
 
-    if confianza_over15 >= 62:
-        senales.append({
-            "id": id_partido,
-            "liga": liga,
-            "tipo_evento": tipo_evento,
-            "equipoA": equipoA,
-            "equipoB": equipoB,
-            "minuto": minuto,
-            "mercado": "OVER_0_5_NEXT_15",
-            "apuesta": "Over 0.5 próximos 15 min",
-            "cuota": cuota,
-            "confianza": confianza_over15,
-            "valor": valor,
-            "prob_real": prob_real,
-            "prob_implicita": prob_implicita,
-            "razon": "Momentum alto + presión ofensiva + ventana favorable"
-        })
+    if confianza_next15 >= 68 and valor > 0:
+        linea = total_goles + 0.5
+        tier = clasificar_tier(confianza_next15, valor)
+        if tier != "DESCARTAR":
+            senales.append({
+                "mercado": "OVER_NEXT_15_DYNAMIC",
+                "apuesta": f"Over {linea} próximos 15 min",
+                "linea": linea,
+                "confianza": confianza_next15,
+                "valor": valor,
+                "cuota": cuota,
+                "prob_real": prob_real,
+                "prob_implicita": prob_implicita,
+                "razon": "Momentum alto + presión ofensiva + ventana favorable",
+                "tier": tier
+            })
 
+    # OVER PARTIDO DINAMICO
     confianza_over_match = base
     if xg >= 1.5:
-        confianza_over_match += 10
-    if minuto <= 70:
-        confianza_over_match += 6
+        confianza_over_match += 8
+    if estado["estado"] == "EXPLOSIVO":
+        confianza_over_match += 8
+    elif estado["estado"] == "CALIENTE":
+        confianza_over_match += 5
+    if minuto <= 75:
+        confianza_over_match += 5
 
     confianza_over_match = clamp(confianza_over_match, 45, 95)
 
-    if confianza_over_match >= 64:
-        senales.append({
-            "id": id_partido,
-            "liga": liga,
-            "tipo_evento": tipo_evento,
-            "equipoA": equipoA,
-            "equipoB": equipoB,
-            "minuto": minuto,
-            "mercado": "OVER_1_5_MATCH",
-            "apuesta": "Over 1.5 goles partido",
-            "cuota": cuota,
-            "confianza": confianza_over_match,
-            "valor": valor,
-            "prob_real": prob_real,
-            "prob_implicita": prob_implicita,
-            "razon": "xG acumulado favorable para más goles en el partido"
-        })
+    if confianza_over_match >= 70 and valor > 0:
+        linea_match = max(1.5, total_goles + 0.5)
+        tier = clasificar_tier(confianza_over_match, valor)
+        if tier != "DESCARTAR":
+            senales.append({
+                "mercado": "OVER_MATCH_DYNAMIC",
+                "apuesta": f"Over {linea_match} partido",
+                "linea": linea_match,
+                "confianza": confianza_over_match,
+                "valor": valor,
+                "cuota": cuota,
+                "prob_real": prob_real,
+                "prob_implicita": prob_implicita,
+                "razon": "xG acumulado favorable para más goles en el partido",
+                "tier": tier
+            })
 
-    confianza_home = base
-    if valor > 0:
-        confianza_home += 5
-    if prob_real > prob_implicita:
-        confianza_home += 5
-
-    confianza_home = clamp(confianza_home, 40, 95)
-
-    if confianza_home >= 68:
-        senales.append({
-            "id": id_partido,
-            "liga": liga,
-            "tipo_evento": tipo_evento,
-            "equipoA": equipoA,
-            "equipoB": equipoB,
-            "minuto": minuto,
-            "mercado": "HOME_WIN",
-            "apuesta": f"{equipoA} gana",
-            "cuota": cuota,
-            "confianza": confianza_home,
-            "valor": valor,
-            "prob_real": prob_real,
-            "prob_implicita": prob_implicita,
-            "razon": "Ventaja táctica del local + value positivo"
-        })
-
-    confianza_away = base - 2
-    if valor > 3:
-        confianza_away += 7
-
-    confianza_away = clamp(confianza_away, 40, 95)
-
-    if confianza_away >= 70:
-        senales.append({
-            "id": id_partido,
-            "liga": liga,
-            "tipo_evento": tipo_evento,
-            "equipoA": equipoA,
-            "equipoB": equipoB,
-            "minuto": minuto,
-            "mercado": "AWAY_WIN",
-            "apuesta": f"{equipoB} gana",
-            "cuota": cuota,
-            "confianza": confianza_away,
-            "valor": valor,
-            "prob_real": prob_real,
-            "prob_implicita": prob_implicita,
-            "razon": "Visitante con condiciones de valor y presión competitiva"
-        })
-
+    # RESULTADO SE MANTIENE
     confianza_hold = 50
     if momentum in ("BAJO", "MEDIO"):
         confianza_hold += 10
-    if xg < 1.0:
-        confianza_hold += 12
-    if minuto >= 70:
+    if xg < 1.2:
+        confianza_hold += 10
+    if estado["estado"] in ("FRIO", "CONTROLADO"):
         confianza_hold += 8
+    if minuto >= 70:
+        confianza_hold += 7
 
     confianza_hold = clamp(confianza_hold, 40, 95)
 
-    if confianza_hold >= 63:
-        senales.append({
-            "id": id_partido,
-            "liga": liga,
-            "tipo_evento": tipo_evento,
-            "equipoA": equipoA,
-            "equipoB": equipoB,
-            "minuto": minuto,
-            "mercado": "RESULT_HOLDS_NEXT_15",
-            "apuesta": "Se mantiene el resultado próximos 15 min",
-            "cuota": cuota,
-            "confianza": confianza_hold,
-            "valor": valor,
-            "prob_real": prob_real,
-            "prob_implicita": prob_implicita,
-            "razon": "Bajo ritmo ofensivo + xG moderado + ventana final"
-        })
+    if confianza_hold >= 72 and valor > 0:
+        tier = clasificar_tier(confianza_hold, valor)
+        if tier != "DESCARTAR":
+            senales.append({
+                "mercado": "RESULT_HOLDS_NEXT_15",
+                "apuesta": "Se mantiene el resultado próximos 15 min",
+                "linea": None,
+                "confianza": confianza_hold,
+                "valor": valor,
+                "cuota": cuota,
+                "prob_real": prob_real,
+                "prob_implicita": prob_implicita,
+                "razon": "Ritmo controlado + ventana final + menor impulso ofensivo",
+                "tier": tier
+            })
 
     return senales
 
@@ -286,40 +316,32 @@ def elegir_mejor_senal(senales):
     if not senales:
         return None
 
-    senales_ordenadas = sorted(
+    prioridad_tier = {
+        "PREMIUM": 3,
+        "FUERTE": 2,
+        "NORMAL": 1
+    }
+
+    return sorted(
         senales,
-        key=lambda s: (s.get("confianza", 0), s.get("valor", 0)),
+        key=lambda s: (
+            prioridad_tier.get(s.get("tier", "NORMAL"), 0),
+            s.get("confianza", 0),
+            s.get("valor", 0)
+        ),
         reverse=True
-    )
-    return senales_ordenadas[0]
+    )[0]
 
 
 def generar_senal(datos):
+    estado = clasificar_partido(datos)
+    gol_inminente = detectar_gol_inminente(datos)
     senales = generar_senales_posibles(datos)
     mejor = elegir_mejor_senal(senales)
 
-    id_partido = datos.get("id", "000")
-    liga_real = datos.get("liga")
-    equipoA_real = datos.get("equipoA")
-    equipoB_real = datos.get("equipoB")
-    tipo_evento_real = datos.get("tipo_evento")
-
-    liga = liga_real if liga_real else detectar_liga(id_partido)
-
-    if equipoA_real and equipoB_real:
-        equipoA, equipoB = equipoA_real, equipoB_real
-    else:
-        equipoA, equipoB = detectar_equipos(id_partido)
-
-    tipo_evento = tipo_evento_real if tipo_evento_real else detectar_evento(id_partido)
-
     if mejor is None:
         return {
-            "id": id_partido,
-            "liga": liga,
-            "tipo_evento": tipo_evento,
-            "equipoA": equipoA,
-            "equipoB": equipoB,
+            "id": datos.get("id", ""),
             "minuto": int(datos.get("minuto", 0) or 0),
             "mercado": "SIN_SEÑAL",
             "apuesta": "Sin oportunidad clara",
@@ -328,54 +350,29 @@ def generar_senal(datos):
             "valor": calcular_valor(datos),
             "prob_real": float(datos.get("prob_real", 0.75) or 0.75),
             "razon": "No se detectó ventaja suficiente en este momento",
+            "tier": "DESCARTAR",
+            "estado_partido": estado,
+            "gol_inminente": gol_inminente,
             "senales_posibles": []
         }
 
-    senales_limpias = []
-
-    for s in senales:
-        senales_limpias.append({
+    resultado = dict(mejor)
+    resultado["id"] = datos.get("id", "")
+    resultado["minuto"] = int(datos.get("minuto", 0) or 0)
+    resultado["estado_partido"] = estado
+    resultado["gol_inminente"] = gol_inminente
+    resultado["senales_posibles"] = [
+        {
             "mercado": s.get("mercado"),
             "apuesta": s.get("apuesta"),
+            "linea": s.get("linea"),
             "confianza": s.get("confianza"),
             "valor": s.get("valor"),
             "cuota": s.get("cuota"),
-            "razon": s.get("razon")
-        })
-
-    resultado = dict(mejor)
-    resultado["senales_posibles"] = senales_limpias
+            "razon": s.get("razon"),
+            "tier": s.get("tier")
+        }
+        for s in senales
+    ]
 
     return resultado
-
-
-def formatear_senal_narrativa(senal, hora_local="19:59 BOL", numero=1):
-    equipoA = senal.get("equipoA", "Equipo A")
-    equipoB = senal.get("equipoB", "Equipo B")
-    minuto = senal.get("minuto", 0)
-    liga = senal.get("liga", "Liga desconocida")
-    tipo = senal.get("tipo_evento", "Partido")
-    confianza = senal.get("confianza", 0)
-    cuota = senal.get("cuota", 1.85)
-    razon = senal.get("razon", "Sin razón definida")
-    valor = senal.get("valor", 0)
-    prob_real = senal.get("prob_real", 0.75)
-    apuesta = senal.get("apuesta", "Sin apuesta")
-    mercado = senal.get("mercado", "SIN_MERCADO")
-
-    return f"""
-📊 DATOS PARTIDO [{senal.get("id", "SIN-ID")}]
-⚽ {equipoA} vs {equipoB} — Min {minuto}°
-🏆 {liga} — {tipo}
-🎯 Mercado: {mercado}
-
----
-
-🎯 SEÑAL #{numero} — {hora_local}
-⚽ {equipoA} vs {equipoB} — Min {minuto}°
-💡 APUESTA: {apuesta} @{cuota}
-🎯 CONFIANZA: {confianza}%
-📈 VALOR: +{valor}% margen
-🎲 PROB REAL: {round(prob_real * 100, 2)}%
-🔍 RAZÓN: {razon}
-""".strip()
