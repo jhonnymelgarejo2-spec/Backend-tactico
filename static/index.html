@@ -1494,6 +1494,20 @@
     function marketLabelDinamico(s) {
       const total = obtenerTotalGolesDesdeScore(s.score || "0-0");
 
+      if (s.selection && String(s.selection).trim() !== "") {
+        return s.selection;
+      }
+
+      if (s.market === "OVER_NEXT_15_DYNAMIC") {
+        const linea = s.line ?? (total + 0.5);
+        return `Over ${linea} próximos 15 min`;
+      }
+
+      if (s.market === "OVER_MATCH_DYNAMIC") {
+        const linea = s.line ?? Math.max(total + 0.5, 1.5);
+        return `Over ${linea} partido`;
+      }
+
       if (s.market === "OVER_0_5_NEXT_15") {
         return `Over ${total + 0.5} próximos 15 min`;
       }
@@ -1502,7 +1516,11 @@
         return `Over ${Math.max(total + 0.5, 1.5)} partido`;
       }
 
-      return s.selection || s.market || "SEÑAL";
+      if (s.market === "RESULT_HOLDS_NEXT_15") {
+        return "Se mantiene el resultado próximos 15 min";
+      }
+
+      return s.market || "SEÑAL";
     }
 
     function calcularGoal15(p) {
@@ -1632,6 +1650,62 @@
               </div>
             `).join("")}
           </div>
+        </div>
+      `;
+    }
+
+    function renderEstadoPartidoBlock(signal) {
+      const estado = signal?.estado_partido || {};
+      const nombre = estado.estado || "";
+      const razon = estado.razon || "";
+
+      if (!nombre && !razon) return "";
+
+      let badgeClass = "pill";
+      let titulo = "Estado del partido";
+
+      if (nombre === "EXPLOSIVO") {
+        badgeClass = "alert-badge alert-roja";
+        titulo = "🔥 Estado del partido";
+      } else if (nombre === "CALIENTE") {
+        badgeClass = "alert-badge alert-naranja";
+        titulo = "⚠️ Estado del partido";
+      } else if (nombre === "CONTROLADO") {
+        badgeClass = "alert-badge alert-amarilla";
+        titulo = "📊 Estado del partido";
+      } else if (nombre === "FRIO" || nombre === "MUERTO") {
+        badgeClass = "alert-badge alert-baja";
+        titulo = "🧊 Estado del partido";
+      }
+
+      return `
+        <div class="goal-prob-box">
+          <div class="goal-prob-title">${titulo}</div>
+          <div class="signal-inline-meta">
+            <span class="${badgeClass}">${nombre || "N/A"}</span>
+          </div>
+          ${razon ? `<div class="signal-inline-sub" style="margin-top:10px;">${razon}</div>` : ""}
+        </div>
+      `;
+    }
+
+    function renderGolInminenteBlock(signal) {
+      const gol = signal?.gol_inminente || {};
+      const activo = !!gol.gol_inminente;
+      const label = gol.label || (activo ? "GOL MUY PROBABLE" : "SIN ALERTA");
+      const razon = gol.razon || "";
+
+      if (!activo && !razon) return "";
+
+      return `
+        <div class="goal-prob-box">
+          <div class="goal-prob-title">Alerta inmediata</div>
+          <div class="signal-inline-meta">
+            <span class="${activo ? "alert-badge alert-roja" : "alert-badge alert-baja"}">
+              ${activo ? "🚨 " : ""}${label}
+            </span>
+          </div>
+          ${razon ? `<div class="signal-inline-sub" style="margin-top:10px;">${razon}</div>` : ""}
         </div>
       `;
     }
@@ -1885,6 +1959,8 @@
                                     <span class="pill">${signal.league || "Liga desconocida"}</span>
                                   </div>
 
+                                  ${renderEstadoPartidoBlock(signal)}
+                                  ${renderGolInminenteBlock(signal)}
                                   ${renderSecondarySignalsBlock(signal)}
                                   ${renderGoalProbabilityBlock(p)}
                                   ${renderExplosiveBlock(p)}
