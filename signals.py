@@ -1,8 +1,8 @@
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from signal_engine import generar_senal
 
 
-def partido_es_apostable(p: Dict) -> tuple[bool, str]:
+def partido_es_apostable(p: Dict) -> Tuple[bool, str]:
     minuto = int(p.get("minuto", 0) or 0)
     estado = str(p.get("estado_partido", "activo")).lower()
 
