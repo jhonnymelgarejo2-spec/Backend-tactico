@@ -13,23 +13,29 @@
 
     :root {
       --bg: #07111f;
-      --panel: #0b1728;
-      --panel-2: #0f1d30;
+      --panel: #0d1828;
+      --panel-2: #12233a;
+      --panel-3: #0b1625;
       --card: linear-gradient(180deg, #0f1c2d, #0a1423);
-      --card-2: linear-gradient(180deg, #13253a, #0c1828);
+      --card-soft: linear-gradient(180deg, #13253a, #0d1a2a);
       --border: rgba(255,255,255,0.08);
-      --text: #eaf6ff;
-      --muted: #8eb8e8;
-      --blue: #245487;
-      --blue-soft: #18314f;
+      --border-strong: rgba(124,196,255,0.18);
+      --text: #edf7ff;
+      --muted: #91b9e8;
+      --blue: #5db8ff;
       --green: #65ff9b;
       --yellow: #ffd66e;
       --red: #ff8d8d;
+      --orange: #ffbf70;
+      --shadow: 0 10px 28px rgba(0,0,0,0.28);
     }
 
     body {
       font-family: Arial, sans-serif;
-      background: var(--bg);
+      background:
+        radial-gradient(circle at top left, rgba(93,184,255,0.08), transparent 35%),
+        radial-gradient(circle at top right, rgba(101,255,155,0.06), transparent 35%),
+        var(--bg);
       color: var(--text);
     }
 
@@ -41,43 +47,31 @@
       padding: 18px;
     }
 
-    .col {
-      min-width: 0;
-    }
-
-    .leftbar,
-    .mainpanel,
-    .rightbar {
-      min-width: 0;
-    }
+    .col { min-width: 0; }
 
     .card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 18px;
+      border-radius: 20px;
       padding: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      box-shadow: var(--shadow);
     }
 
-    .card + .card {
-      margin-top: 16px;
-    }
+    .card + .card { margin-top: 16px; }
 
     .logo {
-      font-size: 26px;
-      font-weight: bold;
-      color: #fff;
+      font-size: 30px;
+      font-weight: 900;
+      line-height: 1.05;
       margin-bottom: 10px;
     }
 
-    .logo span {
-      color: #3ddc97;
-    }
+    .logo span { color: var(--green); }
 
     .subtitle {
       font-size: 13px;
-      color: #7cb8ff;
-      line-height: 1.5;
+      color: var(--muted);
+      line-height: 1.55;
     }
 
     .menu {
@@ -88,12 +82,13 @@
     }
 
     .menu button,
-    .toolbar button {
-      background: #12233b;
-      color: #dbeaff;
+    .toolbar button,
+    .refresh-toggle {
+      background: linear-gradient(180deg, #17304f, #12233b);
+      color: #e9f4ff;
       border: 1px solid rgba(255,255,255,0.08);
       padding: 12px 14px;
-      border-radius: 12px;
+      border-radius: 14px;
       text-align: left;
       cursor: pointer;
       transition: 0.2s;
@@ -101,14 +96,15 @@
     }
 
     .menu button:hover,
-    .toolbar button:hover {
-      background: #18304f;
+    .toolbar button:hover,
+    .refresh-toggle:hover {
+      background: linear-gradient(180deg, #1e3d63, #18304f);
     }
 
     .section-title {
       font-size: 16px;
-      font-weight: bold;
-      color: #ffffff;
+      font-weight: 800;
+      color: #fff;
       margin-bottom: 12px;
     }
 
@@ -152,24 +148,28 @@
     .metric-card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 18px;
+      border-radius: 20px;
       padding: 16px;
+      box-shadow: var(--shadow);
     }
 
     .metric-title {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--muted);
       margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
     .metric-value {
-      font-size: 26px;
-      font-weight: bold;
+      font-size: 30px;
+      font-weight: 900;
       color: #fff;
+      line-height: 1.1;
     }
 
     .metric-sub {
-      margin-top: 6px;
+      margin-top: 8px;
       font-size: 12px;
       color: #9bc1e8;
       line-height: 1.4;
@@ -180,6 +180,7 @@
       gap: 10px;
       flex-wrap: wrap;
       margin-bottom: 16px;
+      align-items: center;
     }
 
     .filters-row {
@@ -193,9 +194,13 @@
       color: #dbeaff;
       border: 1px solid rgba(255,255,255,0.08);
       padding: 12px 14px;
-      border-radius: 12px;
+      border-radius: 14px;
       min-width: 220px;
       outline: none;
+    }
+
+    .filter-control::placeholder {
+      color: #b8d5f4;
     }
 
     .liga-badge-list {
@@ -233,7 +238,9 @@
     }
 
     .status-badge {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       padding: 8px 12px;
       border-radius: 999px;
       font-size: 12px;
@@ -249,9 +256,7 @@
       border: 1px solid #a94444;
     }
 
-    .subsection {
-      margin-top: 16px;
-    }
+    .subsection { margin-top: 16px; }
 
     .hot-grid {
       display: grid;
@@ -260,7 +265,7 @@
     }
 
     .hot-card {
-      background: var(--card-2);
+      background: var(--card-soft);
       border: 1px solid rgba(255,255,255,0.09);
       border-radius: 18px;
       padding: 14px;
@@ -299,7 +304,8 @@
     .alert-badge,
     .pressure-badge,
     .signal-tier,
-    .chaos-badge {
+    .chaos-badge,
+    .signal-status-badge {
       display: inline-block;
       padding: 6px 10px;
       border-radius: 999px;
@@ -309,16 +315,17 @@
     }
 
     .alert-roja,
-    .pressure-extrema {
+    .pressure-extrema,
+    .signal-status-danger {
       background: #4a1010;
-      color: #ff8d8d;
+      color: var(--red);
       border-color: #a33a3a;
     }
 
     .alert-naranja,
     .pressure-alta {
       background: #4a2f10;
-      color: #ffbf70;
+      color: var(--orange);
       border-color: #a36b2e;
     }
 
@@ -330,7 +337,8 @@
     }
 
     .alert-baja,
-    .pressure-baja {
+    .pressure-baja,
+    .signal-status-open {
       background: #10351f;
       color: #7dffb0;
       border-color: #2f8a57;
@@ -344,7 +352,7 @@
 
     .chaos-alto {
       background: #4a2f10;
-      color: #ffbf70;
+      color: var(--orange);
       border-color: #a36b2e;
     }
 
@@ -401,212 +409,6 @@
       line-height: 1.45;
     }
 
-    .match-item {
-      background: linear-gradient(180deg, #0f1d30, #091321);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 18px;
-      padding: 16px;
-    }
-
-    .match-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 10px;
-    }
-
-    .minute-badge {
-      background: #18314f;
-      color: #dcecff;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: bold;
-    }
-
-    .match-main {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr auto;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 14px;
-    }
-
-    .team-box {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 0;
-    }
-
-    .team-box.right {
-      justify-content: flex-end;
-    }
-
-    .team-logo {
-      width: 34px;
-      height: 34px;
-      object-fit: contain;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
-      padding: 3px;
-    }
-
-    .team-name {
-      font-size: 22px;
-      font-weight: bold;
-      color: #fff;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .score-box {
-      min-width: 100px;
-      text-align: center;
-    }
-
-    .score {
-      font-size: 44px;
-      font-weight: 900;
-      color: #fff;
-      line-height: 1;
-    }
-
-    .match-group {
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid rgba(255,255,255,0.06);
-    }
-
-    .match-group-title {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #7fa7d6;
-      margin-bottom: 8px;
-      font-weight: bold;
-    }
-
-    .match-stats {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .predictor-highlight {
-      background: linear-gradient(180deg, #16314b, #0d2236);
-      border: 1px solid rgba(124,196,255,0.25);
-      border-radius: 14px;
-      padding: 12px;
-    }
-
-    .predictor-highlight strong {
-      color: #9bd0ff;
-    }
-
-    .signal-card {
-      background: linear-gradient(180deg, #102235, #0a1522);
-      border: 1px solid rgba(61,220,151,0.22);
-      border-radius: 18px;
-      padding: 14px;
-    }
-
-    .signal-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .signal-market {
-      font-size: 20px;
-      font-weight: bold;
-      color: #ffd66e;
-      line-height: 1.3;
-      margin-top: 8px;
-    }
-
-    .signal-value {
-      font-size: 26px;
-      font-weight: bold;
-      color: #65ff9b;
-      white-space: nowrap;
-    }
-
-    .signal-sub {
-      font-size: 14px;
-      color: #d7e8ff;
-      line-height: 1.5;
-      margin-bottom: 8px;
-    }
-
-    .signal-meta {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 8px;
-    }
-
-    .history-item {
-      background: #0b1625;
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 14px;
-      padding: 12px;
-    }
-
-    .history-title {
-      font-weight: bold;
-      margin-bottom: 6px;
-      font-size: 15px;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .stats-box {
-      background: #0b1625;
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 14px;
-      padding: 12px;
-    }
-
-    .stats-box-title {
-      font-size: 12px;
-      color: #8eb8e8;
-      margin-bottom: 8px;
-    }
-
-    .stats-box-value {
-      font-size: 22px;
-      font-weight: bold;
-      color: #fff;
-    }
-
-    .empty {
-      color: #9eb7d4;
-      padding: 10px 0;
-    }
-
-    .danger {
-      color: #ff7b7b;
-    }
-
-    .green {
-      color: #65ff9b;
-    }
-
-    .yellow {
-      color: #ffd66e;
-    }
-
     .matches-group {
       display: flex;
       flex-direction: column;
@@ -650,13 +452,11 @@
       border-bottom: 1px solid rgba(255,255,255,0.06);
     }
 
-    .match-clean:last-child {
-      border-bottom: none;
-    }
+    .match-clean:last-child { border-bottom: none; }
 
     .match-clean-top {
       display: grid;
-      grid-template-columns: 1fr 180px 1fr;
+      grid-template-columns: 1fr 210px 1fr;
       align-items: center;
       gap: 18px;
     }
@@ -670,8 +470,8 @@
     }
 
     .team-clean img {
-      width: 46px;
-      height: 46px;
+      width: 52px;
+      height: 52px;
       object-fit: contain;
       border-radius: 50%;
       background: rgba(255,255,255,0.04);
@@ -693,7 +493,7 @@
     }
 
     .score-clean {
-      font-size: 54px;
+      font-size: 58px;
       font-weight: 900;
       color: #ffffff;
       line-height: 1;
@@ -705,19 +505,25 @@
     }
 
     .match-status-clean {
-      font-size: 13px;
+      font-size: 12px;
       color: #9bc1e8;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
+      font-weight: bold;
     }
 
-    .match-clean-bottom {
-      margin-top: 18px;
-      padding-top: 14px;
-      border-top: 1px solid rgba(255,255,255,0.06);
+    .match-clean-bottom,
+    .match-extra-row {
+      margin-top: 14px;
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
+    }
+
+    .match-clean-bottom {
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      margin-top: 18px;
     }
 
     .event-pill {
@@ -727,13 +533,6 @@
       padding: 7px 10px;
       border-radius: 999px;
       font-size: 12px;
-    }
-
-    .match-extra-row {
-      margin-top: 14px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
     }
 
     .country-group {
@@ -781,20 +580,10 @@
       transform: rotate(-90deg);
     }
 
-    .country-content {
-      padding: 14px;
-    }
+    .country-content { padding: 14px; }
 
     .country-group.collapsed .country-content {
       display: none;
-    }
-
-    .market-dynamic {
-      font-size: 20px;
-      font-weight: bold;
-      color: #ffd66e;
-      line-height: 1.3;
-      margin-top: 8px;
     }
 
     .signal-inline-box {
@@ -809,9 +598,9 @@
       justify-content: space-between;
       align-items: center;
       gap: 10px;
-      background: #12233b;
+      background: linear-gradient(180deg, #143455, #102842);
       color: #dbeaff;
-      border: 1px solid rgba(255,255,255,0.08);
+      border: 1px solid rgba(124,196,255,0.25);
       padding: 12px 14px;
       border-radius: 14px;
       cursor: pointer;
@@ -819,7 +608,7 @@
     }
 
     .signal-inline-toggle:hover {
-      background: #18304f;
+      background: linear-gradient(180deg, #1a4068, #153452);
     }
 
     .signal-inline-title {
@@ -841,9 +630,9 @@
       display: none;
       margin-top: 12px;
       background: linear-gradient(180deg, #102235, #0a1522);
-      border: 1px solid rgba(61,220,151,0.22);
-      border-radius: 16px;
-      padding: 14px;
+      border: 1px solid rgba(61,220,151,0.18);
+      border-radius: 18px;
+      padding: 16px;
     }
 
     .signal-inline-box.open .signal-inline-content {
@@ -851,10 +640,10 @@
     }
 
     .signal-inline-market {
-      font-size: 19px;
-      font-weight: bold;
-      color: #ffd66e;
-      line-height: 1.3;
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--yellow);
+      line-height: 1.25;
       margin-bottom: 10px;
     }
 
@@ -972,17 +761,9 @@
       margin-bottom: 6px;
     }
 
-    .explosive-title.high {
-      color: #ff8d8d;
-    }
-
-    .explosive-title.medium {
-      color: #ffd66e;
-    }
-
-    .explosive-title.low {
-      color: #8eb8e8;
-    }
+    .explosive-title.high { color: #ff8d8d; }
+    .explosive-title.medium { color: #ffd66e; }
+    .explosive-title.low { color: #8eb8e8; }
 
     .explosive-sub {
       font-size: 12px;
@@ -990,92 +771,112 @@
       line-height: 1.45;
     }
 
-    .match-intelligence {
-      margin-top: 14px;
+    .signal-card {
+      background: linear-gradient(180deg, #102235, #0a1522);
+      border: 1px solid rgba(61,220,151,0.18);
+      border-radius: 18px;
       padding: 14px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.07);
-      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
     }
 
-    .intel-row {
+    .signal-head {
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 12px;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
     }
 
-    .intel-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 10px;
-      border-radius: 999px;
-      font-size: 12px;
+    .signal-market {
+      font-size: 20px;
       font-weight: bold;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: #12233b;
-      color: #dbeaff;
-    }
-
-    .intel-tag.estado {
-      background: rgba(124,196,255,0.12);
-      color: #9bd0ff;
-    }
-
-    .intel-tag.gol {
-      background: rgba(101,255,155,0.10);
-      color: #8ff0b3;
-    }
-
-    .intel-tag.predictor {
-      background: rgba(255,214,110,0.10);
       color: #ffd66e;
+      line-height: 1.3;
+      margin-top: 8px;
     }
 
-    .attack-meter {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .attack-team {
-      display: grid;
-      grid-template-columns: 120px 1fr;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .attack-team span {
-      font-size: 12px;
-      color: #dbeaff;
+    .signal-value {
+      font-size: 26px;
+      font-weight: bold;
+      color: #65ff9b;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
-    .attack-bar {
-      width: 100%;
-      height: 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.08);
-      overflow: hidden;
+    .signal-sub {
+      font-size: 14px;
+      color: #d7e8ff;
+      line-height: 1.5;
+      margin-bottom: 8px;
     }
 
-    .attack-fill {
-      height: 100%;
-      border-radius: 999px;
+    .signal-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
     }
 
-    .attack-fill.home {
-      background: linear-gradient(90deg, #245487, #7cc4ff);
+    .history-item {
+      background: #0b1625;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 12px;
     }
 
-    .attack-fill.away {
-      background: linear-gradient(90deg, #1f6b45, #65ff9b);
+    .history-title {
+      font-weight: bold;
+      margin-bottom: 6px;
+      font-size: 15px;
     }
 
-    @media (max-width: 1400px) {
+    .history-sub {
+      font-size: 12px;
+      color: #cfe4ff;
+      line-height: 1.45;
+      margin-top: 4px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .stats-box {
+      background: #0b1625;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .stats-box-title {
+      font-size: 12px;
+      color: #8eb8e8;
+      margin-bottom: 8px;
+    }
+
+    .stats-box-value {
+      font-size: 22px;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .empty {
+      color: #9eb7d4;
+      padding: 10px 0;
+    }
+
+    .danger { color: #ff7b7b; }
+    .green { color: #65ff9b; }
+    .yellow { color: #ffd66e; }
+
+    .small-note {
+      color: #94b8e0;
+      font-size: 12px;
+      margin-top: 10px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 1450px) {
       .page {
         grid-template-columns: 260px 1fr 320px;
       }
@@ -1099,27 +900,10 @@
       }
     }
 
-    @media (max-width: 750px) {
+    @media (max-width: 760px) {
       .topbar,
       .stats-grid {
         grid-template-columns: 1fr;
-      }
-
-      .match-main {
-        grid-template-columns: 1fr;
-        align-items: flex-start;
-      }
-
-      .team-box.right {
-        justify-content: flex-start;
-      }
-
-      .score-box {
-        text-align: left;
-      }
-
-      .filter-control {
-        min-width: 100%;
       }
 
       .match-clean-top {
@@ -1135,8 +919,12 @@
         align-items: flex-start;
       }
 
-      .attack-team {
-        grid-template-columns: 1fr;
+      .filter-control {
+        min-width: 100%;
+      }
+
+      .page {
+        padding: 12px;
       }
     }
   </style>
@@ -1146,7 +934,7 @@
     <aside class="col leftbar">
       <div class="card">
         <div class="logo">JHONNY_<span>ELITE V10</span></div>
-        <div class="subtitle">SCANNER AUTOMÁTICO · SEÑALES · MEMORIA DE APRENDIZAJE · PREDICTOR DE GOL</div>
+        <div class="subtitle">SCANNER AUTOMÁTICO · SEÑALES · MEMORIA DE APRENDIZAJE · PREDICTOR DE GOL · DASHBOARD TÁCTICO</div>
 
         <div class="menu">
           <button onclick="cargarTodo()">📡 Actualizar panel</button>
@@ -1155,6 +943,11 @@
           <button onclick="cargarScan()">⚽ Recargar partidos</button>
           <button onclick="cargarSignals()">🚨 Recargar señales</button>
           <button onclick="cargarHistory()">🧠 Recargar historial</button>
+        </div>
+
+        <div class="small-note">
+          Backend: <strong id="backendMiniUrl">backend-tactico-9lld.onrender.com</strong><br>
+          Auto refresh: <strong id="refreshInfo">30s</strong>
         </div>
       </div>
 
@@ -1189,7 +982,7 @@
         <div class="metric-card">
           <div class="metric-title">Historial total</div>
           <div id="historyTotal" class="metric-value">0</div>
-          <div class="metric-sub">Señales guardadas en memoria</div>
+          <div id="historySub" class="metric-sub">Señales guardadas en memoria</div>
         </div>
 
         <div class="metric-card">
@@ -1274,7 +1067,7 @@
   </div>
 
   <script>
-    const BACKEND = "https://backend-tactico-9lld.onrender.com";
+    const BACKEND = window.location.origin;
     let autoRefreshInterval = null;
     let cachePartidos = [];
     let cacheSignals = [];
@@ -1304,27 +1097,11 @@
     ];
 
     const LIGAS_OCULTAS = [
-      "U19",
-      "U20",
-      "U21",
-      "U23",
-      "Women",
-      "Fem",
-      "Feminina",
-      "Reserve",
-      "Reserves",
-      "Youth",
-      "Juvenil",
-      "Amateur",
-      "Regional",
-      "Division 2",
-      "Division 3",
-      "A4",
-      "Paulista - A4",
-      "Goiano - 1",
-      "Paranaense - 2",
-      "II Liga - East",
-      "MLS Next Pro"
+      "U19", "U20", "U21", "U23", "Women", "Fem", "Feminina",
+      "Reserve", "Reserves", "Youth", "Juvenil", "Amateur",
+      "Regional", "Division 2", "Division 3", "A4",
+      "Paulista - A4", "Goiano - 1", "Paranaense - 2",
+      "II Liga - East", "MLS Next Pro"
     ];
 
     async function fetchJSON(url, options = {}) {
@@ -1343,6 +1120,11 @@
       return Math.max(min, Math.min(max, valor));
     }
 
+    function safeNum(v, fallback = 0) {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
     function getPressureClass(level) {
       const t = String(level || "").toUpperCase();
       if (t === "EXTREMA") return "pressure-badge pressure-extrema";
@@ -1352,17 +1134,15 @@
     }
 
     function getSignalTier(confidence, value) {
-      const c = Number(confidence || 0);
-      const v = Number(value || 0);
+      const c = safeNum(confidence);
+      const v = safeNum(value);
 
       if (c >= 90 && v >= 12) {
         return { label: "🔥 PREMIUM", className: "signal-tier tier-premium" };
       }
-
       if (c >= 80 && v >= 6) {
         return { label: "⚡ FUERTE", className: "signal-tier tier-fuerte" };
       }
-
       return { label: "📊 NORMAL", className: "signal-tier tier-normal" };
     }
 
@@ -1380,6 +1160,12 @@
       if (t === "ALTO") return "chaos-badge chaos-alto";
       if (t === "MEDIO") return "chaos-badge chaos-medio";
       return "chaos-badge chaos-bajo";
+    }
+
+    function getSignalStatusClass(status) {
+      const s = String(status || "OPEN").toUpperCase();
+      if (s === "CLOSED" || s === "DANGER") return "signal-status-badge signal-status-danger";
+      return "signal-status-badge signal-status-open";
     }
 
     function normalizarTexto(valor) {
@@ -1439,7 +1225,6 @@
       if (l.includes("ivory-coast")) return "ci";
       if (l.includes("morocco") || l.includes("botola")) return "ma";
       if (l.includes("dominican") || l.includes("cibao")) return "do";
-
       return "un";
     }
 
@@ -1467,7 +1252,7 @@
     }
 
     function colorPorValor(value) {
-      const num = Number(value || 0);
+      const num = safeNum(value);
       if (num >= 15) return "green";
       if (num >= 8) return "yellow";
       return "";
@@ -1501,14 +1286,12 @@
 
       const ligasFinales = [...topPresentes, ...resto];
 
-      select.innerHTML =
-        `<option value="ALL">Todas las ligas</option>` +
-        ligasFinales.map(l => `<option value="${l}">${l}</option>`).join("");
+      if (select) {
+        select.innerHTML =
+          `<option value="ALL">Todas las ligas</option>` +
+          ligasFinales.map(l => `<option value="${l}">${l}</option>`).join("");
 
-      if (ligasFinales.includes(valorActual)) {
-        select.value = valorActual;
-      } else {
-        select.value = "ALL";
+        select.value = ligasFinales.includes(valorActual) ? valorActual : "ALL";
       }
 
       renderLigasTopBar(ligasFinales);
@@ -1549,13 +1332,9 @@
       return partidos.filter(p => {
         const ligaNombre = p.liga || "";
 
-        if (esLigaOculta(ligaNombre)) {
-          return false;
-        }
+        if (esLigaOculta(ligaNombre)) return false;
 
-        const ligaOk =
-          ligaSeleccionada === "ALL" ||
-          ligaNombre === ligaSeleccionada;
+        const ligaOk = ligaSeleccionada === "ALL" || ligaNombre === ligaSeleccionada;
 
         const local = (p.local || "").toLowerCase();
         const visitante = (p.visitante || "").toLowerCase();
@@ -1577,15 +1356,13 @@
 
     function obtenerTotalGolesDesdeScore(score) {
       const partes = String(score || "0-0").split("-");
-      return Number(partes[0] || 0) + Number(partes[1] || 0);
+      return safeNum(partes[0]) + safeNum(partes[1]);
     }
 
     function marketLabelDinamico(s) {
       const total = obtenerTotalGolesDesdeScore(s.score || "0-0");
 
-      if (s.selection && String(s.selection).trim() !== "") {
-        return s.selection;
-      }
+      if (s.selection && String(s.selection).trim() !== "") return s.selection;
 
       if (s.market === "OVER_NEXT_15_DYNAMIC") {
         const linea = s.line ?? (total + 0.5);
@@ -1597,48 +1374,39 @@
         return `Over ${linea} partido`;
       }
 
-      if (s.market === "OVER_0_5_NEXT_15") {
-        return `Over ${total + 0.5} próximos 15 min`;
-      }
-
-      if (s.market === "OVER_1_5_MATCH") {
-        return `Over ${Math.max(total + 0.5, 1.5)} partido`;
-      }
-
-      if (s.market === "RESULT_HOLDS_NEXT_15") {
-        return "Se mantiene el resultado próximos 15 min";
-      }
+      if (s.market === "NEXT_GOAL") return "Habrá gol (próximo)";
+      if (s.market === "RESULT_HOLDS_NEXT_15") return "Se mantiene el resultado próximos 15 min";
 
       return s.market || "SEÑAL";
     }
 
-    function calcularGoal15(p) {
+    function calcularGoal15DesdePartido(p) {
       const predictor = p.goal_predictor || {};
       const gp = p.goal_pressure || {};
       const chaos = p.chaos || {};
 
-      const p10 = Number(predictor.goal_next_10_prob || 0);
-      const pressure = Number(gp.pressure_score || 0);
-      const chaosScore = Number(chaos.chaos_score || 0);
+      const p10 = safeNum(predictor.goal_next_10_prob);
+      const pressure = safeNum(gp.pressure_score);
+      const chaosScore = safeNum(chaos.chaos_score);
 
       let p15 = p10 + 0.08 + (pressure * 0.01) + (chaosScore * 0.005);
       return clamp(p15, 0, 0.97);
     }
 
-    function getExplosiveInfo(p) {
+    function getExplosiveInfo(p, signal = null) {
       const predictor = p.goal_predictor || {};
       const gp = p.goal_pressure || {};
       const chaos = p.chaos || {};
 
-      const p10 = Number(predictor.goal_next_10_prob || 0);
-      const pressure = Number(gp.pressure_score || 0);
-      const chaosScore = Number(chaos.chaos_score || 0);
-      const xg = Number(p.xG || 0);
+      const p10 = safeNum(signal?.goal_prob_10, safeNum(predictor.goal_next_10_prob));
+      const pressure = safeNum(gp.pressure_score);
+      const chaosScore = safeNum(chaos.chaos_score);
+      const xg = safeNum(p.xG);
 
       let score = 0;
 
-      if (p10 >= 0.75) score += 3;
-      else if (p10 >= 0.60) score += 2;
+      if (p10 >= 75) score += 3;
+      else if (p10 >= 60) score += 2;
 
       if (pressure >= 10) score += 3;
       else if (pressure >= 7) score += 2;
@@ -1674,22 +1442,36 @@
 
     function getSecondarySignals(signal) {
       if (!signal || !Array.isArray(signal.all_signals)) return [];
-
       return signal.all_signals
-        .filter(s => (s.mercado || "") !== (signal.market || ""))
+        .filter(s => (s.mercado || s.market || "") !== (signal.market || ""))
         .slice(0, 3);
     }
 
-    function renderGoalProbabilityBlock(p) {
+    function renderGoalProbabilityBlock(p, signal = null) {
       const predictor = p.goal_predictor || {};
-      const p5 = Math.round(Number(predictor.goal_next_5_prob || 0) * 100);
-      const p10 = Math.round(Number(predictor.goal_next_10_prob || 0) * 100);
-      const p15 = Math.round(calcularGoal15(p) * 100);
+
+      const p5 = Math.round(
+        signal?.goal_prob_5 != null
+          ? safeNum(signal.goal_prob_5)
+          : safeNum(predictor.goal_next_5_prob) * 100
+      );
+
+      const p10 = Math.round(
+        signal?.goal_prob_10 != null
+          ? safeNum(signal.goal_prob_10)
+          : safeNum(predictor.goal_next_10_prob) * 100
+      );
+
+      const p15 = Math.round(
+        signal?.goal_prob_15 != null
+          ? safeNum(signal.goal_prob_15)
+          : calcularGoal15DesdePartido(p) * 100
+      );
 
       const rows = [
-        { label: "5 min", value: p5 },
-        { label: "10 min", value: p10 },
-        { label: "15 min", value: p15 }
+        { label: "5 min", value: clamp(p5, 0, 100) },
+        { label: "10 min", value: clamp(p10, 0, 100) },
+        { label: "15 min", value: clamp(p15, 0, 100) }
       ];
 
       return `
@@ -1708,9 +1490,8 @@
       `;
     }
 
-    function renderExplosiveBlock(p) {
-      const info = getExplosiveInfo(p);
-
+    function renderExplosiveBlock(p, signal = null) {
+      const info = getExplosiveInfo(p, signal);
       return `
         <div class="explosive-box ${info.level}">
           <div class="explosive-title ${info.level}">${info.title}</div>
@@ -1721,7 +1502,6 @@
 
     function renderSecondarySignalsBlock(signal) {
       const others = getSecondarySignals(signal);
-
       if (!others.length) return "";
 
       return `
@@ -1730,11 +1510,11 @@
           <div class="signal-secondary-list">
             ${others.map(s => `
               <div class="signal-secondary-item">
-                <div class="signal-secondary-title">${s.apuesta || s.mercado || "Oportunidad"}</div>
+                <div class="signal-secondary-title">${s.apuesta || s.market || s.mercado || "Oportunidad"}</div>
                 <div class="signal-secondary-sub">
-                  Confianza ${s.confianza ?? "-"}% ·
-                  Cuota ${s.cuota ?? "-"} ·
-                  Value +${s.valor ?? 0}%
+                  Confianza ${s.confianza ?? s.confidence ?? "-"}% ·
+                  Cuota ${s.cuota ?? s.odd ?? "-"} ·
+                  Value +${s.valor ?? s.value ?? 0}%
                 </div>
               </div>
             `).join("")}
@@ -1745,7 +1525,7 @@
 
     function renderEstadoPartidoBlock(signal) {
       const estado = signal?.estado_partido || {};
-      const nombre = estado.estado || "";
+      const nombre = estado.estado || signal?.signal_status || "";
       const razon = estado.razon || "";
 
       if (!nombre && !razon) return "";
@@ -1753,7 +1533,7 @@
       let badgeClass = "pill";
       let titulo = "Estado del partido";
 
-      if (nombre === "EXPLOSIVO" || nombre === "CAOS") {
+      if (nombre === "EXPLOSIVO") {
         badgeClass = "alert-badge alert-roja";
         titulo = "🔥 Estado del partido";
       } else if (nombre === "CALIENTE") {
@@ -1837,11 +1617,15 @@
       const calientes = [...filtrarPartidos(partidos)]
         .sort((a, b) => {
           const pa =
-            ((a.goal_predictor || {}).predictor_score || 0) +
-            ((a.chaos || {}).chaos_score || 0) * 0.6;
+            safeNum((a.goal_predictor || {}).predictor_score) +
+            safeNum((a.chaos || {}).chaos_score) * 0.6 +
+            safeNum((a.goal_pressure || {}).pressure_score) * 0.5;
+
           const pb =
-            ((b.goal_predictor || {}).predictor_score || 0) +
-            ((b.chaos || {}).chaos_score || 0) * 0.6;
+            safeNum((b.goal_predictor || {}).predictor_score) +
+            safeNum((b.chaos || {}).chaos_score) * 0.6 +
+            safeNum((b.goal_pressure || {}).pressure_score) * 0.5;
+
           return pb - pa;
         })
         .slice(0, 3);
@@ -1855,8 +1639,8 @@
         const predictor = p.goal_predictor || {};
         const alertLevel = predictor.alert_level || "BAJA";
         const alertClass = getAlertClass(alertLevel);
-        const goal5 = Math.round((predictor.goal_next_5_prob || 0) * 100);
-        const goal10 = Math.round((predictor.goal_next_10_prob || 0) * 100);
+        const goal5 = Math.round(safeNum(predictor.goal_next_5_prob) * 100);
+        const goal10 = Math.round(safeNum(predictor.goal_next_10_prob) * 100);
 
         const chaos = p.chaos || {};
         const chaosLevel = chaos.chaos_level || "BAJO";
@@ -1911,13 +1695,8 @@
         const pais = p.pais || "País desconocido";
         const liga = p.liga || "Liga desconocida";
 
-        if (!agrupadosPorPais[pais]) {
-          agrupadosPorPais[pais] = {};
-        }
-
-        if (!agrupadosPorPais[pais][liga]) {
-          agrupadosPorPais[pais][liga] = [];
-        }
+        if (!agrupadosPorPais[pais]) agrupadosPorPais[pais] = {};
+        if (!agrupadosPorPais[pais][liga]) agrupadosPorPais[pais][liga] = [];
 
         agrupadosPorPais[pais][liga].push(p);
       });
@@ -1963,8 +1742,8 @@
                       ${ligasObj[liga].map(p => {
                         const predictor = p.goal_predictor || {};
                         const alertLevel = predictor.alert_level || "BAJA";
-                        const goal5 = Math.round((predictor.goal_next_5_prob || 0) * 100);
-                        const goal10 = Math.round((predictor.goal_next_10_prob || 0) * 100);
+                        const goal5 = Math.round(safeNum(predictor.goal_next_5_prob) * 100);
+                        const goal10 = Math.round(safeNum(predictor.goal_next_10_prob) * 100);
 
                         const gp = p.goal_pressure || {};
                         const pressureLevel = gp.pressure_level || "BAJA";
@@ -1981,6 +1760,7 @@
                         const signal = getSignalForMatch(p.id);
                         const signalOpen = !!inlineSignalsOpen[p.id];
                         const signalTier = signal ? getSignalTier(signal.confidence, signal.value) : null;
+                        const signalStatus = signal?.signal_status || "OPEN";
 
                         return `
                           <div class="match-clean">
@@ -2019,38 +1799,6 @@
                               <span class="event-pill">ID ${p.id ?? "-"}</span>
                             </div>
 
-                            <div class="match-intelligence">
-                              <div class="intel-row">
-                                <span class="intel-tag estado">
-                                  ⚡ Estado: ${(signal?.estado_partido?.estado || "N/A")}
-                                </span>
-
-                                <span class="intel-tag gol">
-                                  🎯 Gol inminente: ${(signal?.gol_inminente?.gol_inminente ? "SI" : "NO")}
-                                </span>
-
-                                <span class="intel-tag predictor">
-                                  📊 Predictor: ${predictor.predictor_score ?? 0}
-                                </span>
-                              </div>
-
-                              <div class="attack-meter">
-                                <div class="attack-team">
-                                  <span>${p.local}</span>
-                                  <div class="attack-bar">
-                                    <div class="attack-fill home" style="width:${Math.min(100, (pressureScore || 0) * 8)}%"></div>
-                                  </div>
-                                </div>
-
-                                <div class="attack-team">
-                                  <span>${p.visitante}</span>
-                                  <div class="attack-bar">
-                                    <div class="attack-fill away" style="width:${Math.min(100, (chaosScore || 0) * 7)}%"></div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
                             ${signal ? `
                               <div class="signal-inline-box ${signalOpen ? "open" : ""}">
                                 <button class="signal-inline-toggle" type="button" onclick="event.stopPropagation(); toggleInlineSignal('${p.id}')">
@@ -2078,13 +1826,14 @@
                                     <span class="pill">Confianza ${signal.confidence ?? "-"}%</span>
                                     <span class="pill">Value +${signal.value ?? 0}%</span>
                                     <span class="pill">${signal.league || "Liga desconocida"}</span>
+                                    <span class="${getSignalStatusClass(signalStatus)}">${signalStatus}</span>
                                   </div>
 
                                   ${renderEstadoPartidoBlock(signal)}
                                   ${renderGolInminenteBlock(signal)}
                                   ${renderSecondarySignalsBlock(signal)}
-                                  ${renderGoalProbabilityBlock(p)}
-                                  ${renderExplosiveBlock(p)}
+                                  ${renderGoalProbabilityBlock(p, signal)}
+                                  ${renderExplosiveBlock(p, signal)}
                                 </div>
                               </div>
                             ` : ""}
@@ -2108,9 +1857,10 @@
       try {
         const data = await fetchJSON(`${BACKEND}/scan`);
         const partidos = data.partidos || [];
-        document.getElementById("totalMatches").textContent = data.scanned ?? partidos.length;
 
+        document.getElementById("totalMatches").textContent = data.scanned ?? partidos.length;
         cachePartidos = partidos;
+
         poblarFiltroLigas(cachePartidos);
         renderHotMatches(cachePartidos);
 
@@ -2172,8 +1922,9 @@
           return;
         }
 
-        contenedor.innerHTML = senales.slice(0, 6).map(s => {
+        contenedor.innerHTML = senales.slice(0, 8).map(s => {
           const tier = getSignalTier(s.confidence, s.value);
+          const status = s.signal_status || "OPEN";
 
           return `
             <div class="signal-card">
@@ -2197,6 +1948,7 @@
                 <span class="pill">Prob ${s.prob ?? "-"}</span>
                 <span class="pill">Confianza ${s.confidence ?? "-"}%</span>
                 <span class="pill">${s.league || "Liga desconocida"}</span>
+                <span class="${getSignalStatusClass(status)}">${status}</span>
               </div>
             </div>
           `;
@@ -2223,6 +1975,8 @@
         const stats = await fetchJSON(`${BACKEND}/learning-stats`);
 
         document.getElementById("historyTotal").textContent = stats.total_senales ?? 0;
+        document.getElementById("historySub").textContent =
+          `Resueltas ${stats.resueltas ?? 0} · Pendientes ${stats.pendientes ?? 0}`;
 
         if (!history.length) {
           contenedor.innerHTML = `<div class="empty">No hay historial todavía.</div>`;
@@ -2230,9 +1984,9 @@
           contenedor.innerHTML = history.slice(-8).reverse().map(h => `
             <div class="history-item">
               <div class="history-title">${h.home || "Local"} vs ${h.away || "Visitante"}</div>
-              <div class="small">Mercado: ${h.market || "-"} | Selección: ${h.selection || "-"}</div>
-              <div class="small">Min ${h.minute ?? 0} · Cuota ${h.odd ?? "-"} · Value ${h.value ?? "-"}%</div>
-              <div class="small">Estado: ${h.estado_resultado || "pendiente"}</div>
+              <div class="history-sub">Mercado: ${h.market || "-"} | Selección: ${h.selection || "-"}</div>
+              <div class="history-sub">Min ${h.minute ?? 0} · Cuota ${h.odd ?? "-"} · Value ${h.value ?? "-"}%</div>
+              <div class="history-sub">Estado: ${h.estado_resultado || "pendiente"}</div>
             </div>
           `).join("");
         }
@@ -2254,6 +2008,14 @@
             <div class="stats-box-title">Perdidas</div>
             <div class="stats-box-value">${stats.perdidas ?? 0}</div>
           </div>
+          <div class="stats-box">
+            <div class="stats-box-title">Conf. promedio</div>
+            <div class="stats-box-value">${stats.confidence_promedio ?? 0}%</div>
+          </div>
+          <div class="stats-box">
+            <div class="stats-box-title">Value promedio</div>
+            <div class="stats-box-value">+${stats.value_promedio ?? 0}%</div>
+          </div>
         `;
       } catch (err) {
         contenedor.innerHTML = `<div class="empty danger">Error cargando historial: ${err.message}</div>`;
@@ -2267,6 +2029,8 @@
         document.getElementById("autoScanValue").textContent = data.auto_scan_activo ? "ACTIVO" : "OFF";
         document.getElementById("autoScanMessage").textContent =
           `Cada ${data.intervalo_segundos ?? 30}s · Último scan: ${data.ultimo_scan || "N/A"}`;
+
+        document.getElementById("refreshInfo").textContent = `${data.intervalo_segundos ?? 30}s`;
 
         if (data.auto_scan_activo) {
           setStatus("AUTO-SCAN activo", true);
@@ -2311,6 +2075,7 @@
       }, 30000);
     }
 
+    document.getElementById("backendMiniUrl").textContent = window.location.host;
     cargarTodo();
     activarAutoRefresh();
   </script>
