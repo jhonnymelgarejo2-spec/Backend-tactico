@@ -1,8 +1,8 @@
-from typing import List, Dict, Tuple
+from typing import List, Dict
 from signal_engine import generar_senal
 
 
-def partido_es_apostable(p: Dict) -> Tuple[bool, str]:
+def partido_es_apostable(p: Dict) -> tuple[bool, str]:
     minuto = int(p.get("minuto", 0) or 0)
     estado = str(p.get("estado_partido", "activo")).lower()
 
@@ -67,7 +67,8 @@ def generar_senales(partidos: List[Dict]) -> List[Dict]:
             "confidence": senal.get("confianza", 0),
             "reason": senal.get("razon", ""),
             "tier": senal.get("tier", "NORMAL"),
-            "estado_partido": p.get("estado_partido", "activo"),
+            "estado_partido": senal.get("estado_partido", {}),
+            "gol_inminente": senal.get("gol_inminente", {}),
             "signal_status": senal.get("signal_status", "OPEN"),
             "goal_prob_5": senal.get("goal_prob_5", 0),
             "goal_prob_10": senal.get("goal_prob_10", 0),
