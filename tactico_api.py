@@ -19,7 +19,7 @@ app.add_middleware(
 )
 
 # conectar router
-app.include_router(live_router)
+app.include_router(live_router, prefix="/api")
 
 # ------------------------------
 # RUTA PRINCIPAL
@@ -62,3 +62,4 @@ def ping():
         "ping": "pong",
         "mensaje": "Servidor activo"
     }
+
