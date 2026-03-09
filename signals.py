@@ -2,10 +2,27 @@ from typing import List, Dict
 from signal_engine import generar_senal
 
 
+def partido_es_apostable(p: Dict) -> tuple[bool, str]:
+    minuto = int(p.get("minuto", 0) or 0)
+    estado = str(p.get("estado_partido", "activo")).lower()
+
+    if estado in ["finalizado", "finished", "ft", "ended"]:
+        return False, "Partido finalizado"
+
+    if minuto >= 88:
+        return False, "Minuto demasiado alto"
+
+    return True, "OK"
+
+
 def generar_senales(partidos: List[Dict]) -> List[Dict]:
     senales = []
 
     for p in partidos:
+        ok, motivo = partido_es_apostable(p)
+        if not ok:
+            continue
+
         datos = {
             "id": p.get("id", ""),
             "momentum": p.get("momentum", "MEDIO"),
@@ -19,6 +36,7 @@ def generar_senales(partidos: List[Dict]) -> List[Dict]:
             "goal_pressure": p.get("goal_pressure", {}),
             "goal_predictor": p.get("goal_predictor", {}),
             "chaos": p.get("chaos", {}),
+            "estado_partido": p.get("estado_partido", "activo"),
         }
 
         senal = generar_senal(datos)
@@ -29,7 +47,7 @@ def generar_senales(partidos: List[Dict]) -> List[Dict]:
         if senal.get("mercado") == "SIN_SEÑAL":
             continue
 
-        if senal.get("valor", 0) <= 0:
+        if float(senal.get("valor", 0) or 0) <= 0:
             continue
 
         senales.append({
@@ -49,16 +67,19 @@ def generar_senales(partidos: List[Dict]) -> List[Dict]:
             "confidence": senal.get("confianza", 0),
             "reason": senal.get("razon", ""),
             "tier": senal.get("tier", "NORMAL"),
-            "estado_partido": senal.get("estado_partido", {}),
-            "gol_inminente": senal.get("gol_inminente", {}),
+            "estado_partido": p.get("estado_partido", "activo"),
+            "signal_status": senal.get("signal_status", "OPEN"),
+            "goal_prob_5": senal.get("goal_prob_5", 0),
+            "goal_prob_10": senal.get("goal_prob_10", 0),
+            "goal_prob_15": senal.get("goal_prob_15", 0),
             "all_signals": senal.get("senales_posibles", []),
         })
 
     senales.sort(
         key=lambda s: (
             {"PREMIUM": 3, "FUERTE": 2, "NORMAL": 1}.get(s.get("tier", "NORMAL"), 0),
-            s.get("confidence", 0),
-            s.get("value", 0)
+            float(s.get("confidence", 0) or 0),
+            float(s.get("value", 0) or 0)
         ),
         reverse=True
     )
