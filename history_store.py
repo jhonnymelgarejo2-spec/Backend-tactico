@@ -63,7 +63,7 @@ def guardar_senales_en_historial(senales):
             "confidence": float(s.get("confidence", 0) or 0),
             "reason": s.get("reason"),
             "resultado_real": None,
-            "estado_resultado": "pendiente"
+            "estado_resultado": "pendiente",
         }
 
         if not existe_senal_parecida(historial, registro):
@@ -80,7 +80,10 @@ def actualizar_resultado_senal(index, estado_resultado, resultado_real=None):
 
     estado = str(estado_resultado).strip().lower()
     if estado not in ["ganada", "perdida", "nula"]:
-        return {"status": "error", "detalle": "Estado inválido. Usa: ganada, perdida o nula"}
+        return {
+            "status": "error",
+            "detalle": "Estado inválido. Usa: ganada, perdida o nula",
+        }
 
     historial[index]["estado_resultado"] = estado
     historial[index]["resultado_real"] = resultado_real
@@ -91,7 +94,7 @@ def actualizar_resultado_senal(index, estado_resultado, resultado_real=None):
     return {
         "status": "ok",
         "mensaje": "Resultado actualizado",
-        "senal": historial[index]
+        "senal": historial[index],
     }
 
 
@@ -137,16 +140,22 @@ def obtener_estadisticas_historial():
         }
 
     confidence_promedio = round(
-        sum(float(x.get("confidence", 0) or 0) for x in historial) / total, 2
+        sum(float(x.get("confidence", 0) or 0) for x in historial) / total,
+        2,
     )
 
     value_promedio = round(
-        sum(float(x.get("value", 0) or 0) for x in historial) / total, 2
+        sum(float(x.get("value", 0) or 0) for x in historial) / total,
+        2,
     )
 
     profit_units = round(
-        sum(calcular_beneficio_unitario(x) for x in historial if x.get("estado_resultado") != "pendiente"),
-        2
+        sum(
+            calcular_beneficio_unitario(x)
+            for x in historial
+            if x.get("estado_resultado") != "pendiente"
+        ),
+        2,
     )
 
     if resueltas > 0:
@@ -184,13 +193,13 @@ def obtener_estadisticas_historial():
     ligas_top = sorted(
         [{"liga": k, **v} for k, v in ligas.items()],
         key=lambda x: x["profit"],
-        reverse=True
+        reverse=True,
     )[:5]
 
     mercados_top = sorted(
         [{"mercado": k, **v} for k, v in mercados.items()],
         key=lambda x: x["profit"],
-        reverse=True
+        reverse=True,
     )[:5]
 
     return {
@@ -207,4 +216,4 @@ def obtener_estadisticas_historial():
         "value_promedio": value_promedio,
         "ligas_top": ligas_top,
         "mercados_top": mercados_top,
-        }
+                }
