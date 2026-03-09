@@ -1,12 +1,57 @@
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from signal_engine import generar_senal
 
 
-def generar_senales(partidos: List[Dict]) -> List[Dict]:
+def partido_es_apostable(p: Dict) -> Tuple[bool, str]:
+    minuto = int(p.get("minuto", 0) or 0)
+    estado = str(p.get("estado_partido", "activo")).strip().lower()
 
+    if estado in ["finalizado", "finished", "ft", "ended"]:
+        return False, "Partido finalizado"
+
+    if minuto >= 88:
+        return False, "Minuto demasiado alto"
+
+    return True, "OK"
+
+
+def filtrar_partidos(partidos: List[Dict], max_partidos: int = 40) -> List[Dict]:
+    """
+    Filtra partidos válidos para escaneo.
+    Evita partidos terminados o demasiado avanzados.
+    """
+    if not partidos:
+        return []
+
+    partidos_filtrados = []
+
+    for p in partidos:
+        ok, _ = partido_es_apostable(p)
+        if not ok:
+            continue
+
+        partidos_filtrados.append(p)
+
+    partidos_filtrados.sort(
+        key=lambda p: (
+            float(p.get("xG", 0) or 0),
+            float((p.get("goal_pressure") or {}).get("pressure_score", 0) or 0),
+            float((p.get("chaos") or {}).get("chaos_score", 0) or 0),
+            float((p.get("goal_predictor") or {}).get("goal_next_10_prob", 0) or 0),
+        ),
+        reverse=True
+    )
+
+    return partidos_filtrados[:max_partidos]
+
+
+def generar_senales(partidos: List[Dict]) -> List[Dict]:
     senales = []
 
     for p in partidos:
+        ok, _ = partido_es_apostable(p)
+        if not ok:
+            continue
 
         datos = {
             "id": p.get("id", ""),
@@ -23,6 +68,7 @@ def generar_senales(partidos: List[Dict]) -> List[Dict]:
             "goal_pressure": p.get("goal_pressure", {}),
             "goal_predictor": p.get("goal_predictor", {}),
             "chaos": p.get("chaos", {}),
+            "estado_partido": p.get("estado_partido", "activo"),
         }
 
         senal = generar_senal(datos)
@@ -33,11 +79,10 @@ def generar_senales(partidos: List[Dict]) -> List[Dict]:
         if senal.get("mercado") == "SIN_SEÑAL":
             continue
 
-        if senal.get("valor", 0) <= 0:
+        if float(senal.get("valor", 0) or 0) <= 0:
             continue
 
         senales.append({
-
             "match_id": p.get("id", ""),
             "home": p.get("local", ""),
             "away": p.get("visitante", ""),
@@ -45,7 +90,6 @@ def generar_senales(partidos: List[Dict]) -> List[Dict]:
             "country": p.get("pais", ""),
 
             "minute": p.get("minuto", 0),
-
             "score": f'{p.get("marcador_local", 0)}-{p.get("marcador_visitante", 0)}',
 
             "market": senal.get("mercado", ""),
@@ -73,8 +117,8 @@ def generar_senales(partidos: List[Dict]) -> List[Dict]:
     senales.sort(
         key=lambda s: (
             {"PREMIUM": 3, "FUERTE": 2, "NORMAL": 1}.get(s.get("tier", "NORMAL"), 0),
-            s.get("confidence", 0),
-            s.get("value", 0)
+            float(s.get("confidence", 0) or 0),
+            float(s.get("value", 0) or 0)
         ),
         reverse=True
     )
