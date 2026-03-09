@@ -30,23 +30,33 @@ class ResolverResultadoRequest(BaseModel):
 
 def limpiar_senal_para_api(s):
     """
-    Devuelve una versión limpia de la señal para el dashboard/API.
+    Devuelve una versión completa y limpia de la señal para el dashboard/API.
     """
     return {
         "match_id": s.get("match_id", ""),
         "home": s.get("home", ""),
         "away": s.get("away", ""),
         "league": s.get("league", ""),
+        "country": s.get("country", ""),
         "event_type": s.get("event_type", ""),
         "minute": s.get("minute", 0),
         "score": s.get("score", "0-0"),
         "market": s.get("market", ""),
         "selection": s.get("selection", ""),
+        "line": s.get("line"),
         "odd": s.get("odd", 0),
         "prob": s.get("prob", 0),
         "value": s.get("value", 0),
         "confidence": s.get("confidence", 0),
-        "reason": s.get("reason", "")
+        "reason": s.get("reason", ""),
+        "tier": s.get("tier", "NORMAL"),
+        "estado_partido": s.get("estado_partido", {}),
+        "gol_inminente": s.get("gol_inminente", {}),
+        "signal_status": s.get("signal_status", "OPEN"),
+        "goal_prob_5": s.get("goal_prob_5", 0),
+        "goal_prob_10": s.get("goal_prob_10", 0),
+        "goal_prob_15": s.get("goal_prob_15", 0),
+        "all_signals": s.get("all_signals", []),
     }
 
 
@@ -60,6 +70,7 @@ def obtener_top_senales(senales, limite=MAX_TOP_SIGNALS):
     ordenadas = sorted(
         senales,
         key=lambda s: (
+            {"PREMIUM": 3, "FUERTE": 2, "NORMAL": 1}.get(s.get("tier", "NORMAL"), 0),
             float(s.get("confidence", 0) or 0),
             float(s.get("value", 0) or 0),
             float(s.get("prob", 0) or 0)
