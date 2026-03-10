@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, HTMLResponse
+from pathlib import Path
 
 from live_router import router as live_router
 from sofascore_fetcher import obtener_partidos_en_vivo
@@ -21,14 +23,24 @@ app.add_middleware(
 # router adicional
 app.include_router(live_router)
 
+BASE_DIR = Path(__file__).resolve().parent
+INDEX_FILE = BASE_DIR / "static" / "index.html"
+
 
 @app.get("/")
 def home():
-    return {
-        "ok": True,
-        "mensaje": "Backend táctico funcionando",
-        "version": "V1_REAL"
-    }
+    if INDEX_FILE.exists():
+        return FileResponse(INDEX_FILE)
+
+    return HTMLResponse("""
+    <html>
+      <head><title>JHONNY ELITE</title></head>
+      <body style="background:#07111f;color:white;font-family:Arial;padding:20px">
+        <h2>Backend táctico funcionando</h2>
+        <p>No se encontró static/index.html</p>
+      </body>
+    </html>
+    """)
 
 
 @app.get("/status")
@@ -91,11 +103,4 @@ def signals_endpoint():
             "estado": "error",
             "detalle": str(e),
             "signals": []
-}
-@app.get("/scan")
-def scan_alias():
-    return scan()
-
-@app.get("/signals")
-def signals_alias():
-    return signals_endpoint()
+    }
