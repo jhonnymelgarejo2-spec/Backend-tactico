@@ -25,3 +25,4 @@ def status():
 @app.get("/partidos-en-vivo")
 def partidos():
     return {"ok": True, "ruta": "/partidos-en-vivo"}
+
