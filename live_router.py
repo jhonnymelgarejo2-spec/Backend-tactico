@@ -115,4 +115,4 @@ def auto_scan_status():
         "estado": "OK",
         "auto_scan_activo": True,
         "mensaje": "AUTO-SCAN operativo"
-    }
+        }
