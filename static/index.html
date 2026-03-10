@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JHONNY_ELITE V10 PRO</title>
+  <title>JHONNY_ELITE V10</title>
   <style>
     * {
       box-sizing: border-box;
@@ -12,47 +12,48 @@
     }
 
     :root {
-      --bg: #08111d;
-      --panel: #0d1828;
-      --panel-2: #101d30;
-      --card: linear-gradient(180deg, #101c2d, #0a1422);
-      --card-2: linear-gradient(180deg, #13233a, #0d1828);
+      --bg: #07111f;
+      --panel: #0b1728;
+      --panel-2: #0f1d30;
+      --card: linear-gradient(180deg, #0f1c2d, #0a1423);
+      --card-2: linear-gradient(180deg, #13253a, #0c1828);
       --border: rgba(255,255,255,0.08);
-      --text: #edf6ff;
-      --muted: #8fb7df;
-      --blue: #4da3ff;
-      --green: #67f7a1;
-      --yellow: #ffd76d;
+      --text: #eaf6ff;
+      --muted: #8eb8e8;
+      --blue: #245487;
+      --blue-soft: #18314f;
+      --green: #65ff9b;
+      --yellow: #ffd66e;
       --red: #ff8d8d;
-      --orange: #ffb86b;
-      --purple: #c39bff;
-      --shadow: 0 10px 28px rgba(0,0,0,0.28);
     }
 
     body {
       font-family: Arial, sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(77,163,255,0.08), transparent 28%),
-        radial-gradient(circle at top right, rgba(103,247,161,0.06), transparent 24%),
-        var(--bg);
+      background: var(--bg);
       color: var(--text);
     }
 
     .page {
       display: grid;
-      grid-template-columns: 290px 1fr 370px;
+      grid-template-columns: 280px 1fr 360px;
       gap: 18px;
       min-height: 100vh;
       padding: 18px;
     }
 
+    .col,
+    .leftbar,
+    .mainpanel,
+    .rightbar {
+      min-width: 0;
+    }
+
     .card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 20px;
+      border-radius: 18px;
       padding: 16px;
-      box-shadow: var(--shadow);
-      min-width: 0;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
     }
 
     .card + .card {
@@ -60,60 +61,87 @@
     }
 
     .logo {
-      font-size: 30px;
-      font-weight: 900;
-      line-height: 1;
-      letter-spacing: 0.02em;
+      font-size: 26px;
+      font-weight: bold;
+      color: #fff;
       margin-bottom: 10px;
     }
 
     .logo span {
-      color: var(--green);
+      color: #3ddc97;
     }
 
     .subtitle {
-      color: var(--muted);
       font-size: 13px;
+      color: #7cb8ff;
       line-height: 1.5;
     }
 
     .menu {
-      margin-top: 18px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
+      margin-top: 18px;
     }
 
     .menu button,
-    .toolbar button,
-    .filter-control,
-    .signal-inline-toggle {
-      background: #142741;
-      color: #e7f1fb;
+    .toolbar button {
+      background: #12233b;
+      color: #dbeaff;
       border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 14px;
       padding: 12px 14px;
-      font-weight: bold;
+      border-radius: 12px;
+      text-align: left;
       cursor: pointer;
-      transition: 0.2s ease;
+      transition: 0.2s;
+      font-weight: bold;
     }
 
     .menu button:hover,
-    .toolbar button:hover,
-    .signal-inline-toggle:hover {
-      background: #1a3355;
+    .toolbar button:hover {
+      background: #18304f;
     }
 
     .section-title {
-      font-size: 17px;
-      font-weight: 900;
-      color: #fff;
+      font-size: 16px;
+      font-weight: bold;
+      color: #ffffff;
       margin-bottom: 12px;
+    }
+
+    .mini-signal-list,
+    .signal-list,
+    .history-list,
+    .match-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .mini-signal {
+      background: #0b1625;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .mini-signal-title {
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    .mini-signal-sub {
+      font-size: 12px;
+      color: #cde2ff;
+      line-height: 1.45;
+      margin-bottom: 6px;
     }
 
     .topbar {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 14px;
       margin-bottom: 16px;
     }
@@ -123,67 +151,46 @@
       border: 1px solid var(--border);
       border-radius: 18px;
       padding: 16px;
-      box-shadow: var(--shadow);
     }
 
     .metric-title {
-      color: var(--muted);
       font-size: 13px;
+      color: var(--muted);
       margin-bottom: 8px;
     }
 
     .metric-value {
-      font-size: 28px;
-      font-weight: 900;
+      font-size: 26px;
+      font-weight: bold;
       color: #fff;
-      line-height: 1.05;
     }
 
     .metric-sub {
-      margin-top: 8px;
+      margin-top: 6px;
       font-size: 12px;
-      line-height: 1.45;
-      color: #a3c3e7;
+      color: #9bc1e8;
+      line-height: 1.4;
     }
 
     .toolbar {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
-      align-items: center;
       margin-bottom: 16px;
-    }
-
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: #163823;
-      color: #7bffb2;
-      border: 1px solid #2f8155;
-      font-size: 12px;
-      font-weight: bold;
-    }
-
-    .status-badge.off {
-      background: #4b1b1b;
-      color: #ff9c9c;
-      border-color: #a84a4a;
-    }
-
-    .subsection {
-      margin-top: 16px;
     }
 
     .filters-row {
       display: flex;
-      flex-wrap: wrap;
       gap: 10px;
+      flex-wrap: wrap;
     }
 
     .filter-control {
+      background: #12233b;
+      color: #dbeaff;
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 12px 14px;
+      border-radius: 12px;
       min-width: 220px;
       outline: none;
     }
@@ -199,18 +206,18 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: #142741;
-      color: #e7f1fb;
+      background: #12233b;
+      color: #dbeaff;
       border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 999px;
       padding: 8px 10px;
+      border-radius: 999px;
       font-size: 12px;
       cursor: pointer;
-      transition: 0.2s ease;
+      transition: 0.2s;
     }
 
     .liga-badge:hover {
-      background: #1a3355;
+      background: #18304f;
     }
 
     .liga-flag {
@@ -218,42 +225,29 @@
       height: 13px;
       object-fit: cover;
       border-radius: 2px;
-      border: 1px solid rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.15);
       background: #0f1d30;
     }
 
-    .mini-signal-list,
-    .signal-list,
-    .history-list,
-    .match-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .mini-signal,
-    .history-item,
-    .signal-card {
-      background: #0d1828;
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 16px;
-      padding: 12px;
-    }
-
-    .mini-signal-title,
-    .history-title {
-      font-size: 14px;
-      font-weight: bold;
-      margin-bottom: 8px;
-    }
-
-    .mini-signal-sub,
-    .signal-sub,
-    .history-sub,
-    .small {
+    .status-badge {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 999px;
       font-size: 12px;
-      line-height: 1.45;
-      color: #cfe2f8;
+      font-weight: bold;
+      background: #173a24;
+      color: #70ffab;
+      border: 1px solid #2d7a4b;
+    }
+
+    .status-badge.off {
+      background: #4a1a1a;
+      color: #ff9999;
+      border: 1px solid #a94444;
+    }
+
+    .subsection {
+      margin-top: 16px;
     }
 
     .hot-grid {
@@ -278,38 +272,25 @@
     }
 
     .league {
-      color: #82c7ff;
+      color: #7cc4ff;
       font-size: 12px;
       font-weight: bold;
     }
 
-    .hot-teams {
-      font-size: 22px;
-      font-weight: 900;
-      line-height: 1.25;
-      margin-bottom: 10px;
-    }
-
-    .hot-line,
-    .signal-meta,
-    .match-extra-row,
-    .match-clean-bottom,
-    .signal-inline-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 8px;
-    }
-
     .pill,
-    .event-pill {
+    .metric-pill-soft {
       display: inline-block;
-      background: #1a3355;
-      color: #e2effb;
-      padding: 7px 10px;
+      background: #18314f;
+      color: #dcecff;
+      padding: 6px 10px;
       border-radius: 999px;
       font-size: 12px;
       line-height: 1.2;
+    }
+
+    .metric-pill-soft {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.06);
     }
 
     .alert-badge,
@@ -321,95 +302,214 @@
       border-radius: 999px;
       font-size: 12px;
       font-weight: bold;
-      border: 1px solid rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.12);
     }
 
     .alert-roja,
     .pressure-extrema {
-      background: #4c1414;
-      color: #ff9f9f;
-      border-color: #b34949;
+      background: #4a1010;
+      color: #ff8d8d;
+      border-color: #a33a3a;
     }
 
     .alert-naranja,
     .pressure-alta {
-      background: #4e3112;
-      color: #ffc27b;
-      border-color: #b67635;
+      background: #4a2f10;
+      color: #ffbf70;
+      border-color: #a36b2e;
     }
 
     .alert-amarilla,
     .pressure-media {
-      background: #4b4313;
-      color: #ffe37a;
-      border-color: #b5a42f;
+      background: #4a4410;
+      color: #ffe670;
+      border-color: #a39a2e;
     }
 
     .alert-baja,
     .pressure-baja {
-      background: #123521;
-      color: #7ff5af;
+      background: #10351f;
+      color: #7dffb0;
       border-color: #2f8a57;
     }
 
     .chaos-extremo {
-      background: #52182f;
-      color: #ff9dc5;
-      border-color: #b64b7d;
+      background: #5a1028;
+      color: #ff9dc2;
+      border-color: #b34775;
     }
 
     .chaos-alto {
-      background: #4e3112;
-      color: #ffc27b;
-      border-color: #b67635;
+      background: #4a2f10;
+      color: #ffbf70;
+      border-color: #a36b2e;
     }
 
     .chaos-medio {
-      background: #4b4313;
-      color: #ffe37a;
-      border-color: #b5a42f;
+      background: #4a4410;
+      color: #ffe670;
+      border-color: #a39a2e;
     }
 
     .chaos-bajo {
-      background: #123521;
-      color: #7ff5af;
+      background: #10351f;
+      color: #7dffb0;
       border-color: #2f8a57;
     }
 
     .tier-premium {
-      background: linear-gradient(180deg, #533a11, #2f2108);
-      color: #ffd76d;
-      border-color: #c09028;
+      background: linear-gradient(180deg, #4a3410, #2f2008);
+      color: #ffd66e;
+      border-color: #b78a22;
     }
 
     .tier-fuerte {
-      background: linear-gradient(180deg, #122f50, #0d1e36);
-      color: #89ccff;
-      border-color: #3f77ab;
+      background: linear-gradient(180deg, #102b4a, #0a1d33);
+      color: #7cc4ff;
+      border-color: #2f6ea3;
     }
 
     .tier-normal {
-      background: linear-gradient(180deg, #1b3821, #122618);
-      color: #8ef2b4;
-      border-color: #33895a;
+      background: linear-gradient(180deg, #18351f, #102515);
+      color: #8ff0b3;
+      border-color: #2f8a57;
+    }
+
+    .hot-teams {
+      font-size: 22px;
+      font-weight: bold;
+      line-height: 1.3;
+      margin-bottom: 10px;
+    }
+
+    .hot-line {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
     }
 
     .reason-box {
       margin-top: 10px;
       padding-top: 10px;
       border-top: 1px solid rgba(255,255,255,0.08);
-      color: #a8c9e9;
+      color: #9bc1e8;
       font-size: 13px;
       line-height: 1.45;
+    }
+
+    .signal-card {
+      background: linear-gradient(180deg, #102235, #0a1522);
+      border: 1px solid rgba(61,220,151,0.22);
+      border-radius: 18px;
+      padding: 14px;
+    }
+
+    .signal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .signal-market {
+      font-size: 20px;
+      font-weight: bold;
+      color: #ffd66e;
+      line-height: 1.3;
+      margin-top: 8px;
+    }
+
+    .signal-value {
+      font-size: 26px;
+      font-weight: bold;
+      color: #65ff9b;
+      white-space: nowrap;
+    }
+
+    .signal-sub {
+      font-size: 14px;
+      color: #d7e8ff;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    .signal-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .history-item {
+      background: #0b1625;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .history-title {
+      font-weight: bold;
+      margin-bottom: 6px;
+      font-size: 15px;
+    }
+
+    .small {
+      font-size: 12px;
+      color: #b8d6f5;
+      line-height: 1.45;
+      margin-top: 4px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .stats-box {
+      background: #0b1625;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .stats-box-title {
+      font-size: 12px;
+      color: #8eb8e8;
+      margin-bottom: 8px;
+    }
+
+    .stats-box-value {
+      font-size: 22px;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .empty {
+      color: #9eb7d4;
+      padding: 10px 0;
+    }
+
+    .danger {
+      color: #ff7b7b;
+    }
+
+    .green {
+      color: #65ff9b;
+    }
+
+    .yellow {
+      color: #ffd66e;
     }
 
     .matches-group {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 18px;
     }
 
-    .country-group,
     .league-block {
       background: linear-gradient(180deg, #0f1c2d, #0a1423);
       border: 1px solid rgba(255,255,255,0.08);
@@ -417,42 +517,160 @@
       overflow: hidden;
     }
 
-    .country-header,
     .league-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
       padding: 14px 18px;
       background: rgba(255,255,255,0.03);
       border-bottom: 1px solid rgba(255,255,255,0.06);
+      gap: 10px;
       flex-wrap: wrap;
     }
 
-    .country-header {
-      cursor: pointer;
-    }
-
-    .country-header-left,
     .league-header-left {
       display: flex;
       align-items: center;
       gap: 10px;
       font-size: 15px;
       font-weight: bold;
+      color: #ffffff;
+    }
+
+    .league-header-right {
+      font-size: 13px;
+      color: #9bc1e8;
+    }
+
+    .match-clean {
+      padding: 20px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .match-clean:last-child {
+      border-bottom: none;
+    }
+
+    .match-clean-top {
+      display: grid;
+      grid-template-columns: 1fr 180px 1fr;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .team-clean {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      text-align: center;
+    }
+
+    .team-clean img {
+      width: 46px;
+      height: 46px;
+      object-fit: contain;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 4px;
+    }
+
+    .team-clean-name {
+      font-size: 18px;
+      font-weight: bold;
       color: #fff;
     }
 
-    .country-header-right,
-    .league-header-right {
+    .score-clean-box {
       display: flex;
-      gap: 10px;
+      flex-direction: column;
       align-items: center;
-      color: #9fc4e7;
+      gap: 8px;
+    }
+
+    .score-clean {
+      font-size: 54px;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1;
+    }
+
+    .score-separator {
+      opacity: 0.7;
+      padding: 0 8px;
+    }
+
+    .match-status-clean {
+      font-size: 13px;
+      color: #9bc1e8;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .match-clean-bottom {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .event-pill {
+      display: inline-block;
+      background: #18314f;
+      color: #dcecff;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+
+    .match-extra-row {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .country-group {
+      background: linear-gradient(180deg, #0f1c2d, #0a1423);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .country-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 18px;
+      cursor: pointer;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .country-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .country-header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #9bc1e8;
       font-size: 13px;
     }
 
     .country-chevron {
+      font-size: 16px;
       transition: transform 0.2s ease;
     }
 
@@ -468,76 +686,10 @@
       display: none;
     }
 
-    .match-clean {
-      padding: 18px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
-
-    .match-clean:last-child {
-      border-bottom: none;
-    }
-
-    .match-clean-top {
-      display: grid;
-      grid-template-columns: 1fr 190px 1fr;
-      align-items: center;
-      gap: 18px;
-    }
-
-    .team-clean {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      text-align: center;
-    }
-
-    .team-clean img {
-      width: 48px;
-      height: 48px;
-      object-fit: contain;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      padding: 4px;
-    }
-
-    .team-clean-name {
-      font-size: 18px;
-      font-weight: 900;
-      color: #fff;
-    }
-
-    .score-clean-box {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .match-status-clean {
-      font-size: 12px;
-      color: #9ec3e7;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      font-weight: bold;
-    }
-
-    .score-clean {
-      font-size: 56px;
-      font-weight: 900;
-      line-height: 1;
-    }
-
-    .score-separator {
-      opacity: 0.65;
-      padding: 0 8px;
-    }
-
     .signal-inline-box {
       margin-top: 16px;
-      padding-top: 14px;
       border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 14px;
     }
 
     .signal-inline-toggle {
@@ -546,6 +698,17 @@
       justify-content: space-between;
       align-items: center;
       gap: 10px;
+      background: #12233b;
+      color: #dbeaff;
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 12px 14px;
+      border-radius: 14px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .signal-inline-toggle:hover {
+      background: #18304f;
     }
 
     .signal-inline-title {
@@ -567,7 +730,7 @@
       display: none;
       margin-top: 12px;
       background: linear-gradient(180deg, #102235, #0a1522);
-      border: 1px solid rgba(77,163,255,0.18);
+      border: 1px solid rgba(61,220,151,0.22);
       border-radius: 16px;
       padding: 14px;
     }
@@ -576,40 +739,53 @@
       display: block;
     }
 
-    .signal-inline-market,
-    .signal-market {
-      font-size: 20px;
-      font-weight: 900;
-      color: var(--yellow);
+    .signal-inline-market {
+      font-size: 19px;
+      font-weight: bold;
+      color: #ffd66e;
       line-height: 1.3;
       margin-bottom: 10px;
     }
 
-    .signal-head {
+    .signal-inline-sub {
+      font-size: 14px;
+      color: #d7e8ff;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    .signal-inline-meta {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 10px;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
     }
 
-    .signal-value {
-      font-size: 26px;
-      font-weight: 900;
-      white-space: nowrap;
-      color: var(--green);
+    .signal-secondary-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
     }
 
-    .green {
-      color: var(--green);
+    .signal-secondary-item {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 10px 12px;
     }
 
-    .yellow {
-      color: var(--yellow);
+    .signal-secondary-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #fff;
+      margin-bottom: 4px;
     }
 
-    .danger {
-      color: var(--red);
+    .signal-secondary-sub {
+      font-size: 12px;
+      color: #b8d6f5;
+      line-height: 1.4;
     }
 
     .goal-prob-box {
@@ -620,8 +796,8 @@
 
     .goal-prob-title {
       font-size: 13px;
-      font-weight: 900;
-      color: #9fd2ff;
+      font-weight: bold;
+      color: #9bd0ff;
       margin-bottom: 10px;
       text-transform: uppercase;
       letter-spacing: 0.06em;
@@ -629,7 +805,7 @@
 
     .goal-prob-row {
       display: grid;
-      grid-template-columns: 70px 1fr 54px;
+      grid-template-columns: 70px 1fr 52px;
       gap: 10px;
       align-items: center;
       margin-bottom: 8px;
@@ -651,41 +827,14 @@
     .goal-prob-fill {
       height: 100%;
       border-radius: 999px;
-      background: linear-gradient(90deg, #4da3ff, #67f7a1);
+      background: linear-gradient(90deg, #245487, #65ff9b);
     }
 
     .goal-prob-value {
       font-size: 12px;
-      font-weight: 900;
+      font-weight: bold;
       color: #fff;
       text-align: right;
-    }
-
-    .signal-secondary-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .signal-secondary-item {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 12px;
-      padding: 10px 12px;
-    }
-
-    .signal-secondary-title {
-      font-size: 14px;
-      font-weight: bold;
-      margin-bottom: 4px;
-      color: #fff;
-    }
-
-    .signal-secondary-sub {
-      font-size: 12px;
-      color: #b9d7f5;
-      line-height: 1.4;
     }
 
     .explosive-box {
@@ -693,77 +842,46 @@
       padding: 12px;
       border-radius: 14px;
       border: 1px solid rgba(255,255,255,0.08);
-      background: linear-gradient(180deg, #191321, #0e1520);
+      background: linear-gradient(180deg, #1a1220, #0d1522);
     }
 
     .explosive-box.high {
-      border-color: rgba(255,141,141,0.34);
-      background: linear-gradient(180deg, #35141b, #17121a);
+      border-color: rgba(255, 141, 141, 0.35);
+      background: linear-gradient(180deg, #35131a, #16121d);
     }
 
     .explosive-box.medium {
-      border-color: rgba(255,215,109,0.34);
-      background: linear-gradient(180deg, #302612, #16151a);
+      border-color: rgba(255, 214, 110, 0.35);
+      background: linear-gradient(180deg, #2c2412, #14141a);
     }
 
     .explosive-title {
       font-size: 14px;
-      font-weight: 900;
+      font-weight: bold;
       margin-bottom: 6px;
     }
 
     .explosive-title.high {
-      color: var(--red);
+      color: #ff8d8d;
     }
 
     .explosive-title.medium {
-      color: var(--yellow);
+      color: #ffd66e;
     }
 
     .explosive-title.low {
-      color: #9fc4e7;
+      color: #8eb8e8;
     }
 
     .explosive-sub {
       font-size: 12px;
-      color: #d6e8ff;
+      color: #d7e8ff;
       line-height: 1.45;
     }
 
-    .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .stats-box {
-      background: #0d1828;
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 14px;
-      padding: 12px;
-    }
-
-    .stats-box-title {
-      font-size: 12px;
-      color: #93bce2;
-      margin-bottom: 8px;
-    }
-
-    .stats-box-value {
-      font-size: 24px;
-      font-weight: 900;
-      color: #fff;
-    }
-
-    .empty {
-      color: #9eb8d6;
-      padding: 10px 0;
-      font-size: 13px;
-    }
-
-    @media (max-width: 1500px) {
+    @media (max-width: 1400px) {
       .page {
-        grid-template-columns: 270px 1fr 340px;
+        grid-template-columns: 260px 1fr 320px;
       }
 
       .topbar {
@@ -781,14 +899,18 @@
       }
 
       .topbar {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr 1fr;
       }
     }
 
-    @media (max-width: 760px) {
+    @media (max-width: 750px) {
       .topbar,
       .stats-grid {
         grid-template-columns: 1fr;
+      }
+
+      .filter-control {
+        min-width: 100%;
       }
 
       .match-clean-top {
@@ -797,10 +919,6 @@
 
       .score-clean {
         font-size: 42px;
-      }
-
-      .filter-control {
-        min-width: 100%;
       }
 
       .country-header {
@@ -812,18 +930,16 @@
 </head>
 <body>
   <div class="page">
-    <aside>
+    <aside class="col leftbar">
       <div class="card">
         <div class="logo">JHONNY_<span>ELITE V10</span></div>
-        <div class="subtitle">SCANNER AUTOMÁTICO · MOTOR TÁCTICO · SEÑALES CON VALOR · HISTORIAL DE RENDIMIENTO</div>
+        <div class="subtitle">SCANNER AUTOMÁTICO · SEÑALES · MEMORIA DE APRENDIZAJE · PREDICTOR DE GOL</div>
 
         <div class="menu">
           <button onclick="cargarTodo()">📡 Actualizar panel</button>
-          <button onclick="iniciarAutoScan()">▶️ Iniciar auto-scan</button>
-          <button onclick="detenerAutoScan()">⏹️ Detener auto-scan</button>
-          <button onclick="cargarScan()">⚽ Escanear partidos</button>
-          <button onclick="cargarSignals()">🚨 Actualizar señales</button>
-          <button onclick="cargarHistory()">🧠 Actualizar historial</button>
+          <button onclick="cargarScan()">⚽ Recargar partidos</button>
+          <button onclick="cargarSignals()">🚨 Recargar señales</button>
+          <button onclick="cargarHistory()">🧠 Recargar historial</button>
         </div>
       </div>
 
@@ -835,7 +951,7 @@
       </div>
     </aside>
 
-    <main>
+    <main class="col mainpanel">
       <div class="topbar">
         <div class="metric-card">
           <div class="metric-title">Estado backend</div>
@@ -846,25 +962,19 @@
         <div class="metric-card">
           <div class="metric-title">Partidos escaneados</div>
           <div id="totalMatches" class="metric-value">0</div>
-          <div class="metric-sub">Partidos activos en el escaneo</div>
+          <div class="metric-sub">Partidos analizados por el scanner</div>
         </div>
 
         <div class="metric-card">
           <div class="metric-title">Señales detectadas</div>
           <div id="totalSignals" class="metric-value">0</div>
-          <div class="metric-sub">Señales activas en caché</div>
+          <div class="metric-sub">Oportunidades activas</div>
         </div>
 
         <div class="metric-card">
           <div class="metric-title">Historial total</div>
           <div id="historyTotal" class="metric-value">0</div>
-          <div class="metric-sub">Señales guardadas</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-title">Win Rate</div>
-          <div id="winRateTop" class="metric-value">0%</div>
-          <div id="winRateSub" class="metric-sub">Precisión del sistema</div>
+          <div class="metric-sub">Señales guardadas en memoria</div>
         </div>
 
         <div class="metric-card">
@@ -876,8 +986,6 @@
 
       <div class="toolbar">
         <button onclick="cargarTodo()">Actualizar panel</button>
-        <button onclick="iniciarAutoScan()">Iniciar</button>
-        <button onclick="detenerAutoScan()">Detener</button>
         <span id="statusBadge" class="status-badge">Esperando...</span>
       </div>
 
@@ -924,7 +1032,7 @@
       </section>
     </main>
 
-    <aside>
+    <aside class="col rightbar">
       <div class="card">
         <div class="section-title">SEÑALES DETECTADAS</div>
         <div id="signalList" class="signal-list">
@@ -949,8 +1057,7 @@
   </div>
 
   <script>
-    const BACKEND = window.location.origin;
-
+    const BACKEND = "https://backend-tactico-911d.onrender.com";
     let autoRefreshInterval = null;
     let cachePartidos = [];
     let cacheSignals = [];
@@ -961,25 +1068,30 @@
     let inlineSignalsOpen = {};
 
     const LIGAS_TOP = [
-      "Premier League",
       "La Liga",
+      "Premier League",
       "Serie A",
       "Bundesliga",
       "Ligue 1",
-      "Super Lig",
+      "Eredivisie",
+      "Jupiler Pro League",
       "Primeira Liga",
       "Liga Portugal",
-      "Svenska Cupen",
-      "Super Liga",
-      "Premier Liga"
+      "MLS",
+      "Championship",
+      "Super Lig",
+      "Belgian Pro League",
+      "Superliga",
+      "Czech Liga",
+      "Ekstraklasa"
     ];
 
     const LIGAS_OCULTAS = [
-      "U19", "U20", "U21", "U23",
-      "Women", "Fem", "Feminina",
-      "Reserve", "Reserves", "Youth",
-      "Juvenil", "Amateur", "Regional",
-      "Division 2", "Division 3", "MLS Next Pro"
+      "U19", "U20", "U21", "U23", "Women", "Fem", "Feminina",
+      "Reserve", "Reserves", "Youth", "Juvenil", "Amateur",
+      "Regional", "Division 2", "Division 3", "A4",
+      "Paulista - A4", "Goiano - 1", "Paranaense - 2",
+      "II Liga - East", "MLS Next Pro"
     ];
 
     async function fetchJSON(url, options = {}) {
@@ -996,17 +1108,6 @@
 
     function clamp(valor, min, max) {
       return Math.max(min, Math.min(max, valor));
-    }
-
-    function normalizarTexto(valor) {
-      return String(valor || "").trim().toLowerCase();
-    }
-
-    function colorPorValor(value) {
-      const num = Number(value || 0);
-      if (num >= 15) return "green";
-      if (num >= 8) return "yellow";
-      return "";
     }
 
     function getSignalTier(confidence, value) {
@@ -1026,9 +1127,9 @@
 
     function getAlertClass(level) {
       const t = String(level || "").toUpperCase();
-      if (t === "ROJA" || t === "EXPLOSIVO") return "alert-badge alert-roja";
-      if (t === "NARANJA" || t === "CALIENTE") return "alert-badge alert-naranja";
-      if (t === "AMARILLA" || t === "CONTROLADO") return "alert-badge alert-amarilla";
+      if (t === "ROJA") return "alert-badge alert-roja";
+      if (t === "NARANJA") return "alert-badge alert-naranja";
+      if (t === "AMARILLA") return "alert-badge alert-amarilla";
       return "alert-badge alert-baja";
     }
 
@@ -1040,59 +1141,82 @@
       return "chaos-badge chaos-bajo";
     }
 
-    function getPressureClass(level) {
-      const t = String(level || "").toUpperCase();
-      if (t === "EXTREMA") return "pressure-badge pressure-extrema";
-      if (t === "ALTA") return "pressure-badge pressure-alta";
-      if (t === "MEDIA") return "pressure-badge pressure-media";
-      return "pressure-badge pressure-baja";
+    function normalizarTexto(valor) {
+      return String(valor || "").trim().toLowerCase();
     }
 
     function detectarBanderaEquipo(nombre) {
       const n = String(nombre || "").toLowerCase();
-      if (n.includes("manchester") || n.includes("liverpool") || n.includes("arsenal") || n.includes("chelsea")) return "gb";
-      if (n.includes("barcelona") || n.includes("real madrid")) return "es";
-      if (n.includes("juventus") || n.includes("inter") || n.includes("milan")) return "it";
+      if (n.includes("river")) return "ar";
+      if (n.includes("boca")) return "ar";
+      if (n.includes("flamengo")) return "br";
+      if (n.includes("palmeiras")) return "br";
+      if (n.includes("benfica")) return "pt";
+      if (n.includes("porto")) return "pt";
+      if (n.includes("barcelona")) return "es";
+      if (n.includes("real madrid")) return "es";
+      if (n.includes("liverpool")) return "gb";
+      if (n.includes("manchester")) return "gb";
+      if (n.includes("arsenal")) return "gb";
+      if (n.includes("chelsea")) return "gb";
+      if (n.includes("inter")) return "it";
+      if (n.includes("milan")) return "it";
+      if (n.includes("juventus")) return "it";
       if (n.includes("bayern")) return "de";
       if (n.includes("psg")) return "fr";
-      if (n.includes("porto") || n.includes("benfica")) return "pt";
       if (n.includes("ajax")) return "nl";
-      if (n.includes("river") || n.includes("boca")) return "ar";
-      if (n.includes("flamengo") || n.includes("palmeiras")) return "br";
       return "un";
     }
 
     function detectarCodigoPaisDesdeLiga(liga) {
       const l = normalizarTexto(liga);
-      if (l.includes("premier")) return "gb";
-      if (l.includes("la liga") || l.includes("segunda") || l.includes("spain")) return "es";
-      if (l.includes("serie a") || l.includes("serie b") || l.includes("ital")) return "it";
-      if (l.includes("bundes")) return "de";
-      if (l.includes("ligue")) return "fr";
-      if (l.includes("eredivisie")) return "nl";
-      if (l.includes("primeira") || l.includes("portugal")) return "pt";
-      if (l.includes("super lig")) return "tr";
-      if (l.includes("sweden") || l.includes("svenska")) return "se";
-      if (l.includes("denmark")) return "dk";
-      if (l.includes("poland")) return "pl";
-      if (l.includes("romania")) return "ro";
-      if (l.includes("croatia")) return "hr";
+
+      if (l.includes("la liga") || l.includes("segunda división") || l.includes("rfef") || l.includes("tercera") || l.includes("spain")) return "es";
+      if (l.includes("serie a") || l.includes("serie b") || l.includes("italy")) return "it";
+      if (l.includes("premier league") || l.includes("championship") || l.includes("league one") || l.includes("league two") || l.includes("england")) return "gb";
+      if (l.includes("bundesliga") || l.includes("germany") || l.includes("3. liga")) return "de";
+      if (l.includes("ligue 1") || l.includes("ligue 2") || l.includes("france")) return "fr";
+      if (l.includes("eredivisie") || l.includes("netherlands")) return "nl";
+      if (l.includes("primeira liga") || l.includes("liga portugal") || l.includes("portugal")) return "pt";
+      if (l.includes("jupiler") || l.includes("belg")) return "be";
+      if (l.includes("super lig") || l.includes("turk")) return "tr";
+      if (l.includes("superliga") && l.includes("rom")) return "ro";
+      if (l.includes("czech")) return "cz";
+      if (l.includes("ekstraklasa") || l.includes("poland")) return "pl";
+      if (l.includes("hungary") || l.includes("nb i")) return "hu";
+      if (l.includes("greece")) return "gr";
       if (l.includes("serbia")) return "rs";
-      if (l.includes("slovenia")) return "si";
+      if (l.includes("norway")) return "no";
       if (l.includes("slovakia")) return "sk";
-      if (l.includes("azerbaijan")) return "az";
-      if (l.includes("brazil")) return "br";
+      if (l.includes("usa") || l.includes("mls")) return "us";
+      if (l.includes("brazil") || l.includes("brasile") || l.includes("paulista") || l.includes("goiano") || l.includes("paranaense") || l.includes("carioca")) return "br";
+      if (l.includes("argentina")) return "ar";
+      if (l.includes("croatia")) return "hr";
+      if (l.includes("denmark")) return "dk";
+      if (l.includes("sweden")) return "se";
+      if (l.includes("finland")) return "fi";
+      if (l.includes("ivory-coast")) return "ci";
+      if (l.includes("morocco") || l.includes("botola")) return "ma";
+      if (l.includes("dominican") || l.includes("cibao")) return "do";
+
       return "un";
     }
 
     function fallbackLogo(nombre) {
       const code = detectarBanderaEquipo(nombre);
-      return code === "un" ? "https://flagcdn.com/w40/un.png" : `https://flagcdn.com/w40/${code}.png`;
+      if (code === "un") return "https://flagcdn.com/w40/un.png";
+      return `https://flagcdn.com/w40/${code}.png`;
     }
 
     function flagUrlByLeague(liga) {
       const code = detectarCodigoPaisDesdeLiga(liga);
-      return code === "un" ? "https://flagcdn.com/w40/un.png" : `https://flagcdn.com/w40/${code}.png`;
+      if (code === "un") return "https://flagcdn.com/w40/un.png";
+      return `https://flagcdn.com/w40/${code}.png`;
+    }
+
+    function esLigaOculta(liga) {
+      const l = normalizarTexto(liga);
+      return LIGAS_OCULTAS.some(x => l.includes(normalizarTexto(x)));
     }
 
     function getTeamLogo(p, side) {
@@ -1101,42 +1225,11 @@
       return logo || fallbackLogo(teamName);
     }
 
-    function esLigaOculta(liga) {
-      const l = normalizarTexto(liga);
-      return LIGAS_OCULTAS.some(x => l.includes(normalizarTexto(x)));
-    }
-
-    function obtenerTotalGolesDesdeScore(score) {
-      const partes = String(score || "0-0").split("-");
-      return Number(partes[0] || 0) + Number(partes[1] || 0);
-    }
-
-    function marketLabelDinamico(s) {
-      const total = obtenerTotalGolesDesdeScore(s.score || "0-0");
-
-      if (s.selection && String(s.selection).trim() !== "") {
-        return s.selection;
-      }
-
-      if (s.market === "OVER_NEXT_15_DYNAMIC") {
-        const linea = s.line ?? (total + 0.5);
-        return `Over ${linea} próximos 15 min`;
-      }
-
-      if (s.market === "OVER_MATCH_DYNAMIC") {
-        const linea = s.line ?? Math.max(total + 0.5, 1.5);
-        return `Over ${linea} partido`;
-      }
-
-      if (s.market === "RESULT_HOLDS_NEXT_15") {
-        return "Se mantiene el resultado próximos 15 min";
-      }
-
-      if (s.market === "NEXT_GOAL") {
-        return "Habrá gol (próximo)";
-      }
-
-      return s.market || "SEÑAL";
+    function colorPorValor(value) {
+      const num = Number(value || 0);
+      if (num >= 15) return "green";
+      if (num >= 8) return "yellow";
+      return "";
     }
 
     function setLigaFiltro(valor) {
@@ -1227,38 +1320,112 @@
           local.includes(equipoBuscado) ||
           visitante.includes(equipoBuscado);
 
-        const estado = String(((getSignalForMatch(p.id) || {}).estado_partido || {}).estado || "").toUpperCase();
+        const alertLevel = String((p.goal_predictor || {}).alert_level || "BAJA").toUpperCase();
 
-        const alertaOk =
-          alertaSeleccionada === "ALL" ||
-          estado === alertaSeleccionada;
+        const alertaOk = alertaSeleccionada === "ALL" || alertLevel === alertaSeleccionada;
 
         return ligaOk && equipoOk && alertaOk;
       });
     }
 
-    function calcularGoal15(p, signal = null) {
-      if (signal && signal.goal_prob_15) {
-        return clamp(Number(signal.goal_prob_15 || 0), 0, 100);
-      }
-
-      const predictor = p.goal_predictor || {};
-      const p10 = Number(predictor.goal_next_10_prob || 0);
-      return Math.round(clamp((p10 + 0.12) * 100, 0, 97));
+    function obtenerTotalGolesDesdeScore(score) {
+      const partes = String(score || "0-0").split("-");
+      return Number(partes[0] || 0) + Number(partes[1] || 0);
     }
 
-    function renderGoalProbabilityBlock(p, signal = null) {
+    function marketLabelDinamico(s) {
+      const total = obtenerTotalGolesDesdeScore(s.score || "0-0");
+
+      if (s.selection && String(s.selection).trim() !== "") {
+        return s.selection;
+      }
+
+      if (s.market === "OVER_NEXT_15_DYNAMIC") {
+        const linea = s.line ?? (total + 0.5);
+        return `Over ${linea} próximos 15 min`;
+      }
+
+      if (s.market === "OVER_MATCH_DYNAMIC") {
+        const linea = s.line ?? Math.max(total + 0.5, 1.5);
+        return `Over ${linea} partido`;
+      }
+
+      if (s.market === "RESULT_HOLDS_NEXT_15") {
+        return "Se mantiene el resultado próximos 15 min";
+      }
+
+      return s.market || "SEÑAL";
+    }
+
+    function calcularGoal15(p) {
       const predictor = p.goal_predictor || {};
+      const gp = p.goal_pressure || {};
+      const chaos = p.chaos || {};
 
-      const p5 = signal?.goal_prob_5 != null
-        ? Number(signal.goal_prob_5 || 0)
-        : Math.round(Number(predictor.goal_next_5_prob || 0) * 100);
+      const p10 = Number(predictor.goal_next_10_prob || 0);
+      const pressure = Number(gp.pressure_score || 0);
+      const chaosScore = Number(chaos.chaos_score || 0);
 
-      const p10 = signal?.goal_prob_10 != null
-        ? Number(signal.goal_prob_10 || 0)
-        : Math.round(Number(predictor.goal_next_10_prob || 0) * 100);
+      let p15 = p10 + 0.08 + (pressure * 0.01) + (chaosScore * 0.005);
+      return clamp(p15, 0, 0.97);
+    }
 
-      const p15 = calcularGoal15(p, signal);
+    function getExplosiveInfo(p) {
+      const predictor = p.goal_predictor || {};
+      const gp = p.goal_pressure || {};
+      const chaos = p.chaos || {};
+
+      const p10 = Number(predictor.goal_next_10_prob || 0);
+      const pressure = Number(gp.pressure_score || 0);
+      const chaosScore = Number(chaos.chaos_score || 0);
+      const xg = Number(p.xG || 0);
+
+      let score = 0;
+
+      if (p10 >= 0.75) score += 3;
+      else if (p10 >= 0.60) score += 2;
+
+      if (pressure >= 10) score += 3;
+      else if (pressure >= 7) score += 2;
+
+      if (chaosScore >= 9) score += 3;
+      else if (chaosScore >= 6) score += 2;
+
+      if (xg >= 2.5) score += 2;
+      else if (xg >= 1.5) score += 1;
+
+      if (score >= 8) {
+        return {
+          level: "high",
+          title: "🔥 PARTIDO EXPLOSIVO",
+          text: "Alta probabilidad de un cambio fuerte en el marcador o de otro gol pronto."
+        };
+      }
+
+      if (score >= 5) {
+        return {
+          level: "medium",
+          title: "⚠️ PARTIDO CALIENTE",
+          text: "El partido muestra presión, caos y ritmo ofensivo por encima de lo normal."
+        };
+      }
+
+      return {
+        level: "low",
+        title: "📊 PARTIDO CONTROLADO",
+        text: "El partido está activo, pero todavía no entra en zona explosiva."
+      };
+    }
+
+    function getSecondarySignals(signal) {
+      if (!signal || !Array.isArray(signal.all_signals)) return [];
+      return signal.all_signals.slice(0, 3);
+    }
+
+    function renderGoalProbabilityBlock(p, signal) {
+      const p5 = Math.round(Number(signal?.goal_prob_5 || 0));
+      const p10 = Math.round(Number(signal?.goal_prob_10 || 0));
+      const p15 = Math.round(Number(signal?.goal_prob_15 || calcularGoal15(p) * 100));
 
       const rows = [
         { label: "5 min", value: p5 },
@@ -1273,43 +1440,17 @@
             <div class="goal-prob-row">
               <div class="goal-prob-label">${r.label}</div>
               <div class="goal-prob-bar">
-                <div class="goal-prob-fill" style="width:${clamp(r.value, 0, 100)}%"></div>
+                <div class="goal-prob-fill" style="width:${r.value}%"></div>
               </div>
-              <div class="goal-prob-value">${clamp(r.value, 0, 100)}%</div>
+              <div class="goal-prob-value">${r.value}%</div>
             </div>
           `).join("")}
         </div>
       `;
     }
 
-    function getExplosiveInfo(signal) {
-      const estado = String((signal?.estado_partido || {}).estado || "").toUpperCase();
-
-      if (estado === "EXPLOSIVO" || estado === "CAOS") {
-        return {
-          level: "high",
-          title: "🔥 PARTIDO EXPLOSIVO",
-          text: (signal?.estado_partido || {}).razon || "Alta probabilidad de cambio fuerte en el marcador."
-        };
-      }
-
-      if (estado === "CALIENTE" || estado === "CONTROLADO") {
-        return {
-          level: "medium",
-          title: "⚠️ PARTIDO CALIENTE",
-          text: (signal?.estado_partido || {}).razon || "El partido muestra presión y dinámica interesante."
-        };
-      }
-
-      return {
-        level: "low",
-        title: "📊 PARTIDO FRÍO/CONTROLADO",
-        text: (signal?.estado_partido || {}).razon || "No se detecta una explosión ofensiva fuerte."
-      };
-    }
-
-    function renderExplosiveBlock(signal) {
-      const info = getExplosiveInfo(signal);
+    function renderExplosiveBlock(p) {
+      const info = getExplosiveInfo(p);
 
       return `
         <div class="explosive-box ${info.level}">
@@ -1319,16 +1460,9 @@
       `;
     }
 
-    function getSecondarySignals(signal) {
-      if (!signal || !Array.isArray(signal.all_signals)) return [];
-
-      return signal.all_signals
-        .filter(s => (s.mercado || "") !== (signal.market || ""))
-        .slice(0, 3);
-    }
-
     function renderSecondarySignalsBlock(signal) {
       const others = getSecondarySignals(signal);
+
       if (!others.length) return "";
 
       return `
@@ -1337,7 +1471,7 @@
           <div class="signal-secondary-list">
             ${others.map(s => `
               <div class="signal-secondary-item">
-                <div class="signal-secondary-title">${s.apuesta || s.mercado || "Oportunidad"}</div>
+                <div class="signal-secondary-title">${s.apuesta || s.selection || s.market || "Oportunidad"}</div>
                 <div class="signal-secondary-sub">
                   Confianza ${s.confianza ?? s.confidence ?? "-"}% ·
                   Cuota ${s.cuota ?? s.odd ?? "-"} ·
@@ -1357,13 +1491,30 @@
 
       if (!nombre && !razon) return "";
 
+      let badgeClass = "pill";
+      let titulo = "Estado del partido";
+
+      if (nombre === "EXPLOSIVO" || nombre === "CAOS") {
+        badgeClass = "alert-badge alert-roja";
+        titulo = "🔥 Estado del partido";
+      } else if (nombre === "CALIENTE") {
+        badgeClass = "alert-badge alert-naranja";
+        titulo = "⚠️ Estado del partido";
+      } else if (nombre === "CONTROLADO") {
+        badgeClass = "alert-badge alert-amarilla";
+        titulo = "📊 Estado del partido";
+      } else if (nombre === "FRIO" || nombre === "MUERTO") {
+        badgeClass = "alert-badge alert-baja";
+        titulo = "🧊 Estado del partido";
+      }
+
       return `
         <div class="goal-prob-box">
-          <div class="goal-prob-title">Estado del partido</div>
+          <div class="goal-prob-title">${titulo}</div>
           <div class="signal-inline-meta">
-            <span class="${getAlertClass(nombre)}">${nombre || "N/A"}</span>
+            <span class="${badgeClass}">${nombre || "N/A"}</span>
           </div>
-          ${razon ? `<div class="signal-sub" style="margin-top:10px;">${razon}</div>` : ""}
+          ${razon ? `<div class="signal-inline-sub" style="margin-top:10px;">${razon}</div>` : ""}
         </div>
       `;
     }
@@ -1374,6 +1525,8 @@
       const label = gol.label || (activo ? "GOL MUY PROBABLE" : "SIN ALERTA");
       const razon = gol.razon || "";
 
+      if (!activo && !razon) return "";
+
       return `
         <div class="goal-prob-box">
           <div class="goal-prob-title">Alerta inmediata</div>
@@ -1382,7 +1535,82 @@
               ${activo ? "🚨 " : ""}${label}
             </span>
           </div>
-          ${razon ? `<div class="signal-sub" style="margin-top:10px;">${razon}</div>` : ""}
+          ${razon ? `<div class="signal-inline-sub" style="margin-top:10px;">${razon}</div>` : ""}
+        </div>
+      `;
+    }
+
+    function traducirGanadorProbable(valor) {
+      const v = String(valor || "").toUpperCase();
+      if (v === "LOCAL") return "Local";
+      if (v === "VISITANTE") return "Visitante";
+      if (v === "EMPATE") return "Empate";
+      return valor || "N/A";
+    }
+
+    function traducirDobleOportunidad(valor) {
+      const v = String(valor || "").toUpperCase();
+      if (v === "LOCAL_O_EMPATE") return "Local o Empate";
+      if (v === "EMPATE_O_VISITANTE") return "Empate o Visitante";
+      if (v === "LOCAL_O_VISITANTE") return "Local o Visitante";
+      return valor || "N/A";
+    }
+
+    function riesgoClass(riesgo) {
+      const r = String(riesgo || "").toUpperCase();
+      if (r === "ALTO") return "alert-badge alert-roja";
+      if (r === "MEDIO") return "alert-badge alert-naranja";
+      return "alert-badge alert-baja";
+    }
+
+    function renderPrediccionPartidoBlock(signal) {
+      if (!signal) return "";
+
+      const resultadoProbable = signal.resultado_probable || "N/A";
+      const ganadorProbable = traducirGanadorProbable(signal.ganador_probable);
+      const dobleOportunidad = traducirDobleOportunidad(signal.doble_oportunidad_probable);
+      const totalGoles = Number(signal.total_goles_estimado || 0).toFixed(2);
+      const overUnder = signal.over_under_probable || "N/A";
+      const confianzaPred = signal.confianza_prediccion ?? "-";
+      const riesgo = signal.riesgo_operativo || "MEDIO";
+      const recomendacion = signal.recomendacion_final || "OBSERVAR";
+
+      return `
+        <div class="goal-prob-box">
+          <div class="goal-prob-title">Predicción del encuentro</div>
+
+          <div class="signal-secondary-list">
+            <div class="signal-secondary-item">
+              <div class="signal-secondary-title">Marcador estimado</div>
+              <div class="signal-secondary-sub">${resultadoProbable}</div>
+            </div>
+
+            <div class="signal-secondary-item">
+              <div class="signal-secondary-title">Ganador probable</div>
+              <div class="signal-secondary-sub">${ganadorProbable}</div>
+            </div>
+
+            <div class="signal-secondary-item">
+              <div class="signal-secondary-title">Doble oportunidad</div>
+              <div class="signal-secondary-sub">${dobleOportunidad}</div>
+            </div>
+
+            <div class="signal-secondary-item">
+              <div class="signal-secondary-title">Total de goles estimado</div>
+              <div class="signal-secondary-sub">${totalGoles}</div>
+            </div>
+
+            <div class="signal-secondary-item">
+              <div class="signal-secondary-title">Línea probable</div>
+              <div class="signal-secondary-sub">${overUnder}</div>
+            </div>
+          </div>
+
+          <div class="signal-inline-meta" style="margin-top:12px;">
+            <span class="pill">Confianza predicción ${confianzaPred}%</span>
+            <span class="${riesgoClass(riesgo)}">Riesgo ${riesgo}</span>
+            <span class="pill">Recomendación ${recomendacion}</span>
+          </div>
         </div>
       `;
     }
@@ -1409,7 +1637,7 @@
     async function verEstado() {
       try {
         const data = await fetchJSON(`${BACKEND}/status`);
-        document.getElementById("backendStatus").textContent = data.status || "ok";
+        document.getElementById("backendStatus").textContent = data.estado || data.status || "ok";
         document.getElementById("backendMessage").textContent = data.mensaje || "Backend operativo";
         setStatus("Backend conectado", true);
       } catch (err) {
@@ -1424,11 +1652,13 @@
 
       const calientes = [...filtrarPartidos(partidos)]
         .sort((a, b) => {
-          const sa = getSignalForMatch(a.id);
-          const sb = getSignalForMatch(b.id);
-          const va = Number(sa?.confidence || 0) + Number(sa?.value || 0);
-          const vb = Number(sb?.confidence || 0) + Number(sb?.value || 0);
-          return vb - va;
+          const pa =
+            ((a.goal_predictor || {}).predictor_score || 0) +
+            ((a.chaos || {}).chaos_score || 0) * 0.6;
+          const pb =
+            ((b.goal_predictor || {}).predictor_score || 0) +
+            ((b.chaos || {}).chaos_score || 0) * 0.6;
+          return pb - pa;
         })
         .slice(0, 3);
 
@@ -1438,15 +1668,22 @@
       }
 
       hotBox.innerHTML = calientes.map(p => {
-        const signal = getSignalForMatch(p.id);
-        const estado = (signal?.estado_partido || {}).estado || "BAJA";
-        const alertClass = getAlertClass(estado);
+        const predictor = p.goal_predictor || {};
+        const alertLevel = predictor.alert_level || "BAJA";
+        const alertClass = getAlertClass(alertLevel);
+        const goal5 = Math.round((predictor.goal_next_5_prob || 0) * 100);
+        const goal10 = Math.round((predictor.goal_next_10_prob || 0) * 100);
+
+        const chaos = p.chaos || {};
+        const chaosLevel = chaos.chaos_level || "BAJO";
+        const chaosScore = chaos.chaos_score ?? 0;
+        const chaosClass = getChaosClass(chaosLevel);
 
         return `
           <div class="hot-card">
             <div class="hot-head">
               <div class="league">${p.liga || "Liga"} · ${p.pais || "País"}</div>
-              <span class="${alertClass}">${estado}</span>
+              <span class="${alertClass}">${alertLevel}</span>
             </div>
 
             <div class="hot-teams">${p.local || "Local"} vs ${p.visitante || "Visitante"}</div>
@@ -1457,15 +1694,19 @@
               <span class="pill">xG ${p.xG ?? 0}</span>
             </div>
 
-            ${signal ? `
-              <div class="hot-line">
-                <span class="pill">Confianza ${signal.confidence ?? 0}%</span>
-                <span class="pill">Value +${signal.value ?? 0}%</span>
-                <span class="pill">${marketLabelDinamico(signal)}</span>
-              </div>
-            ` : ""}
+            <div class="hot-line">
+              <span class="pill">Gol 5 min ${goal5}%</span>
+              <span class="pill">Gol 10 min ${goal10}%</span>
+              <span class="pill">Predictor ${predictor.predictor_score ?? 0}</span>
+            </div>
 
-            <div class="reason-box">🧠 ${(signal?.reason || "Sin señal destacada")}</div>
+            <div class="hot-line">
+              <span class="${chaosClass}">🌪 ${chaosLevel}</span>
+              <span class="pill">Chaos ${chaosScore}</span>
+            </div>
+
+            <div class="reason-box">🧠 ${predictor.alert_reason || "Sin alerta especial"}</div>
+            <div class="reason-box">🌪 ${chaos.chaos_reason || "Sin caos detectado"}</div>
           </div>
         `;
       }).join("");
@@ -1531,10 +1772,23 @@
                       </div>
 
                       ${ligasObj[liga].map(p => {
+                        const predictor = p.goal_predictor || {};
+                        const alertLevel = predictor.alert_level || "BAJA";
+                        const goal5 = Math.round((predictor.goal_next_5_prob || 0) * 100);
+                        const goal10 = Math.round((predictor.goal_next_10_prob || 0) * 100);
+
+                        const gp = p.goal_pressure || {};
+                        const pressureLevel = gp.pressure_level || "BAJA";
+                        const pressureScore = gp.pressure_score ?? 0;
+
+                        const chaos = p.chaos || {};
+                        const chaosLevel = chaos.chaos_level || "BAJO";
+                        const chaosScore = chaos.chaos_score ?? 0;
+
                         const homeLogo = getTeamLogo(p, "home");
                         const awayLogo = getTeamLogo(p, "away");
-                        const estadoTexto = Number(p.minuto || 0) >= 90 ? "Finalizado" : `Min ${p.minuto ?? 0}`;
 
+                        const estado = Number(p.minuto || 0) >= 90 ? "Finalizado" : `Min ${p.minuto ?? 0}`;
                         const signal = getSignalForMatch(p.id);
                         const signalOpen = !!inlineSignalsOpen[p.id];
                         const signalTier = signal ? getSignalTier(signal.confidence, signal.value) : null;
@@ -1548,7 +1802,7 @@
                               </div>
 
                               <div class="score-clean-box">
-                                <div class="match-status-clean">${estadoTexto}</div>
+                                <div class="match-status-clean">${estado}</div>
                                 <div class="score-clean">
                                   ${p.marcador_local ?? 0}
                                   <span class="score-separator">-</span>
@@ -1565,21 +1819,16 @@
                             <div class="match-clean-bottom">
                               <span class="event-pill">xG ${p.xG ?? 0}</span>
                               <span class="event-pill">Momentum ${p.momentum ?? "MEDIO"}</span>
-                              ${signal ? `<span class="event-pill">Confianza ${signal.confidence ?? 0}%</span>` : ""}
-                              ${signal ? `<span class="event-pill">Value +${signal.value ?? 0}%</span>` : ""}
+                              <span class="event-pill">Alerta ${alertLevel}</span>
+                              <span class="event-pill">Gol 5 min ${goal5}%</span>
+                              <span class="event-pill">Gol 10 min ${goal10}%</span>
                             </div>
 
-                            ${signal ? `
-                              <div class="match-extra-row">
-                                <span class="event-pill">${marketLabelDinamico(signal)}</span>
-                                <span class="event-pill">Cuota ${signal.odd ?? "-"}</span>
-                                <span class="event-pill">ID ${p.id ?? "-"}</span>
-                              </div>
-                            ` : `
-                              <div class="match-extra-row">
-                                <span class="event-pill">ID ${p.id ?? "-"}</span>
-                              </div>
-                            `}
+                            <div class="match-extra-row">
+                              <span class="event-pill">Pressure ${pressureLevel} · ${pressureScore}</span>
+                              <span class="event-pill">Chaos ${chaosLevel} · ${chaosScore}</span>
+                              <span class="event-pill">ID ${p.id ?? "-"}</span>
+                            </div>
 
                             ${signal ? `
                               <div class="signal-inline-box ${signalOpen ? "open" : ""}">
@@ -1594,13 +1843,13 @@
                                 <div class="signal-inline-content">
                                   <div class="signal-inline-market">${marketLabelDinamico(signal)}</div>
 
-                                  <div class="signal-sub">
+                                  <div class="signal-inline-sub">
                                     <strong>${signal.home || "Local"} vs ${signal.away || "Visitante"}</strong>
                                     · Min ${signal.minute ?? 0}
                                     · Marcador ${signal.score || "0-0"}
                                   </div>
 
-                                  <div class="signal-sub">${signal.reason || "Señal generada por el sistema"}</div>
+                                  <div class="signal-inline-sub">${signal.reason || "Señal generada por el sistema"}</div>
 
                                   <div class="signal-inline-meta">
                                     <span class="pill">Cuota ${signal.odd ?? "-"}</span>
@@ -1612,9 +1861,10 @@
 
                                   ${renderEstadoPartidoBlock(signal)}
                                   ${renderGolInminenteBlock(signal)}
+                                  ${renderPrediccionPartidoBlock(signal)}
                                   ${renderSecondarySignalsBlock(signal)}
                                   ${renderGoalProbabilityBlock(p, signal)}
-                                  ${renderExplosiveBlock(signal)}
+                                  ${renderExplosiveBlock(p)}
                                 </div>
                               </div>
                             ` : ""}
@@ -1638,7 +1888,8 @@
       try {
         const data = await fetchJSON(`${BACKEND}/scan`);
         const partidos = data.partidos || [];
-        document.getElementById("totalMatches").textContent = data.scanned ?? partidos.length;
+        document.getElementById("totalMatches").textContent =
+          data.partidos_analizados ?? data.scanned ?? partidos.length;
 
         cachePartidos = partidos;
         poblarFiltroLigas(cachePartidos);
@@ -1693,7 +1944,9 @@
         const senales = Array.isArray(data) ? data : (data.signals || []);
         cacheSignals = senales;
 
-        document.getElementById("totalSignals").textContent = senales.length;
+        document.getElementById("totalSignals").textContent =
+          data.total_senales ?? senales.length;
+
         renderMiniSignals(senales);
 
         if (!senales.length) {
@@ -1717,7 +1970,9 @@
               </div>
 
               <div class="signal-sub">
-                <strong>${s.home || "Local"} vs ${s.away || "Visitante"}</strong> · Min ${s.minute ?? 0} · Marcador ${s.score || "0-0"}
+                <strong>${s.home || "Local"} vs ${s.away || "Visitante"}</strong>
+                · Min ${s.minute ?? 0}
+                · Marcador ${s.score || "0-0"}
               </div>
 
               <div class="signal-sub">${s.reason || "Señal generada por el sistema"}</div>
@@ -1727,6 +1982,7 @@
                 <span class="pill">Prob ${s.prob ?? "-"}</span>
                 <span class="pill">Confianza ${s.confidence ?? "-"}%</span>
                 <span class="pill">${s.league || "Liga desconocida"}</span>
+                <span class="pill">${s.country || "País desconocido"}</span>
               </div>
             </div>
           `;
@@ -1749,12 +2005,11 @@
       statsBox.innerHTML = `<div class="empty">Cargando mini stats...</div>`;
 
       try {
-        const history = await fetchJSON(`${BACKEND}/history`);
+        const historyRes = await fetchJSON(`${BACKEND}/history`);
         const stats = await fetchJSON(`${BACKEND}/learning-stats`);
 
+        const history = Array.isArray(historyRes) ? historyRes : (historyRes.data || []);
         document.getElementById("historyTotal").textContent = stats.total_senales ?? 0;
-        document.getElementById("winRateTop").textContent = `${stats.win_rate ?? 0}%`;
-        document.getElementById("winRateSub").textContent = `ROI ${stats.roi_percent ?? 0}% · Profit ${stats.profit_units ?? 0}`;
 
         if (!history.length) {
           contenedor.innerHTML = `<div class="empty">No hay historial todavía.</div>`;
@@ -1762,9 +2017,9 @@
           contenedor.innerHTML = history.slice(-8).reverse().map(h => `
             <div class="history-item">
               <div class="history-title">${h.home || "Local"} vs ${h.away || "Visitante"}</div>
-              <div class="history-sub">Mercado: ${h.market || "-"} | Selección: ${h.selection || "-"}</div>
-              <div class="history-sub">Min ${h.minute ?? 0} · Cuota ${h.odd ?? "-"} · Value ${h.value ?? "-"}%</div>
-              <div class="history-sub">Estado: ${h.estado_resultado || "pendiente"}</div>
+              <div class="small">Mercado: ${h.market || "-"} | Selección: ${h.selection || "-"}</div>
+              <div class="small">Min ${h.minute ?? 0} · Cuota ${h.odd ?? "-"} · Value ${h.value ?? "-"}%</div>
+              <div class="small">Estado: ${h.estado_resultado || "pendiente"}</div>
             </div>
           `).join("");
         }
@@ -1786,14 +2041,6 @@
             <div class="stats-box-title">Perdidas</div>
             <div class="stats-box-value">${stats.perdidas ?? 0}</div>
           </div>
-          <div class="stats-box">
-            <div class="stats-box-title">Pendientes</div>
-            <div class="stats-box-value">${stats.pendientes ?? 0}</div>
-          </div>
-          <div class="stats-box">
-            <div class="stats-box-title">Value prom.</div>
-            <div class="stats-box-value">${stats.value_promedio ?? 0}%</div>
-          </div>
         `;
       } catch (err) {
         contenedor.innerHTML = `<div class="empty danger">Error cargando historial: ${err.message}</div>`;
@@ -1804,35 +2051,17 @@
     async function cargarAutoScanStatus() {
       try {
         const data = await fetchJSON(`${BACKEND}/auto-scan/status`);
-        document.getElementById("autoScanValue").textContent = data.auto_scan_activo ? "ACTIVO" : "OFF";
+        document.getElementById("autoScanValue").textContent =
+          data.auto_scan_activo ? "ACTIVO" : (data.auto_scan || "OFF");
         document.getElementById("autoScanMessage").textContent =
-          `Cada ${data.intervalo_segundos ?? 30}s · Último scan: ${data.ultimo_scan || "N/A"}`;
+          data.mensaje || `Último scan: ${data.ultimo_scan || "N/A"}`;
 
-        if (data.auto_scan_activo) {
+        if (data.auto_scan_activo || data.auto_scan === "activo") {
           setStatus("AUTO-SCAN activo", true);
         }
       } catch (err) {
         document.getElementById("autoScanValue").textContent = "ERROR";
         document.getElementById("autoScanMessage").textContent = err.message;
-      }
-    }
-
-    async function iniciarAutoScan() {
-      try {
-        await fetchJSON(`${BACKEND}/auto-scan/start`, { method: "POST" });
-        await cargarAutoScanStatus();
-        await cargarTodo();
-      } catch (err) {
-        setStatus("No se pudo iniciar AUTO-SCAN", false);
-      }
-    }
-
-    async function detenerAutoScan() {
-      try {
-        await fetchJSON(`${BACKEND}/auto-scan/stop`, { method: "POST" });
-        await cargarAutoScanStatus();
-      } catch (err) {
-        setStatus("No se pudo detener AUTO-SCAN", false);
       }
     }
 
@@ -1848,7 +2077,7 @@
       if (autoRefreshInterval) clearInterval(autoRefreshInterval);
       autoRefreshInterval = setInterval(() => {
         cargarTodo();
-      }, 30000);
+      }, 300000);
     }
 
     cargarTodo();
