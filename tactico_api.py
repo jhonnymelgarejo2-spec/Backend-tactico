@@ -92,3 +92,10 @@ def signals_endpoint():
             "detalle": str(e),
             "signals": []
 }
+@app.get("/scan")
+def scan_alias():
+    return scan()
+
+@app.get("/signals")
+def signals_alias():
+    return signals_endpoint()
