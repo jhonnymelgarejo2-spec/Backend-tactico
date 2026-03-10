@@ -10,13 +10,11 @@ router = APIRouter()
 def partidos_en_vivo():
     try:
         partidos = obtener_partidos_en_vivo()
-
         return {
             "estado": "OK",
             "total_partidos": len(partidos),
             "partidos": partidos
         }
-
     except Exception as e:
         return {
             "estado": "error",
@@ -29,14 +27,12 @@ def obtener_signals():
     try:
         partidos = obtener_partidos_en_vivo()
         senales = generar_senales(partidos)
-
         return {
             "estado": "OK",
             "total_partidos": len(partidos),
             "total_senales": len(senales),
             "signals": senales
         }
-
     except Exception as e:
         return {
             "estado": "error",
@@ -50,7 +46,6 @@ def scan():
     try:
         partidos = obtener_partidos_en_vivo()
         senales = generar_senales(partidos)
-
         return {
             "estado": "OK",
             "mensaje": "Scan ejecutado correctamente",
@@ -59,7 +54,6 @@ def scan():
             "partidos": partidos,
             "signals": senales
         }
-
     except Exception as e:
         return {
             "estado": "error",
@@ -73,13 +67,11 @@ def scan():
 def history():
     try:
         historial = cargar_historial()
-
         return {
             "estado": "OK",
             "total": len(historial),
             "data": historial
         }
-
     except Exception as e:
         return {
             "estado": "error",
@@ -93,12 +85,10 @@ def history():
 def learning_stats():
     try:
         stats = obtener_estadisticas_historial()
-
         return {
             "estado": "OK",
             **stats
         }
-
     except Exception as e:
         return {
             "estado": "error",
@@ -125,4 +115,4 @@ def auto_scan_status():
         "estado": "OK",
         "auto_scan_activo": True,
         "mensaje": "AUTO-SCAN operativo"
-        }
+    }
