@@ -21,4 +21,4 @@ def debug_routes():
         "ok": True,
         "rutas": ["/", "/scan", "/signals", "/debug-routes"]
     }
-
+    
