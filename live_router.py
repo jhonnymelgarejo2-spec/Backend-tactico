@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from sofascore_fetcher import obtener_partidos_en_vivo
 from signals import generar_senales
+from history_store import cargar_historial, obtener_estadisticas_historial
 
 router = APIRouter()
 
@@ -71,14 +72,19 @@ def scan():
 @router.get("/history")
 def history():
     try:
+        historial = cargar_historial()
+
         return {
             "estado": "OK",
-            "data": []
+            "total": len(historial),
+            "data": historial
         }
+
     except Exception as e:
         return {
             "estado": "error",
             "detalle": str(e),
+            "total": 0,
             "data": []
         }
 
@@ -86,23 +92,30 @@ def history():
 @router.get("/learning-stats")
 def learning_stats():
     try:
+        stats = obtener_estadisticas_historial()
+
         return {
             "estado": "OK",
-            "total_senales": 0,
-            "ganadas": 0,
-            "perdidas": 0,
-            "win_rate": 0,
-            "roi_percent": 0
+            **stats
         }
+
     except Exception as e:
         return {
             "estado": "error",
             "detalle": str(e),
             "total_senales": 0,
+            "pendientes": 0,
+            "resueltas": 0,
             "ganadas": 0,
             "perdidas": 0,
+            "nulas": 0,
             "win_rate": 0,
-            "roi_percent": 0
+            "roi_percent": 0,
+            "profit_units": 0,
+            "confidence_promedio": 0,
+            "value_promedio": 0,
+            "ligas_top": [],
+            "mercados_top": []
         }
 
 
