@@ -1,7 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-# importar router de partidos y señales
 from live_router import router as live_router
 
 app = FastAPI(
@@ -9,7 +7,6 @@ app = FastAPI(
     version="1.0"
 )
 
-# permitir acceso desde frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -18,31 +15,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# conectar router
-app.include_router(live_router, prefix="/api")
+# Conectar router
+app.include_router(live_router)
 
-# ------------------------------
-# RUTA PRINCIPAL
-# ------------------------------
 
 @app.get("/")
 def home():
     return {
         "status": "ok",
-        "mensaje": "Backend táctico funcionando",
-        "rutas_disponibles": [
-            "/signals",
-            "/scan",
-            "/history",
-            "/learning-stats",
-            "/status",
-            "/auto-scan/status"
-        ]
+        "mensaje": "Backend táctico funcionando"
     }
 
-# ------------------------------
-# ESTADO DEL BACKEND
-# ------------------------------
 
 @app.get("/status")
 def estado_backend():
@@ -52,9 +35,6 @@ def estado_backend():
         "estado": "ok"
     }
 
-# ------------------------------
-# PING TEST
-# ------------------------------
 
 @app.get("/ping")
 def ping():
@@ -63,3 +43,19 @@ def ping():
         "mensaje": "Servidor activo"
     }
 
+
+@app.get("/debug-routes")
+def debug_routes():
+    rutas = []
+    for route in app.routes:
+        methods = list(route.methods) if hasattr(route, "methods") else []
+        rutas.append({
+            "path": route.path,
+            "methods": methods,
+            "name": route.name
+        })
+
+    return {
+        "total_rutas": len(rutas),
+        "rutas": rutas
+    }
