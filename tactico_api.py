@@ -119,3 +119,4 @@ def auto_scan_status():
         "auto_scan_activo": True,
         "intervalo_segundos": 30
     }
+
