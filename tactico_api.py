@@ -1,15 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# importar router
 from live_router import router as live_router
+from sofascore_fetcher import obtener_partidos_en_vivo
+from signals import generar_senales
 
 app = FastAPI(
     title="JHONNY ELITE API",
     version="1.0"
 )
 
-# permitir acceso desde frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -18,8 +18,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# conectar router
+# router adicional
 app.include_router(live_router)
+
 
 @app.get("/")
 def home():
@@ -29,6 +30,7 @@ def home():
         "version": "V1_REAL"
     }
 
+
 @app.get("/status")
 def status():
     return {
@@ -36,3 +38,57 @@ def status():
         "service": "backend-tactico",
         "version": "V1_REAL"
     }
+
+
+@app.get("/debug-routes")
+def debug_routes():
+    return {
+        "ok": True,
+        "routes": [
+            "/",
+            "/status",
+            "/debug-routes",
+            "/partidos-en-vivo",
+            "/scan",
+            "/signals"
+        ],
+        "version": "V1_REAL"
+    }
+
+
+@app.get("/scan")
+def scan():
+    try:
+        partidos = obtener_partidos_en_vivo()
+        return {
+            "estado": "OK",
+            "total_partidos": len(partidos),
+            "partidos_analizados": len(partidos),
+            "partidos": partidos
+        }
+    except Exception as e:
+        return {
+            "estado": "error",
+            "detalle": str(e),
+            "partidos": []
+        }
+
+
+@app.get("/signals")
+def signals_endpoint():
+    try:
+        partidos = obtener_partidos_en_vivo()
+        senales = generar_senales(partidos)
+
+        return {
+            "estado": "OK",
+            "total_partidos": len(partidos),
+            "total_senales": len(senales),
+            "signals": senales
+        }
+    except Exception as e:
+        return {
+            "estado": "error",
+            "detalle": str(e),
+            "signals": []
+}
