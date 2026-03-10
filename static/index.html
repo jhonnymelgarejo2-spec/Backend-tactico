@@ -1,4 +1,4 @@
-o<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -1095,10 +1095,28 @@ o<!DOCTYPE html>
     ];
 
     async function fetchJSON(url, options = {}) {
-      const res = await fetch(url, options);
-      if (!res.ok) throw new Error(`Error ${res.status}`);
-      return await res.json();
+  try {
+    const res = await fetch(`${BACKEND}${url}`, {
+      ...options,
+      headers: {
+        "Accept": "application/json",
+        ...(options.headers || {})
+      },
+      cache: "no-store"
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("Respuesta no OK:", res.status, url, text);
+      throw new Error(`Error ${res.status}`);
     }
+
+    return await res.json();
+  } catch (err) {
+    console.error("Fetch falló en:", url, err);
+    throw err;
+  }
+      }
 
     function setStatus(texto, ok = true) {
       const badge = document.getElementById("statusBadge");
