@@ -1095,28 +1095,28 @@
     ];
 
     async function fetchJSON(url, options = {}) {
-  try {
-    const res = await fetch(`${BACKEND}${url}`, {
-      ...options,
-      headers: {
-        "Accept": "application/json",
-        ...(options.headers || {})
-      },
-      cache: "no-store"
-    });
+      try {
+        const res = await fetch(`${BACKEND}${url}`, {
+          ...options,
+          headers: {
+            "Accept": "application/json",
+            ...(options.headers || {})
+          },
+          cache: "no-store"
+        });
 
-    if (!res.ok) {
-      const text = await res.text();
-      console.error("Respuesta no OK:", res.status, url, text);
-      throw new Error(`Error ${res.status}`);
-    }
+        if (!res.ok) {
+          const text = await res.text();
+          console.error("Respuesta no OK:", res.status, url, text);
+          throw new Error(`Error ${res.status}`);
+        }
 
-    return await res.json();
-  } catch (err) {
-    console.error("Fetch falló en:", url, err);
-    throw err;
-  }
+        return await res.json();
+      } catch (err) {
+        console.error("Fetch falló en:", url, err);
+        throw err;
       }
+    }
 
     function setStatus(texto, ok = true) {
       const badge = document.getElementById("statusBadge");
@@ -1588,6 +1588,7 @@
       const ganadorProbable = traducirGanadorProbable(signal.ganador_probable);
       const dobleOportunidad = traducirDobleOportunidad(signal.doble_oportunidad_probable);
       const totalGoles = Number(signal.total_goles_estimado || 0).toFixed(2);
+      const lineaGoles = signal.linea_goles_probable || "N/A";
       const overUnder = signal.over_under_probable || "N/A";
       const confianzaPred = signal.confianza_prediccion ?? "-";
       const riesgo = signal.riesgo_operativo || "MEDIO";
@@ -1620,6 +1621,11 @@
 
             <div class="signal-secondary-item">
               <div class="signal-secondary-title">Línea probable</div>
+              <div class="signal-secondary-sub">${lineaGoles}</div>
+            </div>
+
+            <div class="signal-secondary-item">
+              <div class="signal-secondary-title">Over / Under probable</div>
               <div class="signal-secondary-sub">${overUnder}</div>
             </div>
           </div>
@@ -1654,7 +1660,7 @@
 
     async function verEstado() {
       try {
-        const data = await fetchJSON(`${BACKEND}/status`);
+        const data = await fetchJSON(`/status`);
         document.getElementById("backendStatus").textContent = data.estado || data.status || "ok";
         document.getElementById("backendMessage").textContent = data.mensaje || "Backend operativo";
         setStatus("Backend conectado", true);
@@ -1904,7 +1910,7 @@
       contenedor.innerHTML = `<div class="empty">Cargando partidos...</div>`;
 
       try {
-        const data = await fetchJSON(`${BACKEND}/scan`);
+        const data = await fetchJSON(`/scan`);
         const partidos = data.partidos || [];
         document.getElementById("totalMatches").textContent =
           data.partidos_analizados ?? data.scanned ?? partidos.length;
@@ -1958,7 +1964,7 @@
       contenedor.innerHTML = `<div class="empty">Cargando señales...</div>`;
 
       try {
-        const data = await fetchJSON(`${BACKEND}/signals`);
+        const data = await fetchJSON(`/signals`);
         const senales = Array.isArray(data) ? data : (data.signals || []);
         cacheSignals = senales;
 
@@ -2023,8 +2029,8 @@
       statsBox.innerHTML = `<div class="empty">Cargando mini stats...</div>`;
 
       try {
-        const historyRes = await fetchJSON(`${BACKEND}/history`);
-        const stats = await fetchJSON(`${BACKEND}/learning-stats`);
+        const historyRes = await fetchJSON(`/history`);
+        const stats = await fetchJSON(`/learning-stats`);
 
         const history = Array.isArray(historyRes) ? historyRes : (historyRes.data || []);
         document.getElementById("historyTotal").textContent = stats.total_senales ?? 0;
@@ -2068,7 +2074,7 @@
 
     async function cargarAutoScanStatus() {
       try {
-        const data = await fetchJSON(`${BACKEND}/auto-scan/status`);
+        const data = await fetchJSON(`/auto-scan/status`);
         document.getElementById("autoScanValue").textContent =
           data.auto_scan_activo ? "ACTIVO" : (data.auto_scan || "OFF");
         document.getElementById("autoScanMessage").textContent =
@@ -2102,4 +2108,4 @@
     activarAutoRefresh();
   </script>
 </body>
-</html>
+  </html>
