@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from sofascore_fetcher import obtener_partidos_en_vivo
+from api_football_fetcher import obtener_partidos_en_vivo
 from signals import generar_senales
 
 router = APIRouter()
