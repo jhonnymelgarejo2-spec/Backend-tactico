@@ -1,4 +1,5 @@
-# signal_engine.py
+from engines.value_engine import evaluar_value
+
 
 def normalizar_texto(valor):
     return str(valor or "").strip().upper()
@@ -197,10 +198,10 @@ def detectar_gol_inminente(datos):
     }
 
 
-def clasificar_tier(confianza, valor):
-    if confianza >= 90 and valor >= 10:
+def clasificar_tier(confianza, valor, value_categoria="SIN_VALUE"):
+    if confianza >= 90 and valor >= 10 and value_categoria in ("VALUE_ALTO", "VALUE_ELITE"):
         return "PREMIUM"
-    if confianza >= 80 and valor >= 6:
+    if confianza >= 82 and valor >= 6 and value_categoria in ("VALUE_MEDIO", "VALUE_ALTO", "VALUE_ELITE"):
         return "FUERTE"
     if confianza >= 70 and valor >= 2:
         return "NORMAL"
@@ -393,6 +394,23 @@ def calcular_riesgo_operativo(datos, confianza_prediccion, estado_partido):
     return "BAJO"
 
 
+def enriquecer_con_value(senal):
+    value_data = evaluar_value(
+        senal.get("prob_real", 0.0),
+        senal.get("cuota", 0.0)
+    )
+
+    senal["prob_implicita_calculada"] = value_data["prob_implicita"]
+    senal["value_pct"] = value_data["value_pct"]
+    senal["edge_pct"] = value_data["edge_pct"]
+    senal["value_score"] = value_data["value_score"]
+    senal["value_categoria"] = value_data["value_categoria"]
+    senal["recomendacion_value"] = value_data["recomendacion_value"]
+    senal["razon_value"] = value_data["razon_value"]
+
+    return senal
+
+
 def generar_senales_posibles(datos):
     minuto = int(datos.get("minuto", 0) or 0)
     if minuto >= 88:
@@ -422,20 +440,21 @@ def generar_senales_posibles(datos):
     confianza_next_goal = clamp(confianza_next_goal, 45, 95)
 
     if confianza_next_goal >= 72 and valor > 0:
-        tier = clasificar_tier(confianza_next_goal, valor)
-        if tier != "DESCARTAR":
-            senales.append({
-                "mercado": "NEXT_GOAL",
-                "apuesta": "Habrá gol (próximo)",
-                "linea": None,
-                "confianza": confianza_next_goal,
-                "valor": valor,
-                "cuota": cuota,
-                "prob_real": 0.65,
-                "prob_implicita": prob_implicita,
-                "razon": "Alta presión ofensiva + dinámica explosiva",
-                "tier": tier
-            })
+        senal = {
+            "mercado": "NEXT_GOAL",
+            "apuesta": "Habrá gol (próximo)",
+            "linea": None,
+            "confianza": confianza_next_goal,
+            "valor": valor,
+            "cuota": cuota,
+            "prob_real": 0.65,
+            "prob_implicita": prob_implicita,
+            "razon": "Alta presión ofensiva + dinámica explosiva",
+        }
+        senal = enriquecer_con_value(senal)
+        senal["tier"] = clasificar_tier(senal["confianza"], senal["valor"], senal["value_categoria"])
+        if senal["tier"] != "DESCARTAR":
+            senales.append(senal)
 
     confianza_next15 = base
     if xg >= 1.2:
@@ -453,20 +472,21 @@ def generar_senales_posibles(datos):
 
     if confianza_next15 >= 68 and valor > 0:
         linea = total_goles + 0.5
-        tier = clasificar_tier(confianza_next15, valor)
-        if tier != "DESCARTAR":
-            senales.append({
-                "mercado": "OVER_NEXT_15_DYNAMIC",
-                "apuesta": f"Over {linea} próximos 15 min",
-                "linea": linea,
-                "confianza": confianza_next15,
-                "valor": valor,
-                "cuota": cuota,
-                "prob_real": 0.64,
-                "prob_implicita": prob_implicita,
-                "razon": "Momentum ofensivo + presión + xG",
-                "tier": tier
-            })
+        senal = {
+            "mercado": "OVER_NEXT_15_DYNAMIC",
+            "apuesta": f"Over {linea} próximos 15 min",
+            "linea": linea,
+            "confianza": confianza_next15,
+            "valor": valor,
+            "cuota": cuota,
+            "prob_real": 0.64,
+            "prob_implicita": prob_implicita,
+            "razon": "Momentum ofensivo + presión + xG",
+        }
+        senal = enriquecer_con_value(senal)
+        senal["tier"] = clasificar_tier(senal["confianza"], senal["valor"], senal["value_categoria"])
+        if senal["tier"] != "DESCARTAR":
+            senales.append(senal)
 
     confianza_over_match = base
     if xg >= 1.5:
@@ -482,20 +502,21 @@ def generar_senales_posibles(datos):
 
     if confianza_over_match >= 70 and valor > 0:
         linea_match = max(1.5, total_goles + 0.5)
-        tier = clasificar_tier(confianza_over_match, valor)
-        if tier != "DESCARTAR":
-            senales.append({
-                "mercado": "OVER_MATCH_DYNAMIC",
-                "apuesta": f"Over {linea_match} partido",
-                "linea": linea_match,
-                "confianza": confianza_over_match,
-                "valor": valor,
-                "cuota": cuota,
-                "prob_real": prob_real,
-                "prob_implicita": prob_implicita,
-                "razon": "xG acumulado favorable para más goles en el partido",
-                "tier": tier
-            })
+        senal = {
+            "mercado": "OVER_MATCH_DYNAMIC",
+            "apuesta": f"Over {linea_match} partido",
+            "linea": linea_match,
+            "confianza": confianza_over_match,
+            "valor": valor,
+            "cuota": cuota,
+            "prob_real": prob_real,
+            "prob_implicita": prob_implicita,
+            "razon": "xG acumulado favorable para más goles en el partido",
+        }
+        senal = enriquecer_con_value(senal)
+        senal["tier"] = clasificar_tier(senal["confianza"], senal["valor"], senal["value_categoria"])
+        if senal["tier"] != "DESCARTAR":
+            senales.append(senal)
 
     confianza_hold = 50
     if momentum in ("BAJO", "MEDIO"):
@@ -510,20 +531,21 @@ def generar_senales_posibles(datos):
     confianza_hold = clamp(confianza_hold, 40, 95)
 
     if confianza_hold >= 72 and valor > 0:
-        tier = clasificar_tier(confianza_hold, valor)
-        if tier != "DESCARTAR":
-            senales.append({
-                "mercado": "RESULT_HOLDS_NEXT_15",
-                "apuesta": "Se mantiene el resultado próximos 15 min",
-                "linea": None,
-                "confianza": confianza_hold,
-                "valor": valor,
-                "cuota": cuota,
-                "prob_real": 0.62,
-                "prob_implicita": prob_implicita,
-                "razon": "Ritmo controlado + ventana final + menor impulso ofensivo",
-                "tier": tier
-            })
+        senal = {
+            "mercado": "RESULT_HOLDS_NEXT_15",
+            "apuesta": "Se mantiene el resultado próximos 15 min",
+            "linea": None,
+            "confianza": confianza_hold,
+            "valor": valor,
+            "cuota": cuota,
+            "prob_real": 0.62,
+            "prob_implicita": prob_implicita,
+            "razon": "Ritmo controlado + ventana final + menor impulso ofensivo",
+        }
+        senal = enriquecer_con_value(senal)
+        senal["tier"] = clasificar_tier(senal["confianza"], senal["valor"], senal["value_categoria"])
+        if senal["tier"] != "DESCARTAR":
+            senales.append(senal)
 
     return senales
 
@@ -542,8 +564,9 @@ def elegir_mejor_senal(senales):
         senales,
         key=lambda s: (
             prioridad_tier.get(s.get("tier", "NORMAL"), 0),
-            s.get("confianza", 0),
-            s.get("valor", 0)
+            float(s.get("value_score", 0) or 0),
+            float(s.get("confianza", 0) or 0),
+            float(s.get("valor", 0) or 0)
         ),
         reverse=True
     )[0]
@@ -607,7 +630,14 @@ def generar_senal(datos):
             "over_under_probable": pred_goles["over_under_probable"],
             "confianza_prediccion": pred_ganador["confianza_prediccion"],
             "recomendacion_final": "OBSERVAR",
-            "riesgo_operativo": riesgo_operativo
+            "riesgo_operativo": riesgo_operativo,
+            "prob_implicita_calculada": 0.0,
+            "value_pct": 0.0,
+            "edge_pct": 0.0,
+            "value_score": 0.0,
+            "value_categoria": "SIN_VALUE",
+            "recomendacion_value": "NO_APOSTAR",
+            "razon_value": "No se detectó value suficiente"
         }
 
     resultado = dict(mejor)
@@ -638,7 +668,11 @@ def generar_senal(datos):
             "valor": s.get("valor"),
             "cuota": s.get("cuota"),
             "razon": s.get("razon"),
-            "tier": s.get("tier")
+            "tier": s.get("tier"),
+            "value_pct": s.get("value_pct"),
+            "value_score": s.get("value_score"),
+            "value_categoria": s.get("value_categoria"),
+            "recomendacion_value": s.get("recomendacion_value")
         }
         for s in senales
     ]
