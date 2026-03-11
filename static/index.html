@@ -700,7 +700,7 @@
       const liga = p.liga || p.torneo || p.league || "Liga desconocida";
       const pais = p.pais || p.country || "País desconocido";
       const score = String(p.score || `${p.marcador_local ?? 0}-${p.marcador_visitante ?? 0}`);
-      const partes = score.split("-");
+      const partes = score.replace(/–/g, "-").split("-");
       const marcador_local = Number((partes[0] || "0").trim()) || 0;
       const marcador_visitante = Number((partes[1] || "0").trim()) || 0;
 
@@ -792,27 +792,13 @@
       return valor || "N/A";
     }
 
-    function traducirDobleOportunidad(valor) {
-      const v = String(valor || "").toUpperCase();
-      if (v === "LOCAL_O_EMPATE") return "Local o Empate";
-      if (v === "EMPATE_O_VISITANTE") return "Empate o Visitante";
-      if (v === "LOCAL_O_VISITANTE") return "Local o Visitante";
-      return valor || "N/A";
-    }
-
     function marketLabelDinamico(s) {
       if (s.selection && String(s.selection).trim() !== "") {
         return s.selection;
       }
-      if (s.market === "OVER_NEXT_15_DYNAMIC") {
-        return "Over próximos 15 min";
-      }
-      if (s.market === "OVER_MATCH_DYNAMIC") {
-        return "Over partido";
-      }
-      if (s.market === "RESULT_HOLDS_NEXT_15") {
-        return "Se mantiene el resultado próximos 15 min";
-      }
+      if (s.market === "OVER_NEXT_15_DYNAMIC") return "Over próximos 15 min";
+      if (s.market === "OVER_MATCH_DYNAMIC") return "Over partido";
+      if (s.market === "RESULT_HOLDS_NEXT_15") return "Se mantiene el resultado próximos 15 min";
       return s.market || "SEÑAL";
     }
 
@@ -1167,49 +1153,58 @@
       contenedor.innerHTML = `<div class="empty">Cargando historial...</div>`;
       statsBox.innerHTML = `<div class="empty">Cargando estadísticas...</div>`;
 
-      const historyRes = await safeFetchJSON("/history", []);
-      const stats = await safeFetchJSON("/learning-stats", {
-        total_senales: cacheSignals.length,
-        ganadas: 0,
-        perdidas: 0,
-        win_rate: 0,
-        roi_percent: 0
-      });
+      try {
+        const historyRes = await safeFetchJSON("/history", []);
+        const stats = await safeFetchJSON("/learning-stats", {
+          total_senales: cacheSignals.length,
+          ganadas: 0,
+          perdidas: 0,
+          win_rate: 0,
+          roi_percent: 0
+        });
 
-      const history = Array.isArray(historyRes) ? historyRes : (historyRes?.data || []);
-      document.getElementById("historyTotal")?.textContent = stats?.total_senales ?? history.length ?? 0;
+        const history = Array.isArray(historyRes) ? historyRes : (historyRes?.data || []);
 
-      if (!history.length) {
-        contenedor.innerHTML = `<div class="empty">Historial no disponible todavía.</div>`;
-      } else {
-        contenedor.innerHTML = history.slice(-8).reverse().map(h => `
-          <div class="history-item">
-            <div class="history-title">${h.home || "Local"} vs ${h.away || "Visitante"}</div>
-            <div class="history-sub">Mercado: ${h.market || "-"}</div>
-            <div class="history-sub">Min ${h.minute ?? 0} · Cuota ${h.odd ?? "-"} · Value ${h.value ?? "-"}%</div>
-            <div class="history-sub">Estado: ${h.estado_resultado || "pendiente"}</div>
+        const historyTotalEl = document.getElementById("historyTotal");
+        if (historyTotalEl) {
+          historyTotalEl.textContent = stats?.total_senales ?? history.length ?? 0;
+        }
+
+        if (!history.length) {
+          contenedor.innerHTML = `<div class="empty">Historial no disponible todavía.</div>`;
+        } else {
+          contenedor.innerHTML = history.slice(-8).reverse().map(h => `
+            <div class="history-item">
+              <div class="history-title">${h.home || "Local"} vs ${h.away || "Visitante"}</div>
+              <div class="history-sub">Mercado: ${h.market || "-"}</div>
+              <div class="history-sub">Min ${h.minute ?? 0} · Cuota ${h.odd ?? "-"} · Value ${h.value ?? "-"}%</div>
+              <div class="history-sub">Estado: ${h.estado_resultado || "pendiente"}</div>
+            </div>
+          `).join("");
+        }
+
+        statsBox.innerHTML = `
+          <div class="stats-box">
+            <div class="stats-box-title">Win Rate</div>
+            <div class="stats-box-value">${stats?.win_rate ?? 0}%</div>
           </div>
-        `).join("");
+          <div class="stats-box">
+            <div class="stats-box-title">ROI</div>
+            <div class="stats-box-value">${stats?.roi_percent ?? 0}%</div>
+          </div>
+          <div class="stats-box">
+            <div class="stats-box-title">Ganadas</div>
+            <div class="stats-box-value">${stats?.ganadas ?? 0}</div>
+          </div>
+          <div class="stats-box">
+            <div class="stats-box-title">Perdidas</div>
+            <div class="stats-box-value">${stats?.perdidas ?? 0}</div>
+          </div>
+        `;
+      } catch (err) {
+        contenedor.innerHTML = `<div class="empty danger">Error cargando historial: ${err.message}</div>`;
+        statsBox.innerHTML = `<div class="empty danger">Error cargando estadísticas: ${err.message}</div>`;
       }
-
-      statsBox.innerHTML = `
-        <div class="stats-box">
-          <div class="stats-box-title">Win Rate</div>
-          <div class="stats-box-value">${stats?.win_rate ?? 0}%</div>
-        </div>
-        <div class="stats-box">
-          <div class="stats-box-title">ROI</div>
-          <div class="stats-box-value">${stats?.roi_percent ?? 0}%</div>
-        </div>
-        <div class="stats-box">
-          <div class="stats-box-title">Ganadas</div>
-          <div class="stats-box-value">${stats?.ganadas ?? 0}</div>
-        </div>
-        <div class="stats-box">
-          <div class="stats-box-title">Perdidas</div>
-          <div class="stats-box-value">${stats?.perdidas ?? 0}</div>
-        </div>
-      `;
     }
 
     function aplicarFiltros() {
