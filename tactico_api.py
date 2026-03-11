@@ -8,7 +8,7 @@ import time
 import traceback
 
 from live_router import router as live_router
-from sofascore_fetcher import obtener_partidos_en_vivo
+from api_football_fetcher import obtener_partidos_en_vivo
 from signals import generar_senales
 from ranking_engine import (
     rankear_senales,
@@ -481,3 +481,4 @@ def auto_scan_status():
             "errores": AUTO_SCAN_DATA["errores"],
             "ultimo_error": AUTO_SCAN_DATA["ultimo_error"],
 }
+
