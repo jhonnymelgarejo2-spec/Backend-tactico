@@ -73,6 +73,7 @@ def calcular_signal_score(senal: Dict, tactical_score: float) -> float:
     confidence = float(senal.get("confidence", 0) or 0)
     confianza_prediccion = float(senal.get("confianza_prediccion", 0) or 0)
     goal_score = calcular_goal_inminente_score(senal)
+    value_score = float(senal.get("value_score", 0) or 0)
 
     score = 0.0
     score += value * 2.2
@@ -80,6 +81,7 @@ def calcular_signal_score(senal: Dict, tactical_score: float) -> float:
     score += confianza_prediccion * 0.7
     score += tactical_score * 0.9
     score += goal_score * 0.8
+    score += value_score * 4.0
 
     return round(score, 2)
 
@@ -109,11 +111,15 @@ def filtrar_value_bets_reales(senal: Dict) -> bool:
     value = float(senal.get("value", 0) or 0)
     confidence = float(senal.get("confidence", 0) or 0)
     riesgo = str(senal.get("riesgo_operativo", "MEDIO")).upper()
+    value_categoria = str(senal.get("value_categoria", "SIN_VALUE")).upper()
 
     if value < 2:
         return False
 
     if confidence < 68:
+        return False
+
+    if value_categoria == "SIN_VALUE":
         return False
 
     if riesgo == "ALTO" and value < 10:
@@ -157,7 +163,7 @@ def generar_senales(partidos: List[Dict]) -> List[Dict]:
         if float(senal.get("valor", 0) or 0) <= 0:
             continue
 
-        señal_final = {
+        senal_final = {
             "match_id": p.get("id", ""),
             "home": p.get("local", ""),
             "away": p.get("visitante", ""),
@@ -193,19 +199,29 @@ def generar_senales(partidos: List[Dict]) -> List[Dict]:
             "recomendacion_final": senal.get("recomendacion_final", "OBSERVAR"),
             "riesgo_operativo": senal.get("riesgo_operativo", "MEDIO"),
 
+            # Nueva capa de value
+            "prob_implicita_calculada": senal.get("prob_implicita_calculada", 0.0),
+            "value_pct": senal.get("value_pct", 0.0),
+            "edge_pct": senal.get("edge_pct", 0.0),
+            "value_score": senal.get("value_score", 0.0),
+            "value_categoria": senal.get("value_categoria", "SIN_VALUE"),
+            "recomendacion_value": senal.get("recomendacion_value", "NO_APOSTAR"),
+            "razon_value": senal.get("razon_value", "Sin análisis de value"),
+
             "all_signals": senal.get("senales_posibles", []),
         }
 
-        señal_final = enriquecer_senal(señal_final, p)
+        senal_final = enriquecer_senal(senal_final, p)
 
-        if not filtrar_value_bets_reales(señal_final):
+        if not filtrar_value_bets_reales(senal_final):
             continue
 
-        senales.append(señal_final)
+        senales.append(senal_final)
 
     senales.sort(
         key=lambda s: (
             float(s.get("signal_score", 0) or 0),
+            float(s.get("value_score", 0) or 0),
             float(s.get("tactical_score", 0) or 0),
             float(s.get("goal_inminente_score", 0) or 0),
             float(s.get("confidence", 0) or 0),
