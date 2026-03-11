@@ -20,9 +20,11 @@
       --border: rgba(255,255,255,0.08);
       --text: #eaf6ff;
       --muted: #8eb8e8;
+      --blue: #52a8ff;
       --green: #65ff9b;
       --yellow: #ffd66e;
       --red: #ff8d8d;
+      --soft: rgba(255,255,255,0.04);
     }
 
     body {
@@ -33,17 +35,10 @@
 
     .page {
       display: grid;
-      grid-template-columns: 280px 1fr 360px;
+      grid-template-columns: 300px 1fr 380px;
       gap: 18px;
       min-height: 100vh;
       padding: 18px;
-    }
-
-    .col,
-    .leftbar,
-    .mainpanel,
-    .rightbar {
-      min-width: 0;
     }
 
     .card {
@@ -59,7 +54,7 @@
     }
 
     .logo {
-      font-size: 26px;
+      font-size: 28px;
       font-weight: bold;
       color: #fff;
       margin-bottom: 10px;
@@ -83,7 +78,8 @@
     }
 
     .menu button,
-    .toolbar button {
+    .toolbar button,
+    .refresh-btn {
       background: #12233b;
       color: #dbeaff;
       border: 1px solid rgba(255,255,255,0.08);
@@ -96,7 +92,8 @@
     }
 
     .menu button:hover,
-    .toolbar button:hover {
+    .toolbar button:hover,
+    .refresh-btn:hover {
       background: #18304f;
     }
 
@@ -105,39 +102,6 @@
       font-weight: bold;
       color: #ffffff;
       margin-bottom: 12px;
-    }
-
-    .mini-signal-list,
-    .signal-list,
-    .history-list,
-    .match-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .mini-signal,
-    .history-item {
-      background: #0b1625;
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 14px;
-      padding: 12px;
-    }
-
-    .mini-signal-title,
-    .history-title {
-      font-size: 14px;
-      font-weight: bold;
-      margin-bottom: 8px;
-      line-height: 1.4;
-    }
-
-    .mini-signal-sub,
-    .small {
-      font-size: 12px;
-      color: #cde2ff;
-      line-height: 1.45;
-      margin-bottom: 6px;
     }
 
     .topbar {
@@ -178,22 +142,7 @@
       gap: 10px;
       flex-wrap: wrap;
       margin-bottom: 16px;
-    }
-
-    .filters-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .filter-control {
-      background: #12233b;
-      color: #dbeaff;
-      border: 1px solid rgba(255,255,255,0.08);
-      padding: 12px 14px;
-      border-radius: 12px;
-      min-width: 220px;
-      outline: none;
+      align-items: center;
     }
 
     .status-badge {
@@ -213,30 +162,63 @@
       border: 1px solid #a94444;
     }
 
-    .subsection {
-      margin-top: 16px;
+    .status-badge.warn {
+      background: #4a2f10;
+      color: #ffbf70;
+      border: 1px solid #a36b2e;
     }
 
-    .hot-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
+    .filters-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .filter-control {
+      background: #12233b;
+      color: #dbeaff;
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 12px 14px;
+      border-radius: 12px;
+      min-width: 220px;
+      outline: none;
+    }
+
+    .hot-grid,
+    .signal-list,
+    .mini-signal-list,
+    .history-list,
+    .match-list {
+      display: flex;
+      flex-direction: column;
       gap: 12px;
     }
 
     .hot-card,
-    .signal-card {
-      background: var(--card-2);
-      border: 1px solid rgba(255,255,255,0.09);
+    .signal-card,
+    .mini-signal,
+    .history-item,
+    .match-card,
+    .hero-signal {
+      background: linear-gradient(180deg, #102235, #0a1522);
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 18px;
       padding: 14px;
     }
 
-    .hot-head,
-    .signal-head {
+    .hero-signal {
+      border: 1px solid rgba(82,168,255,0.28);
+      background: linear-gradient(180deg, #11253b, #0a1625);
+      box-shadow: 0 0 0 1px rgba(82,168,255,0.08), 0 12px 26px rgba(0,0,0,0.25);
+    }
+
+    .hero-top,
+    .signal-head,
+    .hot-head {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      gap: 8px;
+      gap: 10px;
       margin-bottom: 10px;
     }
 
@@ -247,8 +229,8 @@
     }
 
     .pill,
-    .alert-badge,
-    .signal-tier {
+    .signal-tier,
+    .state-badge {
       display: inline-block;
       padding: 6px 10px;
       border-radius: 999px;
@@ -257,30 +239,6 @@
       border: 1px solid rgba(255,255,255,0.12);
       background: #18314f;
       color: #dcecff;
-    }
-
-    .alert-roja {
-      background: #4a1010;
-      color: #ff8d8d;
-      border-color: #a33a3a;
-    }
-
-    .alert-naranja {
-      background: #4a2f10;
-      color: #ffbf70;
-      border-color: #a36b2e;
-    }
-
-    .alert-amarilla {
-      background: #4a4410;
-      color: #ffe670;
-      border-color: #a39a2e;
-    }
-
-    .alert-baja {
-      background: #10351f;
-      color: #7dffb0;
-      border-color: #2f8a57;
     }
 
     .tier-premium {
@@ -301,70 +259,186 @@
       border-color: #2f8a57;
     }
 
-    .hot-teams,
-    .signal-market {
+    .state-frio {
+      background: #10351f;
+      color: #7dffb0;
+      border-color: #2f8a57;
+    }
+
+    .state-controlado {
+      background: #4a4410;
+      color: #ffe670;
+      border-color: #a39a2e;
+    }
+
+    .state-caliente {
+      background: #4a2f10;
+      color: #ffbf70;
+      border-color: #a36b2e;
+    }
+
+    .state-explosivo,
+    .state-caos {
+      background: #4a1010;
+      color: #ff8d8d;
+      border-color: #a33a3a;
+    }
+
+    .state-muerto {
+      background: #232323;
+      color: #d0d0d0;
+      border-color: #5f5f5f;
+    }
+
+    .signal-market,
+    .hero-market,
+    .hot-title {
       font-size: 20px;
       font-weight: bold;
       line-height: 1.3;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
+      color: #fff;
     }
 
-    .hot-line,
-    .signal-meta,
-    .match-clean-bottom,
-    .match-extra-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 8px;
+    .hero-market {
+      font-size: 22px;
+      color: var(--yellow);
     }
 
+    .hero-sub,
+    .signal-sub,
+    .mini-signal-sub,
+    .history-sub,
+    .small,
     .reason-box {
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid rgba(255,255,255,0.08);
-      color: #9bc1e8;
       font-size: 13px;
-      line-height: 1.45;
+      color: #d7e8ff;
+      line-height: 1.5;
     }
 
+    .hero-value,
     .signal-value {
       font-size: 26px;
       font-weight: bold;
-      color: #65ff9b;
+      color: var(--green);
       white-space: nowrap;
     }
 
-    .signal-sub {
-      font-size: 14px;
-      color: #d7e8ff;
-      line-height: 1.5;
-      margin-bottom: 8px;
-    }
-
+    .hero-grid,
     .stats-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
+      margin-top: 12px;
     }
 
+    .hero-box,
     .stats-box {
-      background: #0b1625;
-      border: 1px solid rgba(255,255,255,0.07);
+      background: var(--soft);
+      border: 1px solid rgba(255,255,255,0.06);
       border-radius: 14px;
       padding: 12px;
     }
 
+    .hero-box-title,
     .stats-box-title {
       font-size: 12px;
       color: #8eb8e8;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
+    .hero-box-value,
     .stats-box-value {
-      font-size: 22px;
+      font-size: 18px;
       font-weight: bold;
       color: #fff;
+    }
+
+    .hero-reason {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      color: #b8d6f5;
+      line-height: 1.5;
+      font-size: 13px;
+    }
+
+    .match-card {
+      background: linear-gradient(180deg, #0f1c2d, #0a1423);
+    }
+
+    .match-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .match-league {
+      font-size: 12px;
+      color: #7cc4ff;
+      font-weight: bold;
+    }
+
+    .match-main {
+      display: grid;
+      grid-template-columns: 1fr 160px 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .match-team {
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .match-score-box {
+      text-align: center;
+    }
+
+    .match-score {
+      font-size: 46px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .match-status {
+      color: #8eb8e8;
+      font-size: 12px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .match-meta,
+    .signal-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .signal-list .signal-card .signal-market {
+      color: var(--yellow);
+    }
+
+    .signal-reason {
+      margin-top: 10px;
+      color: #b8d6f5;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .mini-signal-title,
+    .history-title {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 8px;
     }
 
     .empty {
@@ -377,145 +451,24 @@
     }
 
     .green {
-      color: #65ff9b;
+      color: var(--green);
     }
 
     .yellow {
-      color: #ffd66e;
+      color: var(--yellow);
     }
 
-    .matches-group {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
-
-    .league-block {
-      background: linear-gradient(180deg, #0f1c2d, #0a1423);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 20px;
-      overflow: hidden;
-    }
-
-    .league-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 14px 18px;
-      background: rgba(255,255,255,0.03);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .league-header-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 15px;
-      font-weight: bold;
-      color: #ffffff;
-    }
-
-    .league-header-right {
-      font-size: 13px;
-      color: #9bc1e8;
-    }
-
-    .match-clean {
-      padding: 20px 18px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
-
-    .match-clean:last-child {
-      border-bottom: none;
-    }
-
-    .match-clean-top {
-      display: grid;
-      grid-template-columns: 1fr 180px 1fr;
-      align-items: center;
-      gap: 18px;
-    }
-
-    .team-clean {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      text-align: center;
-    }
-
-    .team-clean-name {
-      font-size: 18px;
-      font-weight: bold;
-      color: #fff;
-    }
-
-    .score-clean-box {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .score-clean {
-      font-size: 54px;
-      font-weight: 900;
-      color: #ffffff;
-      line-height: 1;
-    }
-
-    .score-separator {
-      opacity: 0.7;
-      padding: 0 8px;
-    }
-
-    .match-status-clean {
-      font-size: 13px;
-      color: #9bc1e8;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-    }
-
-    .signal-secondary-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .signal-secondary-item {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 12px;
-      padding: 10px 12px;
-    }
-
-    .signal-secondary-title {
-      font-size: 14px;
-      font-weight: bold;
-      color: #fff;
-      margin-bottom: 4px;
-    }
-
-    .signal-secondary-sub {
-      font-size: 12px;
-      color: #b8d6f5;
-      line-height: 1.4;
+    .section-spacer {
+      margin-top: 16px;
     }
 
     @media (max-width: 1400px) {
       .page {
-        grid-template-columns: 260px 1fr 320px;
+        grid-template-columns: 280px 1fr 340px;
       }
 
       .topbar {
         grid-template-columns: repeat(3, 1fr);
-      }
-
-      .hot-grid {
-        grid-template-columns: 1fr;
       }
     }
 
@@ -531,30 +484,31 @@
 
     @media (max-width: 750px) {
       .topbar,
+      .hero-grid,
       .stats-grid {
         grid-template-columns: 1fr;
       }
 
-      .filter-control {
-        min-width: 100%;
-      }
-
-      .match-clean-top {
+      .match-main {
         grid-template-columns: 1fr;
       }
 
-      .score-clean {
-        font-size: 42px;
+      .match-score {
+        font-size: 40px;
+      }
+
+      .filter-control {
+        min-width: 100%;
       }
     }
   </style>
 </head>
 <body>
   <div class="page">
-    <aside class="col leftbar">
+    <aside class="leftbar">
       <div class="card">
         <div class="logo">JHONNY_<span>ELITE V10</span></div>
-        <div class="subtitle">SCANNER AUTOMÁTICO · SEÑALES · MEMORIA DE APRENDIZAJE · PREDICTOR DE GOL</div>
+        <div class="subtitle">SCANNER AUTOMÁTICO · IA TÁCTICA · VALUE BETS · DETECTOR DE GOL INMINENTE</div>
 
         <div class="menu">
           <button onclick="cargarTodo()">📡 Actualizar panel</button>
@@ -572,7 +526,7 @@
       </div>
     </aside>
 
-    <main class="col mainpanel">
+    <main class="mainpanel">
       <div class="topbar">
         <div class="metric-card">
           <div class="metric-title">Estado backend</div>
@@ -593,24 +547,24 @@
         </div>
 
         <div class="metric-card">
-          <div class="metric-title">Historial total</div>
-          <div id="historyTotal" class="metric-value">0</div>
-          <div class="metric-sub">Señales guardadas en memoria</div>
+          <div class="metric-title">Último scan</div>
+          <div id="lastScanValue" class="metric-value">-</div>
+          <div id="lastScanMessage" class="metric-sub">Esperando datos...</div>
         </div>
 
         <div class="metric-card">
-          <div class="metric-title">Versión / Auto-scan</div>
+          <div class="metric-title">Auto-scan</div>
           <div id="autoScanValue" class="metric-value">...</div>
           <div id="autoScanMessage" class="metric-sub">Cargando...</div>
         </div>
       </div>
 
       <div class="toolbar">
-        <button onclick="cargarTodo()">Actualizar panel</button>
+        <button class="refresh-btn" onclick="cargarTodo()">Actualizar panel</button>
         <span id="statusBadge" class="status-badge">Esperando...</span>
       </div>
 
-      <div class="card subsection">
+      <div class="card">
         <div class="section-title">🔎 FILTROS RÁPIDOS</div>
 
         <div class="filters-row">
@@ -626,32 +580,41 @@
             oninput="aplicarFiltros()"
           />
 
-          <select id="alertaFiltro" class="filter-control" onchange="aplicarFiltros()">
-            <option value="ALL">Todas las alertas</option>
-            <option value="ROJA">Solo ROJA</option>
-            <option value="NARANJA">Solo NARANJA</option>
-            <option value="AMARILLA">Solo AMARILLA</option>
-            <option value="BAJA">Solo BAJA</option>
+          <select id="estadoFiltro" class="filter-control" onchange="aplicarFiltros()">
+            <option value="ALL">Todos los estados</option>
+            <option value="FRIO">Frío</option>
+            <option value="CONTROLADO">Controlado</option>
+            <option value="CALIENTE">Caliente</option>
+            <option value="EXPLOSIVO">Explosivo</option>
+            <option value="CAOS">Caos</option>
+            <option value="MUERTO">Muerto</option>
           </select>
         </div>
       </div>
 
-      <section class="card">
+      <div class="card section-spacer">
+        <div class="section-title">🎯 SEÑAL PRINCIPAL DEL SISTEMA</div>
+        <div id="heroSignal">
+          <div class="empty">Cargando señal principal...</div>
+        </div>
+      </div>
+
+      <div class="card section-spacer">
         <div class="section-title">🔥 PARTIDOS CALIENTES</div>
         <div id="hotMatches" class="hot-grid">
           <div class="empty">Cargando partidos calientes...</div>
         </div>
-      </section>
+      </div>
 
-      <section class="card subsection">
-        <div class="section-title">PARTIDOS EN VIVO</div>
+      <div class="card section-spacer">
+        <div class="section-title">⚽ PARTIDOS EN VIVO</div>
         <div id="matchList" class="match-list">
           <div class="empty">Cargando partidos...</div>
         </div>
-      </section>
+      </div>
     </main>
 
-    <aside class="col rightbar">
+    <aside class="rightbar">
       <div class="card">
         <div class="section-title">SEÑALES DETECTADAS</div>
         <div id="signalList" class="signal-list">
@@ -662,7 +625,7 @@
       <div class="card">
         <div class="section-title">MINI STATS</div>
         <div id="miniStats" class="stats-grid">
-          <div class="empty">Cargando mini stats...</div>
+          <div class="empty">Cargando estadísticas...</div>
         </div>
       </div>
 
@@ -682,7 +645,15 @@
     let cacheSignals = [];
     let ligaSeleccionada = "ALL";
     let equipoBuscado = "";
-    let alertaSeleccionada = "ALL";
+    let estadoSeleccionado = "ALL";
+
+    function setStatus(texto, tipo = "ok") {
+      const badge = document.getElementById("statusBadge");
+      badge.textContent = texto;
+      badge.className = "status-badge";
+      if (tipo === "off") badge.classList.add("off");
+      if (tipo === "warn") badge.classList.add("warn");
+    }
 
     async function fetchJSON(url, options = {}) {
       const res = await fetch(`${BACKEND}${url}`, {
@@ -712,132 +683,38 @@
       }
     }
 
-    function setStatus(texto, ok = true) {
-      const badge = document.getElementById("statusBadge");
-      badge.textContent = texto;
-      badge.className = ok ? "status-badge" : "status-badge off";
-    }
-
-    function clamp(valor, min, max) {
-      return Math.max(min, Math.min(max, valor));
-    }
-
-    function normalizarTexto(valor) {
-      return String(valor || "").trim().toLowerCase();
-    }
-
-    function colorPorValor(value) {
-      const num = Number(value || 0);
-      if (num >= 15) return "green";
-      if (num >= 8) return "yellow";
-      return "";
-    }
-
-    function getAlertClass(level) {
-      const t = String(level || "").toUpperCase();
-      if (t === "ROJA") return "alert-badge alert-roja";
-      if (t === "NARANJA") return "alert-badge alert-naranja";
-      if (t === "AMARILLA") return "alert-badge alert-amarilla";
-      return "alert-badge alert-baja";
-    }
-
-    function getSignalTier(confidence, value) {
-      const c = Number(confidence || 0);
-      const v = Number(value || 0);
-
-      if (c >= 90 && v >= 12) {
-        return { label: "🔥 PREMIUM", className: "signal-tier tier-premium" };
-      }
-
-      if (c >= 80 && v >= 6) {
-        return { label: "⚡ FUERTE", className: "signal-tier tier-fuerte" };
-      }
-
-      return { label: "📊 NORMAL", className: "signal-tier tier-normal" };
-    }
-
-    function marketLabelDinamico(s) {
-      if (s.selection && String(s.selection).trim() !== "") {
-        return s.selection;
-      }
-
-      if (s.market === "OVER_NEXT_15_DYNAMIC") {
-        return "Over próximos 15 min";
-      }
-
-      if (s.market === "OVER_MATCH_DYNAMIC") {
-        return "Over partido";
-      }
-
-      if (s.market === "RESULT_HOLDS_NEXT_15") {
-        return "Se mantiene el resultado próximos 15 min";
-      }
-
-      return s.market || "SEÑAL";
-    }
-
-    function parseScore(scoreText) {
-      const raw = String(scoreText || "0-0").trim();
-      const partes = raw.split("-");
-      const local = Number(String(partes[0] || "0").trim()) || 0;
-      const visitante = Number(String(partes[1] || "0").trim()) || 0;
-      return {
-        local,
-        visitante,
-        texto: `${local}-${visitante}`
-      };
+    function formatTimestamp(ts) {
+      if (!ts) return "N/A";
+      const d = new Date(Number(ts) * 1000);
+      if (Number.isNaN(d.getTime())) return "N/A";
+      return d.toLocaleTimeString("es-ES", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      });
     }
 
     function normalizarPartido(p) {
-      const scoreRaw =
-        p.score ||
-        p.marcador ||
-        `${p.marcador_local ?? 0}-${p.marcador_visitante ?? 0}`;
-
-      const score = parseScore(scoreRaw);
-
-      const local =
-        p.local ||
-        p.equipo_local ||
-        p.home ||
-        "Local";
-
-      const visitante =
-        p.visitante ||
-        p.equipo_visitante ||
-        p.away ||
-        "Visitante";
-
-      const liga =
-        p.liga ||
-        p.torneo ||
-        p.league ||
-        "Liga desconocida";
-
-      const pais =
-        p.pais ||
-        p.country ||
-        "País desconocido";
-
-      const minuto =
-        Number(p.minuto ?? p.minute ?? 0) || 0;
-
-      const estadoPartido =
-        p.estado_partido ||
-        p.estado ||
-        (minuto >= 90 ? "finalizado" : "en_juego");
+      const local = p.local || p.equipo_local || p.home || "Local";
+      const visitante = p.visitante || p.equipo_visitante || p.away || "Visitante";
+      const liga = p.liga || p.torneo || p.league || "Liga desconocida";
+      const pais = p.pais || p.country || "País desconocido";
+      const score = String(p.score || `${p.marcador_local ?? 0}-${p.marcador_visitante ?? 0}`);
+      const partes = score.split("-");
+      const marcador_local = Number((partes[0] || "0").trim()) || 0;
+      const marcador_visitante = Number((partes[1] || "0").trim()) || 0;
 
       return {
-        id: p.id ?? `${local}-${visitante}-${minuto}`,
+        id: p.id ?? `${local}-${visitante}`,
         local,
         visitante,
         liga,
         pais,
-        minuto,
-        estado_partido: estadoPartido,
-        marcador_local: score.local,
-        marcador_visitante: score.visitante,
-        score: score.texto,
+        minuto: Number(p.minuto ?? p.minute ?? 0) || 0,
+        estado_partido: p.estado_partido || p.estado || "EN_JUEGO",
+        marcador_local,
+        marcador_visitante,
+        score: `${marcador_local}-${marcador_visitante}`,
         xG: Number(p.xG ?? p.xg ?? 0) || 0,
         momentum: p.momentum || "MEDIO",
         goal_predictor: p.goal_predictor || {},
@@ -849,12 +726,12 @@
     function normalizarSignal(s) {
       return {
         match_id: s.match_id ?? s.id ?? "",
-        home: s.home || s.local || s.equipo_local || "Local",
-        away: s.away || s.visitante || s.equipo_visitante || "Visitante",
-        league: s.league || s.liga || s.torneo || "Liga desconocida",
-        country: s.country || s.pais || "País desconocido",
+        home: s.home || "Local",
+        away: s.away || "Visitante",
+        league: s.league || "Liga desconocida",
+        country: s.country || "País desconocido",
         minute: Number(s.minute ?? s.minuto ?? 0) || 0,
-        score: s.score || `${s.marcador_local ?? 0}-${s.marcador_visitante ?? 0}`,
+        score: s.score || "0-0",
         market: s.market || s.mercado || "",
         selection: s.selection || s.apuesta || "",
         line: s.line ?? s.linea ?? null,
@@ -862,7 +739,7 @@
         prob: s.prob ?? s.prob_real ?? "-",
         value: Number(s.value ?? s.valor ?? 0) || 0,
         confidence: Number(s.confidence ?? s.confianza ?? 0) || 0,
-        reason: s.reason || s.razon || "",
+        reason: s.reason || s.razon || "Señal generada por el sistema",
         tier: s.tier || "NORMAL",
         estado_partido: s.estado_partido || {},
         gol_inminente: s.gol_inminente || {},
@@ -870,65 +747,41 @@
         goal_prob_5: Number(s.goal_prob_5 ?? 0) || 0,
         goal_prob_10: Number(s.goal_prob_10 ?? 0) || 0,
         goal_prob_15: Number(s.goal_prob_15 ?? 0) || 0,
-        resultado_probable: s.resultado_probable || "",
-        ganador_probable: s.ganador_probable || "",
-        doble_oportunidad_probable: s.doble_oportunidad_probable || "",
+        resultado_probable: s.resultado_probable || "N/A",
+        ganador_probable: s.ganador_probable || "N/A",
+        doble_oportunidad_probable: s.doble_oportunidad_probable || "N/A",
         total_goles_estimado: Number(s.total_goles_estimado ?? 0) || 0,
-        linea_goles_probable: s.linea_goles_probable || "",
-        over_under_probable: s.over_under_probable || "",
+        linea_goles_probable: s.linea_goles_probable || "N/A",
+        over_under_probable: s.over_under_probable || "N/A",
         confianza_prediccion: Number(s.confianza_prediccion ?? 0) || 0,
-        recomendacion_final: s.recomendacion_final || "",
-        riesgo_operativo: s.riesgo_operativo || "",
+        recomendacion_final: s.recomendacion_final || "OBSERVAR",
+        riesgo_operativo: s.riesgo_operativo || "MEDIO",
         all_signals: Array.isArray(s.all_signals) ? s.all_signals : []
       };
     }
 
-    function poblarFiltroLigas(partidos) {
-      const select = document.getElementById("ligaFiltro");
-      const actual = select.value || "ALL";
+    function getSignalTier(confidence, value) {
+      const c = Number(confidence || 0);
+      const v = Number(value || 0);
 
-      const ligas = [...new Set(
-        partidos
-          .map(p => String(p.liga || "").trim())
-          .filter(Boolean)
-      )].sort((a, b) => a.localeCompare(b));
-
-      select.innerHTML =
-        `<option value="ALL">Todas las ligas</option>` +
-        ligas.map(l => `<option value="${l}">${l}</option>`).join("");
-
-      if (ligas.includes(actual)) {
-        select.value = actual;
-      } else {
-        select.value = "ALL";
+      if (c >= 90 && v >= 12) {
+        return { label: "🔥 PREMIUM", className: "signal-tier tier-premium" };
       }
+      if (c >= 80 && v >= 6) {
+        return { label: "⚡ FUERTE", className: "signal-tier tier-fuerte" };
+      }
+      return { label: "📊 NORMAL", className: "signal-tier tier-normal" };
     }
 
-    function filtrarPartidos(partidos) {
-      ligaSeleccionada = document.getElementById("ligaFiltro")?.value || "ALL";
-      equipoBuscado = (document.getElementById("equipoFiltro")?.value || "").toLowerCase().trim();
-      alertaSeleccionada = document.getElementById("alertaFiltro")?.value || "ALL";
-
-      return partidos.filter(p => {
-        const ligaOk = ligaSeleccionada === "ALL" || p.liga === ligaSeleccionada;
-
-        const local = (p.local || "").toLowerCase();
-        const visitante = (p.visitante || "").toLowerCase();
-
-        const equipoOk =
-          !equipoBuscado ||
-          local.includes(equipoBuscado) ||
-          visitante.includes(equipoBuscado);
-
-        const signal = cacheSignals.find(s => String(s.match_id) === String(p.id));
-        const nivel = String(signal?.estado_partido?.estado || "BAJA").toUpperCase();
-
-        const alertaOk =
-          alertaSeleccionada === "ALL" ||
-          nivel === alertaSeleccionada;
-
-        return ligaOk && equipoOk && alertaOk;
-      });
+    function estadoClass(estado) {
+      const e = String(estado || "").toUpperCase();
+      if (e === "FRIO") return "state-badge state-frio";
+      if (e === "CONTROLADO") return "state-badge state-controlado";
+      if (e === "CALIENTE") return "state-badge state-caliente";
+      if (e === "EXPLOSIVO") return "state-badge state-explosivo";
+      if (e === "CAOS") return "state-badge state-caos";
+      if (e === "MUERTO") return "state-badge state-muerto";
+      return "state-badge";
     }
 
     function traducirGanadorProbable(valor) {
@@ -947,36 +800,149 @@
       return valor || "N/A";
     }
 
-    function renderPrediccionPartidoBlock(signal) {
-      if (!signal) return "";
+    function marketLabelDinamico(s) {
+      if (s.selection && String(s.selection).trim() !== "") {
+        return s.selection;
+      }
+      if (s.market === "OVER_NEXT_15_DYNAMIC") {
+        return "Over próximos 15 min";
+      }
+      if (s.market === "OVER_MATCH_DYNAMIC") {
+        return "Over partido";
+      }
+      if (s.market === "RESULT_HOLDS_NEXT_15") {
+        return "Se mantiene el resultado próximos 15 min";
+      }
+      return s.market || "SEÑAL";
+    }
 
-      return `
-        <div class="signal-secondary-list" style="margin-top:12px;">
-          <div class="signal-secondary-item">
-            <div class="signal-secondary-title">Predicción del encuentro</div>
-            <div class="signal-secondary-sub">Resultado probable: ${signal.resultado_probable || "N/A"}</div>
-            <div class="signal-secondary-sub">Ganador probable: ${traducirGanadorProbable(signal.ganador_probable)}</div>
-            <div class="signal-secondary-sub">Doble oportunidad: ${traducirDobleOportunidad(signal.doble_oportunidad_probable)}</div>
-            <div class="signal-secondary-sub">Total goles estimado: ${signal.total_goles_estimado || 0}</div>
-            <div class="signal-secondary-sub">Línea probable: ${signal.linea_goles_probable || "N/A"}</div>
-            <div class="signal-secondary-sub">Over / Under: ${signal.over_under_probable || "N/A"}</div>
-            <div class="signal-secondary-sub">Confianza predicción: ${signal.confianza_prediccion || 0}%</div>
-            <div class="signal-secondary-sub">Recomendación: ${signal.recomendacion_final || "OBSERVAR"}</div>
-            <div class="signal-secondary-sub">Riesgo: ${signal.riesgo_operativo || "MEDIO"}</div>
+    function poblarFiltroLigas(partidos) {
+      const select = document.getElementById("ligaFiltro");
+      const actual = select.value || "ALL";
+
+      const ligas = [...new Set(
+        partidos.map(p => String(p.liga || "").trim()).filter(Boolean)
+      )].sort((a, b) => a.localeCompare(b));
+
+      select.innerHTML =
+        `<option value="ALL">Todas las ligas</option>` +
+        ligas.map(l => `<option value="${l}">${l}</option>`).join("");
+
+      if (ligas.includes(actual)) {
+        select.value = actual;
+      } else {
+        select.value = "ALL";
+      }
+    }
+
+    function getSignalForMatch(matchId) {
+      return cacheSignals.find(s => String(s.match_id) === String(matchId)) || null;
+    }
+
+    function filtrarPartidos(partidos) {
+      ligaSeleccionada = document.getElementById("ligaFiltro")?.value || "ALL";
+      equipoBuscado = (document.getElementById("equipoFiltro")?.value || "").toLowerCase().trim();
+      estadoSeleccionado = (document.getElementById("estadoFiltro")?.value || "ALL").toUpperCase();
+
+      return partidos.filter(p => {
+        const ligaOk = ligaSeleccionada === "ALL" || p.liga === ligaSeleccionada;
+
+        const equipoOk =
+          !equipoBuscado ||
+          p.local.toLowerCase().includes(equipoBuscado) ||
+          p.visitante.toLowerCase().includes(equipoBuscado);
+
+        const signal = getSignalForMatch(p.id);
+        const estado = String(signal?.estado_partido?.estado || "").toUpperCase();
+        const estadoOk = estadoSeleccionado === "ALL" || estado === estadoSeleccionado;
+
+        return ligaOk && equipoOk && estadoOk;
+      });
+    }
+
+    function renderHeroSignal() {
+      const box = document.getElementById("heroSignal");
+
+      if (!cacheSignals.length) {
+        box.innerHTML = `<div class="empty">No hay señal principal disponible todavía.</div>`;
+        return;
+      }
+
+      const hero = cacheSignals[0];
+      const tier = getSignalTier(hero.confidence, hero.value);
+      const estado = hero.estado_partido?.estado || "SIN DATO";
+
+      box.innerHTML = `
+        <div class="hero-signal">
+          <div class="hero-top">
+            <div>
+              <div class="${tier.className}">${tier.label}</div>
+              <div class="hero-market">${marketLabelDinamico(hero)}</div>
+            </div>
+            <div class="hero-value">+${hero.value}%</div>
+          </div>
+
+          <div class="hero-sub">
+            <strong>${hero.home} vs ${hero.away}</strong>
+            · Min ${hero.minute}
+            · Marcador ${hero.score}
+          </div>
+
+          <div class="signal-meta">
+            <span class="pill">Cuota ${hero.odd}</span>
+            <span class="pill">Confianza ${hero.confidence}%</span>
+            <span class="pill">Prob ${hero.prob}</span>
+            <span class="${estadoClass(estado)}">${estado}</span>
+          </div>
+
+          <div class="hero-grid">
+            <div class="hero-box">
+              <div class="hero-box-title">Recomendación</div>
+              <div class="hero-box-value">${hero.recomendacion_final || "OBSERVAR"}</div>
+            </div>
+
+            <div class="hero-box">
+              <div class="hero-box-title">Riesgo</div>
+              <div class="hero-box-value">${hero.riesgo_operativo || "MEDIO"}</div>
+            </div>
+
+            <div class="hero-box">
+              <div class="hero-box-title">Resultado probable</div>
+              <div class="hero-box-value">${hero.resultado_probable || "N/A"}</div>
+            </div>
+
+            <div class="hero-box">
+              <div class="hero-box-title">Ganador probable</div>
+              <div class="hero-box-value">${traducirGanadorProbable(hero.ganador_probable)}</div>
+            </div>
+
+            <div class="hero-box">
+              <div class="hero-box-title">Over / Under</div>
+              <div class="hero-box-value">${hero.over_under_probable || "N/A"}</div>
+            </div>
+
+            <div class="hero-box">
+              <div class="hero-box-title">Gol inminente</div>
+              <div class="hero-box-value">${hero.gol_inminente?.gol_inminente ? "SÍ" : "NO"}</div>
+            </div>
+          </div>
+
+          <div class="hero-reason">
+            <strong>Motivo táctico:</strong> ${hero.reason || "Señal generada por el sistema"}
           </div>
         </div>
       `;
     }
 
-    function renderMiniSignals(senales) {
+    function renderMiniSignals() {
       const box = document.getElementById("miniSignalList");
 
-      if (!senales.length) {
+      if (!cacheSignals.length) {
         box.innerHTML = `<div class="empty">No hay señales rápidas.</div>`;
         return;
       }
 
-      box.innerHTML = senales.slice(0, 4).map(s => {
+      box.innerHTML = cacheSignals.slice(0, 4).map(s => {
         const tier = getSignalTier(s.confidence, s.value);
         return `
           <div class="mini-signal">
@@ -986,21 +952,21 @@
             <div class="mini-signal-sub"><strong>${s.home} vs ${s.away}</strong></div>
             <div class="mini-signal-sub">${marketLabelDinamico(s)}</div>
             <div class="mini-signal-sub">Min ${s.minute} · Marcador ${s.score}</div>
-            <div class="mini-signal-sub">Cuota ${s.odd} · Value <span class="${colorPorValor(s.value)}">+${s.value}%</span></div>
+            <div class="mini-signal-sub">Cuota ${s.odd} · Value <span class="${s.value >= 15 ? 'green' : s.value >= 8 ? 'yellow' : ''}">+${s.value}%</span></div>
           </div>
         `;
       }).join("");
     }
 
-    function renderSignals(senales) {
+    function renderSignals() {
       const contenedor = document.getElementById("signalList");
 
-      if (!senales.length) {
+      if (!cacheSignals.length) {
         contenedor.innerHTML = `<div class="empty">No se detectaron señales.</div>`;
         return;
       }
 
-      contenedor.innerHTML = senales.slice(0, 6).map(s => {
+      contenedor.innerHTML = cacheSignals.slice(0, 6).map(s => {
         const tier = getSignalTier(s.confidence, s.value);
         const estado = s.estado_partido?.estado || "SIN DATO";
 
@@ -1011,7 +977,7 @@
                 <div class="${tier.className}">${tier.label}</div>
                 <div class="signal-market">${marketLabelDinamico(s)}</div>
               </div>
-              <div class="signal-value ${colorPorValor(s.value)}">+${s.value}%</div>
+              <div class="signal-value">+${s.value}%</div>
             </div>
 
             <div class="signal-sub">
@@ -1020,212 +986,177 @@
               · Marcador ${s.score}
             </div>
 
-            <div class="signal-sub">${s.reason || "Señal generada por el sistema"}</div>
-
             <div class="signal-meta">
               <span class="pill">Cuota ${s.odd}</span>
-              <span class="pill">Prob ${s.prob}</span>
               <span class="pill">Confianza ${s.confidence}%</span>
               <span class="pill">${s.league}</span>
-              <span class="pill">${s.country}</span>
-              <span class="${getAlertClass(estado)}">${estado}</span>
+              <span class="${estadoClass(estado)}">${estado}</span>
             </div>
 
-            ${renderPrediccionPartidoBlock(s)}
+            <div class="signal-reason">${s.reason || "Señal generada por el sistema"}</div>
           </div>
         `;
       }).join("");
     }
 
-    function renderHotMatches(partidos) {
-      const hotBox = document.getElementById("hotMatches");
-      const base = filtrarPartidos(partidos);
+    function renderHotMatches() {
+      const box = document.getElementById("hotMatches");
+      const partidos = filtrarPartidos(cachePartidos);
 
-      if (!base.length) {
-        hotBox.innerHTML = `<div class="empty">No hay partidos calientes todavía.</div>`;
+      if (!partidos.length) {
+        box.innerHTML = `<div class="empty">No hay partidos calientes todavía.</div>`;
         return;
       }
 
-      const calientes = [...base]
-        .sort((a, b) => b.minuto - a.minuto)
-        .slice(0, 3);
+      const top = partidos.slice(0, 3);
 
-      hotBox.innerHTML = calientes.map(p => {
-        const signal = cacheSignals.find(s => String(s.match_id) === String(p.id));
-        const estado = signal?.estado_partido?.estado || "EN_JUEGO";
-        const clase = getAlertClass(estado);
+      box.innerHTML = top.map(p => {
+        const signal = getSignalForMatch(p.id);
+        const estado = signal?.estado_partido?.estado || "SIN DATO";
 
         return `
           <div class="hot-card">
             <div class="hot-head">
               <div class="league">${p.liga} · ${p.pais}</div>
-              <span class="${clase}">${estado}</span>
+              <span class="${estadoClass(estado)}">${estado}</span>
             </div>
 
-            <div class="hot-teams">${p.local} vs ${p.visitante}</div>
+            <div class="hot-title">${p.local} vs ${p.visitante}</div>
 
-            <div class="hot-line">
+            <div class="signal-meta">
               <span class="pill">Min ${p.minuto}</span>
               <span class="pill">Marcador ${p.score}</span>
-              <span class="pill">Estado ${p.estado_partido}</span>
+              <span class="pill">Momentum ${p.momentum}</span>
             </div>
 
-            ${signal ? `
-              <div class="reason-box">🎯 ${marketLabelDinamico(signal)}</div>
-              <div class="reason-box">🧠 ${signal.reason || "Señal generada por el sistema"}</div>
-            ` : `
-              <div class="reason-box">Sin señal asociada todavía</div>
-            `}
+            <div class="reason-box">
+              ${signal ? (signal.reason || "Partido con señal asociada") : "Sin señal asociada todavía"}
+            </div>
           </div>
         `;
       }).join("");
     }
 
-    function renderMatchList(partidosBase) {
+    function renderMatchList() {
       const contenedor = document.getElementById("matchList");
-      const partidos = filtrarPartidos(partidosBase);
+      const partidos = filtrarPartidos(cachePartidos);
 
       if (!partidos.length) {
         contenedor.innerHTML = `<div class="empty">No hay partidos que coincidan con el filtro.</div>`;
         return;
       }
 
-      const agrupados = {};
-      partidos.forEach(p => {
-        const liga = p.liga || "Liga desconocida";
-        if (!agrupados[liga]) agrupados[liga] = [];
-        agrupados[liga].push(p);
-      });
+      contenedor.innerHTML = partidos.map(p => {
+        const signal = getSignalForMatch(p.id);
+        const estado = signal?.estado_partido?.estado || "SIN DATO";
 
-      const ligas = Object.keys(agrupados).sort((a, b) => a.localeCompare(b));
+        return `
+          <div class="match-card">
+            <div class="match-head">
+              <div class="match-league">${p.liga} · ${p.pais}</div>
+              <span class="${estadoClass(estado)}">${estado}</span>
+            </div>
 
-      contenedor.innerHTML = `
-        <div class="matches-group">
-          ${ligas.map(liga => `
-            <div class="league-block">
-              <div class="league-header">
-                <div class="league-header-left">
-                  <span>${liga}</span>
-                </div>
-                <div class="league-header-right">${agrupados[liga].length} partido(s)</div>
+            <div class="match-main">
+              <div class="match-team">${p.local}</div>
+
+              <div class="match-score-box">
+                <div class="match-status">${p.estado_partido}</div>
+                <div class="match-score">${p.marcador_local} - ${p.marcador_visitante}</div>
               </div>
 
-              ${agrupados[liga].map(p => {
-                const signal = cacheSignals.find(s => String(s.match_id) === String(p.id));
-
-                return `
-                  <div class="match-clean">
-                    <div class="match-clean-top">
-                      <div class="team-clean">
-                        <div class="team-clean-name">${p.local}</div>
-                      </div>
-
-                      <div class="score-clean-box">
-                        <div class="match-status-clean">${p.estado_partido}</div>
-                        <div class="score-clean">
-                          ${p.marcador_local}
-                          <span class="score-separator">-</span>
-                          ${p.marcador_visitante}
-                        </div>
-                      </div>
-
-                      <div class="team-clean">
-                        <div class="team-clean-name">${p.visitante}</div>
-                      </div>
-                    </div>
-
-                    <div class="match-clean-bottom">
-                      <span class="pill">Min ${p.minuto}</span>
-                      <span class="pill">País ${p.pais}</span>
-                      <span class="pill">ID ${p.id}</span>
-                    </div>
-
-                    ${signal ? `
-                      <div class="signal-secondary-list" style="margin-top:14px;">
-                        <div class="signal-secondary-item">
-                          <div class="signal-secondary-title">${marketLabelDinamico(signal)}</div>
-                          <div class="signal-secondary-sub">${signal.reason || "Señal generada por el sistema"}</div>
-                          <div class="signal-secondary-sub">Cuota ${signal.odd} · Confianza ${signal.confidence}% · Value +${signal.value}%</div>
-                          <div class="signal-secondary-sub">Marcador probable: ${signal.resultado_probable || "N/A"} · Recomendación: ${signal.recomendacion_final || "OBSERVAR"}</div>
-                        </div>
-                      </div>
-                    ` : ""}
-                  </div>
-                `;
-              }).join("")}
+              <div class="match-team">${p.visitante}</div>
             </div>
-          `).join("")}
-        </div>
-      `;
+
+            <div class="match-meta">
+              <span class="pill">Min ${p.minuto}</span>
+              <span class="pill">xG ${p.xG}</span>
+              <span class="pill">Momentum ${p.momentum}</span>
+            </div>
+
+            ${signal ? `
+              <div class="signal-reason" style="margin-top:12px;">
+                <strong>Señal:</strong> ${marketLabelDinamico(signal)}<br>
+                <strong>Motivo:</strong> ${signal.reason || "Señal generada por el sistema"}<br>
+                <strong>Recomendación:</strong> ${signal.recomendacion_final || "OBSERVAR"}
+              </div>
+            ` : ""}
+          </div>
+        `;
+      }).join("");
     }
 
     async function verEstado() {
       try {
         const data = await fetchJSON("/status");
-        document.getElementById("backendStatus").textContent = data.estado || data.status || "ok";
-        document.getElementById("backendMessage").textContent = data.mensaje || data.service || "Backend operativo";
-        document.getElementById("autoScanValue").textContent = data.version || "SIN_VERSION";
-        document.getElementById("autoScanMessage").textContent = "Backend conectado";
-        setStatus("Backend conectado", true);
+        document.getElementById("backendStatus").textContent = data.status || "ok";
+        document.getElementById("backendMessage").textContent = data.service || "Backend operativo";
+        setStatus("Backend conectado", "ok");
       } catch (err) {
         document.getElementById("backendStatus").textContent = "error";
         document.getElementById("backendMessage").textContent = err.message;
-        document.getElementById("autoScanValue").textContent = "ERROR";
-        document.getElementById("autoScanMessage").textContent = "Sin conexión";
-        setStatus("Error de conexión", false);
+        setStatus("Error de conexión", "off");
       }
     }
 
-    async function cargarScan() {
-      const contenedor = document.getElementById("matchList");
-      contenedor.innerHTML = `<div class="empty">Cargando partidos...</div>`;
+    async function cargarAutoScan() {
+      const data = await safeFetchJSON("/auto-scan/status", null);
 
+      if (!data) {
+        document.getElementById("autoScanValue").textContent = "N/D";
+        document.getElementById("autoScanMessage").textContent = "Ruta no disponible";
+        document.getElementById("lastScanValue").textContent = "-";
+        document.getElementById("lastScanMessage").textContent = "Sin datos";
+        return;
+      }
+
+      document.getElementById("autoScanValue").textContent = data.auto_scan_activo ? "ACTIVO" : "OFF";
+      document.getElementById("autoScanMessage").textContent = `Cada ${data.intervalo_segundos || 60}s`;
+
+      document.getElementById("lastScanValue").textContent = formatTimestamp(data.ultimo_scan);
+      document.getElementById("lastScanMessage").textContent = `Cache: ${data.partidos_cache || 0} partidos · ${data.senales_cache || 0} señales`;
+    }
+
+    async function cargarScan() {
       try {
         const data = await fetchJSON("/scan");
         const partidosRaw = Array.isArray(data) ? data : (data.partidos || []);
-        const partidos = partidosRaw.map(normalizarPartido);
+        cachePartidos = partidosRaw.map(normalizarPartido);
 
-        cachePartidos = partidos;
         document.getElementById("totalMatches").textContent =
-          data.partidos_analizados ??
-          data.total_partidos ??
-          partidos.length;
+          data.partidos_analizados ?? data.total_partidos ?? cachePartidos.length;
 
         poblarFiltroLigas(cachePartidos);
-        renderHotMatches(cachePartidos);
-        renderMatchList(cachePartidos);
-        setStatus("Partidos actualizados", true);
+        renderHotMatches();
+        renderMatchList();
+        setStatus("Partidos actualizados", "ok");
       } catch (err) {
-        document.getElementById("hotMatches").innerHTML = `<div class="empty danger">Error cargando partidos calientes: ${err.message}</div>`;
-        contenedor.innerHTML = `<div class="empty danger">Error cargando partidos: ${err.message}</div>`;
-        setStatus("Error en /scan", false);
+        document.getElementById("hotMatches").innerHTML = `<div class="empty danger">Error cargando partidos: ${err.message}</div>`;
+        document.getElementById("matchList").innerHTML = `<div class="empty danger">Error cargando partidos: ${err.message}</div>`;
+        setStatus("Error en /scan", "off");
       }
     }
 
     async function cargarSignals() {
-      const contenedor = document.getElementById("signalList");
-      contenedor.innerHTML = `<div class="empty">Cargando señales...</div>`;
-
       try {
         const data = await fetchJSON("/signals");
-        const senalesRaw = Array.isArray(data) ? data : (data.signals || data.senales || []);
-        const senales = senalesRaw.map(normalizarSignal);
+        const senalesRaw = Array.isArray(data) ? data : (data.signals || []);
+        cacheSignals = senalesRaw.map(normalizarSignal);
 
-        cacheSignals = senales;
         document.getElementById("totalSignals").textContent =
-          data.total_senales ??
-          data.total_signals ??
-          senales.length;
+          data.total_senales ?? cacheSignals.length;
 
-        renderMiniSignals(senales);
-        renderSignals(senales);
-        renderHotMatches(cachePartidos);
-        renderMatchList(cachePartidos);
-        setStatus("Señales actualizadas", true);
+        renderHeroSignal();
+        renderMiniSignals();
+        renderSignals();
+        renderHotMatches();
+        renderMatchList();
+        setStatus("Señales actualizadas", "ok");
       } catch (err) {
+        document.getElementById("heroSignal").innerHTML = `<div class="empty danger">Error cargando señal principal: ${err.message}</div>`;
         document.getElementById("miniSignalList").innerHTML = `<div class="empty danger">Error cargando señales rápidas: ${err.message}</div>`;
-        contenedor.innerHTML = `<div class="empty danger">Error cargando señales: ${err.message}</div>`;
-        setStatus("Error en /signals", false);
+        document.getElementById("signalList").innerHTML = `<div class="empty danger">Error cargando señales: ${err.message}</div>`;
+        setStatus("Error en /signals", "off");
       }
     }
 
@@ -1234,19 +1165,19 @@
       const statsBox = document.getElementById("miniStats");
 
       contenedor.innerHTML = `<div class="empty">Cargando historial...</div>`;
-      statsBox.innerHTML = `<div class="empty">Cargando mini stats...</div>`;
+      statsBox.innerHTML = `<div class="empty">Cargando estadísticas...</div>`;
 
       const historyRes = await safeFetchJSON("/history", []);
       const stats = await safeFetchJSON("/learning-stats", {
         total_senales: cacheSignals.length,
-        win_rate: 0,
-        roi_percent: 0,
         ganadas: 0,
-        perdidas: 0
+        perdidas: 0,
+        win_rate: 0,
+        roi_percent: 0
       });
 
       const history = Array.isArray(historyRes) ? historyRes : (historyRes?.data || []);
-      document.getElementById("historyTotal").textContent = stats?.total_senales ?? history.length ?? 0;
+      document.getElementById("historyTotal")?.textContent = stats?.total_senales ?? history.length ?? 0;
 
       if (!history.length) {
         contenedor.innerHTML = `<div class="empty">Historial no disponible todavía.</div>`;
@@ -1254,9 +1185,9 @@
         contenedor.innerHTML = history.slice(-8).reverse().map(h => `
           <div class="history-item">
             <div class="history-title">${h.home || "Local"} vs ${h.away || "Visitante"}</div>
-            <div class="small">Mercado: ${h.market || "-"}</div>
-            <div class="small">Min ${h.minute ?? 0} · Cuota ${h.odd ?? "-"} · Value ${h.value ?? "-"}%</div>
-            <div class="small">Estado: ${h.estado_resultado || "pendiente"}</div>
+            <div class="history-sub">Mercado: ${h.market || "-"}</div>
+            <div class="history-sub">Min ${h.minute ?? 0} · Cuota ${h.odd ?? "-"} · Value ${h.value ?? "-"}%</div>
+            <div class="history-sub">Estado: ${h.estado_resultado || "pendiente"}</div>
           </div>
         `).join("");
       }
@@ -1282,12 +1213,13 @@
     }
 
     function aplicarFiltros() {
-      renderHotMatches(cachePartidos);
-      renderMatchList(cachePartidos);
+      renderHotMatches();
+      renderMatchList();
     }
 
     async function cargarTodo() {
       await verEstado();
+      await cargarAutoScan();
       await cargarScan();
       await cargarSignals();
       await cargarHistory();
@@ -1297,7 +1229,7 @@
       if (autoRefreshInterval) clearInterval(autoRefreshInterval);
       autoRefreshInterval = setInterval(() => {
         cargarTodo();
-      }, 300000);
+      }, 60000);
     }
 
     cargarTodo();
