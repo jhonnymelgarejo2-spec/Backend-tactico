@@ -10,6 +10,11 @@ import traceback
 from live_router import router as live_router
 from sofascore_fetcher import obtener_partidos_en_vivo
 from signals import generar_senales
+from ranking_engine import (
+    rankear_senales,
+    obtener_senal_principal,
+    obtener_partidos_calientes,
+)
 
 # Historial opcional
 try:
@@ -26,7 +31,7 @@ except Exception:
 
 app = FastAPI(
     title="JHONNY ELITE API",
-    version="V11_PRO"
+    version="V13_TRADING_PRO"
 )
 
 app.add_middleware(
@@ -37,7 +42,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Router adicional
 app.include_router(live_router)
 
 # ---------------------------------
@@ -48,20 +52,22 @@ STATIC_DIR = BASE_DIR / "static"
 INDEX_FILE = STATIC_DIR / "index.html"
 
 # ---------------------------------
-# MEMORIA GLOBAL DEL SISTEMA
+# MEMORIA GLOBAL
 # ---------------------------------
 DATA_LOCK = Lock()
 
 AUTO_SCAN_DATA = {
     "partidos": [],
     "signals": [],
+    "hot_matches": [],
+    "hero_signal": None,
     "last_scan": None,
     "last_scan_iso": None,
     "auto_scan_activo": True,
     "intervalo_segundos": 60,
     "errores": 0,
     "ultimo_error": None,
-    "backend_version": "V11_PRO"
+    "backend_version": "V13_TRADING_PRO"
 }
 
 
@@ -77,9 +83,6 @@ def ahora_iso() -> str:
 
 
 def normalizar_partido_crudo(p: dict) -> dict:
-    """
-    Convierte diferentes formatos de partido a uno solo.
-    """
     local = p.get("local") or p.get("equipo_local") or p.get("home") or "Local"
     visitante = p.get("visitante") or p.get("equipo_visitante") or p.get("away") or "Visitante"
     liga = p.get("liga") or p.get("torneo") or p.get("league") or "Liga desconocida"
@@ -142,31 +145,38 @@ def escanear_y_actualizar_memoria():
         partidos_crudos = []
 
     partidos = [normalizar_partido_crudo(p) for p in partidos_crudos]
+
     senales = generar_senales(partidos)
     if not isinstance(senales, list):
         senales = []
+
+    senales_rank = rankear_senales(senales)
+    hero_signal = obtener_senal_principal(senales_rank)
+    hot_matches = obtener_partidos_calientes(partidos, limite=3)
 
     ts = ahora_ts()
     iso = ahora_iso()
 
     with DATA_LOCK:
         AUTO_SCAN_DATA["partidos"] = partidos
-        AUTO_SCAN_DATA["signals"] = senales
+        AUTO_SCAN_DATA["signals"] = senales_rank
+        AUTO_SCAN_DATA["hot_matches"] = hot_matches
+        AUTO_SCAN_DATA["hero_signal"] = hero_signal
         AUTO_SCAN_DATA["last_scan"] = ts
         AUTO_SCAN_DATA["last_scan_iso"] = iso
         AUTO_SCAN_DATA["ultimo_error"] = None
 
     if guardar_senales_en_historial:
         try:
-            guardar_senales_en_historial(senales)
+            guardar_senales_en_historial(senales_rank)
         except Exception:
             pass
 
-    return partidos, senales
+    return partidos, senales_rank, hero_signal, hot_matches
 
 
 # ---------------------------------
-# FUNCION DE AUTO-SCAN
+# AUTO SCAN
 # ---------------------------------
 def auto_scan_loop():
     while True:
@@ -201,7 +211,7 @@ def home():
     return JSONResponse({
         "ok": True,
         "mensaje": "Backend táctico funcionando",
-        "version": "V11_PRO",
+        "version": "V13_TRADING_PRO",
         "frontend": "index.html no encontrado en /static"
     })
 
@@ -237,6 +247,8 @@ def debug_routes():
             "/partidos-en-vivo",
             "/scan",
             "/signals",
+            "/hero-signal",
+            "/hot-matches",
             "/history",
             "/learning-stats",
             "/auto-scan/status",
@@ -245,11 +257,10 @@ def debug_routes():
             "/escanear",
             "/senales",
         ],
-        "version": "V11_PRO"
+        "version": "V13_TRADING_PRO"
     }
 
 
-# Alias en español
 @app.get("/estado")
 def estado_alias():
     return status()
@@ -266,11 +277,13 @@ def debug_routes_alias():
             "/partidos-en-vivo",
             "/escanear",
             "/senales",
+            "/hero-signal",
+            "/hot-matches",
             "/history",
             "/learning-stats",
             "/auto-scan/status",
         ],
-        "version": "V11_PRO"
+        "version": "V13_TRADING_PRO"
     }
 
 
@@ -326,12 +339,56 @@ def signals_endpoint():
         }
 
 
+@app.get("/hero-signal")
+def hero_signal():
+    try:
+        with DATA_LOCK:
+            hero = AUTO_SCAN_DATA["hero_signal"]
+            last_scan = AUTO_SCAN_DATA["last_scan"]
+            last_scan_iso = AUTO_SCAN_DATA["last_scan_iso"]
+
+        return {
+            "estado": "OK",
+            "hero_signal": hero,
+            "last_scan": last_scan,
+            "last_scan_iso": last_scan_iso,
+        }
+    except Exception as e:
+        return {
+            "estado": "error",
+            "detalle": str(e),
+            "hero_signal": None
+        }
+
+
+@app.get("/hot-matches")
+def hot_matches():
+    try:
+        with DATA_LOCK:
+            partidos = list(AUTO_SCAN_DATA["hot_matches"])
+            last_scan = AUTO_SCAN_DATA["last_scan"]
+            last_scan_iso = AUTO_SCAN_DATA["last_scan_iso"]
+
+        return {
+            "estado": "OK",
+            "total_hot_matches": len(partidos),
+            "hot_matches": partidos,
+            "last_scan": last_scan,
+            "last_scan_iso": last_scan_iso,
+        }
+    except Exception as e:
+        return {
+            "estado": "error",
+            "detalle": str(e),
+            "hot_matches": []
+        }
+
+
 @app.get("/partidos-en-vivo")
 def partidos_en_vivo():
     return scan()
 
 
-# Alias en español
 @app.get("/escanear")
 def scan_alias():
     return scan()
@@ -419,6 +476,8 @@ def auto_scan_status():
             "ultimo_scan_iso": AUTO_SCAN_DATA["last_scan_iso"],
             "partidos_cache": len(AUTO_SCAN_DATA["partidos"]),
             "senales_cache": len(AUTO_SCAN_DATA["signals"]),
+            "hot_matches_cache": len(AUTO_SCAN_DATA["hot_matches"]),
+            "hero_signal_disponible": AUTO_SCAN_DATA["hero_signal"] is not None,
             "errores": AUTO_SCAN_DATA["errores"],
             "ultimo_error": AUTO_SCAN_DATA["ultimo_error"],
-    }
+}
