@@ -328,6 +328,30 @@
       border-color: #5f5f5f;
     }
 
+    .rank-elite {
+      background: linear-gradient(180deg, #5a3b10, #2f1f08);
+      color: #ffd66e;
+      border-color: #d6a63a;
+    }
+
+    .rank-top {
+      background: linear-gradient(180deg, #173257, #0d1f36);
+      color: #8fd0ff;
+      border-color: #3c7eb8;
+    }
+
+    .rank-alta {
+      background: linear-gradient(180deg, #18351f, #102515);
+      color: #8ff0b3;
+      border-color: #2f8a57;
+    }
+
+    .rank-normal {
+      background: linear-gradient(180deg, #2c2c2c, #1d1d1d);
+      color: #d0d0d0;
+      border-color: #5d5d5d;
+    }
+
     .signal-meta,
     .match-meta {
       display: flex;
@@ -557,7 +581,8 @@
     <aside class="leftbar">
       <div class="card">
         <div class="logo">JHONNY_<span>ELITE V12_PRO</span></div>
-       <div class="subtitle">SCANNER AUTOMÁTICO PRO · IA TÁCTICA · RANKING DE SEÑALES · VALUE BETS · DETECTOR DE GOL INMINENTE</div>
+        <div class="subtitle">SCANNER AUTOMÁTICO PRO · IA TÁCTICA · RANKING DE SEÑALES · VALUE BETS · DETECTOR DE GOL INMINENTE</div>
+
         <div class="menu">
           <button onclick="cargarTodo()">📡 Actualizar panel</button>
           <button onclick="cargarScan()">⚽ Recargar partidos</button>
@@ -788,12 +813,15 @@
         confidence: Number(s.confidence ?? s.confianza ?? 0) || 0,
         reason: s.reason || s.razon || "Señal generada por el sistema",
         tier: s.tier || "NORMAL",
+
         estado_partido: s.estado_partido || {},
         gol_inminente: s.gol_inminente || {},
         signal_status: s.signal_status || "OPEN",
+
         goal_prob_5: Number(s.goal_prob_5 ?? 0) || 0,
         goal_prob_10: Number(s.goal_prob_10 ?? 0) || 0,
         goal_prob_15: Number(s.goal_prob_15 ?? 0) || 0,
+
         resultado_probable: s.resultado_probable || "N/A",
         ganador_probable: s.ganador_probable || "N/A",
         doble_oportunidad_probable: s.doble_oportunidad_probable || "N/A",
@@ -803,6 +831,20 @@
         confianza_prediccion: Number(s.confianza_prediccion ?? 0) || 0,
         recomendacion_final: s.recomendacion_final || "OBSERVAR",
         riesgo_operativo: s.riesgo_operativo || "MEDIO",
+
+        tactical_score: Number(s.tactical_score ?? 0) || 0,
+        goal_inminente_score: Number(s.goal_inminente_score ?? 0) || 0,
+        signal_score: Number(s.signal_score ?? 0) || 0,
+        signal_rank: s.signal_rank || "NORMAL",
+
+        prob_implicita_calculada: Number(s.prob_implicita_calculada ?? 0) || 0,
+        value_pct: Number(s.value_pct ?? 0) || 0,
+        edge_pct: Number(s.edge_pct ?? 0) || 0,
+        value_score: Number(s.value_score ?? 0) || 0,
+        value_categoria: s.value_categoria || "SIN_VALUE",
+        recomendacion_value: s.recomendacion_value || "NO_APOSTAR",
+        razon_value: s.razon_value || "Sin análisis de value",
+
         all_signals: Array.isArray(s.all_signals) ? s.all_signals : []
       };
     }
@@ -829,6 +871,14 @@
       if (e === "CAOS") return "state-badge state-caos";
       if (e === "MUERTO") return "state-badge state-muerto";
       return "state-badge";
+    }
+
+    function rankClass(rank) {
+      const r = String(rank || "").toUpperCase();
+      if (r === "ELITE") return "pill rank-elite";
+      if (r === "TOP") return "pill rank-top";
+      if (r === "ALTA") return "pill rank-alta";
+      return "pill rank-normal";
     }
 
     function traducirGanadorProbable(valor) {
@@ -923,46 +973,49 @@
           </div>
 
           <div class="signal-meta">
+            <span class="${rankClass(hero.signal_rank)}">RANK ${hero.signal_rank}</span>
             <span class="pill">Cuota ${hero.odd}</span>
             <span class="pill">Confianza ${hero.confidence}%</span>
-            <span class="pill">Prob ${hero.prob}</span>
+            <span class="pill">Value ${hero.value_pct}%</span>
+            <span class="pill">${hero.value_categoria}</span>
             <span class="${estadoClass(estado)}">${estado}</span>
           </div>
 
           <div class="hero-grid">
+            <div class="hero-box">
+              <div class="hero-box-title">Signal score</div>
+              <div class="hero-box-value">${hero.signal_score}</div>
+            </div>
+
+            <div class="hero-box">
+              <div class="hero-box-title">Tactical score</div>
+              <div class="hero-box-value">${hero.tactical_score}</div>
+            </div>
+
+            <div class="hero-box">
+              <div class="hero-box-title">Goal score</div>
+              <div class="hero-box-value">${hero.goal_inminente_score}</div>
+            </div>
+
+            <div class="hero-box">
+              <div class="hero-box-title">Value score</div>
+              <div class="hero-box-value">${hero.value_score}</div>
+            </div>
+
             <div class="hero-box">
               <div class="hero-box-title">Recomendación</div>
               <div class="hero-box-value">${hero.recomendacion_final || "OBSERVAR"}</div>
             </div>
 
             <div class="hero-box">
-              <div class="hero-box-title">Riesgo</div>
-              <div class="hero-box-value">${hero.riesgo_operativo || "MEDIO"}</div>
-            </div>
-
-            <div class="hero-box">
-              <div class="hero-box-title">Resultado probable</div>
-              <div class="hero-box-value">${hero.resultado_probable || "N/A"}</div>
-            </div>
-
-            <div class="hero-box">
-              <div class="hero-box-title">Ganador probable</div>
-              <div class="hero-box-value">${traducirGanadorProbable(hero.ganador_probable)}</div>
-            </div>
-
-            <div class="hero-box">
-              <div class="hero-box-title">Over / Under</div>
-              <div class="hero-box-value">${hero.over_under_probable || "N/A"}</div>
-            </div>
-
-            <div class="hero-box">
-              <div class="hero-box-title">Gol inminente</div>
-              <div class="hero-box-value">${hero.gol_inminente?.gol_inminente ? "SÍ" : "NO"}</div>
+              <div class="hero-box-title">Value engine</div>
+              <div class="hero-box-value">${hero.recomendacion_value || "NO_APOSTAR"}</div>
             </div>
           </div>
 
           <div class="hero-reason">
-            <strong>Motivo táctico:</strong> ${hero.reason || "Señal generada por el sistema"}
+            <strong>Motivo táctico:</strong> ${hero.reason || "Señal generada por el sistema"}<br>
+            <strong>Motivo value:</strong> ${hero.razon_value || "Sin análisis de value"}
           </div>
         </div>
       `;
@@ -982,11 +1035,13 @@
           <div class="mini-signal">
             <div class="mini-signal-title">
               <span class="${tier.className}">${tier.label}</span>
+              <span class="${rankClass(s.signal_rank)}" style="margin-left:6px;">${s.signal_rank}</span>
             </div>
             <div class="mini-signal-sub"><strong>${s.home} vs ${s.away}</strong></div>
             <div class="mini-signal-sub">${marketLabelDinamico(s)}</div>
             <div class="mini-signal-sub">Min ${s.minute} · Marcador ${s.score}</div>
-            <div class="mini-signal-sub">Cuota ${s.odd} · Value <span class="${s.value >= 15 ? 'green' : s.value >= 8 ? 'yellow' : ''}">+${s.value}%</span></div>
+            <div class="mini-signal-sub">Signal ${s.signal_score} · Tactical ${s.tactical_score}</div>
+            <div class="mini-signal-sub">Value <span class="${s.value_pct >= 10 ? 'green' : s.value_pct >= 5 ? 'yellow' : ''}">${s.value_pct}%</span> · ${s.value_categoria}</div>
           </div>
         `;
       }).join("");
@@ -1021,13 +1076,20 @@
             </div>
 
             <div class="signal-meta">
-              <span class="pill">Cuota ${s.odd}</span>
-              <span class="pill">Confianza ${s.confidence}%</span>
-              <span class="pill">${s.league}</span>
+              <span class="${rankClass(s.signal_rank)}">${s.signal_rank}</span>
+              <span class="pill">Signal ${s.signal_score}</span>
+              <span class="pill">Tactical ${s.tactical_score}</span>
+              <span class="pill">Goal ${s.goal_inminente_score}</span>
+              <span class="pill">Value ${s.value_pct}%</span>
+              <span class="pill">${s.value_categoria}</span>
               <span class="${estadoClass(estado)}">${estado}</span>
             </div>
 
-            <div class="signal-reason">${s.reason || "Señal generada por el sistema"}</div>
+            <div class="signal-reason">
+              <strong>Táctico:</strong> ${s.reason || "Señal generada por el sistema"}<br>
+              <strong>Value:</strong> ${s.razon_value || "Sin análisis de value"}<br>
+              <strong>Recomendación:</strong> ${s.recomendacion_value || "NO_APOSTAR"}
+            </div>
           </div>
         `;
       }).join("");
@@ -1061,6 +1123,7 @@
               <span class="pill">Min ${p.minuto}</span>
               <span class="pill">Marcador ${p.score}</span>
               <span class="pill">Momentum ${p.momentum}</span>
+              ${signal ? `<span class="pill">Signal ${signal.signal_score}</span>` : ""}
             </div>
 
             <div class="reason-box">
@@ -1111,8 +1174,11 @@
             ${signal ? `
               <div class="signal-reason" style="margin-top:12px;">
                 <strong>Señal:</strong> ${marketLabelDinamico(signal)}<br>
+                <strong>Rank:</strong> ${signal.signal_rank}<br>
+                <strong>Signal score:</strong> ${signal.signal_score}<br>
                 <strong>Motivo:</strong> ${signal.reason || "Señal generada por el sistema"}<br>
-                <strong>Recomendación:</strong> ${signal.recomendacion_final || "OBSERVAR"}
+                <strong>Value:</strong> ${signal.razon_value || "Sin análisis de value"}<br>
+                <strong>Recomendación:</strong> ${signal.recomendacion_value || "NO_APOSTAR"}
               </div>
             ` : ""}
           </div>
