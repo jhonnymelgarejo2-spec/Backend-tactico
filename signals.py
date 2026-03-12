@@ -1,6 +1,7 @@
 from typing import List, Dict
 from signal_engine import generar_senal
 from risk_engine import evaluar_riesgo
+from ai_brain import decision_final_ia
 
 
 def partido_es_apostable(p: Dict) -> tuple[bool, str]:
@@ -195,6 +196,20 @@ def filtrar_por_riesgo_final(senal: Dict) -> bool:
     return True
 
 
+def filtrar_por_ia(senal: Dict) -> bool:
+    ai_recommendation = str(senal.get("ai_recommendation", "OBSERVAR")).upper()
+    ai_fit = str(senal.get("ai_fit", "NEUTRO")).upper()
+    ai_decision_score = float(senal.get("ai_decision_score", 0) or 0)
+
+    if ai_recommendation == "NO_APOSTAR":
+        return False
+
+    if ai_fit == "DESALINEADA" and ai_decision_score < 75:
+        return False
+
+    return True
+
+
 def generar_senales(partidos: List[Dict]) -> List[Dict]:
     senales = []
 
@@ -269,25 +284,51 @@ def generar_senales(partidos: List[Dict]) -> List[Dict]:
             "all_signals": senal.get("senales_posibles", []),
         }
 
+        # 1. Enriquecer señal con score táctico y value engine
         senal_final = enriquecer_senal(senal_final, p)
 
-        # Motor de riesgo V13_ELITE
+        # 2. Motor de riesgo
         riesgo = evaluar_riesgo(p, senal_final)
         senal_final["risk_score"] = riesgo["risk_score"]
         senal_final["risk_level"] = riesgo["risk_level"]
         senal_final["apto_para_entrar"] = riesgo["apto_para_entrar"]
         senal_final["motivos_riesgo"] = riesgo["motivos_riesgo"]
 
+        # 3. Cerebro IA
+        brain = decision_final_ia(p, senal_final)
+        senal_final["ai_state"] = brain["ai_state"]
+        senal_final["ai_score"] = brain["ai_score"]
+        senal_final["ai_reason"] = brain["ai_reason"]
+        senal_final["ai_fit"] = brain["ai_fit"]
+        senal_final["ai_fit_reason"] = brain["ai_fit_reason"]
+        senal_final["ai_confidence_adjustment"] = brain["ai_confidence_adjustment"]
+        senal_final["ai_confidence_final"] = brain["ai_confidence_final"]
+        senal_final["ai_decision_score"] = brain["ai_decision_score"]
+        senal_final["ai_recommendation"] = brain["ai_recommendation"]
+
+        # 4. Ajustar recomendación final con IA
+        if senal_final["ai_recommendation"] in ["APOSTAR_FUERTE", "APOSTAR", "APOSTAR_SUAVE"]:
+            senal_final["recomendacion_final"] = senal_final["ai_recommendation"]
+        elif senal_final["ai_recommendation"] == "OBSERVAR":
+            senal_final["recomendacion_final"] = "OBSERVAR"
+        else:
+            senal_final["recomendacion_final"] = "NO_APOSTAR"
+
+        # 5. Filtros finales
         if not filtrar_value_bets_reales(senal_final):
             continue
 
         if not filtrar_por_riesgo_final(senal_final):
             continue
 
+        if not filtrar_por_ia(senal_final):
+            continue
+
         senales.append(senal_final)
 
     senales.sort(
         key=lambda s: (
+            float(s.get("ai_decision_score", 0) or 0),
             float(s.get("signal_score", 0) or 0),
             float(s.get("tactical_score", 0) or 0),
             float(s.get("goal_inminente_score", 0) or 0),
