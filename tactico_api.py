@@ -16,17 +16,13 @@ from ranking_engine import (
     obtener_partidos_calientes,
 )
 
-# Historial opcional
-try:
-    from history_store import (
-        cargar_historial,
-        obtener_estadisticas_historial,
-        guardar_senales_en_historial,
-    )
-except Exception:
-    cargar_historial = None
-    obtener_estadisticas_historial = None
-    guardar_senales_en_historial = None
+from history_store import (
+    cargar_historial,
+    guardar_senales_en_historial,
+    obtener_estadisticas_historial,
+)
+
+from prediction_resolver import resolver_historial_con_partidos_finalizados
 
 
 app = FastAPI(
@@ -84,9 +80,6 @@ def ahora_iso() -> str:
 
 
 def construir_league_explorer(partidos, senales):
-    """
-    Agrupa por región/país/liga para el panel estilo Sofascore.
-    """
     regiones = {
         "Europa": [],
         "Sudamérica": [],
@@ -146,6 +139,7 @@ def construir_league_explorer(partidos, senales):
         "El-Salvador": "Norteamérica",
         "Panama": "Norteamérica",
         "North-America": "Norteamérica",
+        "World": "Otros",
 
         # Asia
         "Japan": "Asia",
@@ -226,15 +220,12 @@ def construir_league_explorer(partidos, senales):
 
 
 def normalizar_partido_crudo(p: dict) -> dict:
-    """
-    Normalización defensiva por si algún fetcher devuelve claves distintas.
-    """
     local = p.get("local") or p.get("equipo_local") or p.get("home") or "Local"
     visitante = p.get("visitante") or p.get("equipo_visitante") or p.get("away") or "Visitante"
     liga = p.get("liga") or p.get("torneo") or p.get("league") or "Liga desconocida"
     pais = p.get("pais") or p.get("country") or "Otros"
     minuto = int(p.get("minuto", p.get("minute", 0)) or 0)
-    estado_partido = p.get("estado_partido") or p.get("estado") or "en_juego"
+    estado_partido = p.get("estado_partido") or p.get("estado") or p.get("status") or "en_juego"
     match_id = p.get("id", f"{local}-{visitante}-{minuto}")
 
     score_raw = str(
@@ -243,8 +234,18 @@ def normalizar_partido_crudo(p: dict) -> dict:
     ).replace("–", "-")
 
     partes = score_raw.split("-")
-    marcador_local = int(str(partes[0]).strip()) if len(partes) > 0 and str(partes[0]).strip().isdigit() else int(p.get("marcador_local", 0) or 0)
-    marcador_visitante = int(str(partes[1]).strip()) if len(partes) > 1 and str(partes[1]).strip().isdigit() else int(p.get("marcador_visitante", 0) or 0)
+
+    marcador_local = (
+        int(str(partes[0]).strip())
+        if len(partes) > 0 and str(partes[0]).strip().isdigit()
+        else int(p.get("marcador_local", 0) or 0)
+    )
+
+    marcador_visitante = (
+        int(str(partes[1]).strip())
+        if len(partes) > 1 and str(partes[1]).strip().isdigit()
+        else int(p.get("marcador_visitante", 0) or 0)
+    )
 
     return {
         "id": match_id,
@@ -256,6 +257,7 @@ def normalizar_partido_crudo(p: dict) -> dict:
         "marcador_local": marcador_local,
         "marcador_visitante": marcador_visitante,
         "estado_partido": estado_partido,
+        "score": f"{marcador_local}-{marcador_visitante}",
         "xG": float(p.get("xG", p.get("xg", 0)) or 0),
         "momentum": p.get("momentum", "MEDIO"),
         "cuota": float(p.get("cuota", 1.85) or 1.85),
@@ -283,8 +285,28 @@ def escanear_y_actualizar_memoria():
 
     senales_rank = rankear_senales(senales)
     hero_signal = obtener_senal_principal(senales_rank)
-    hot_matches = obtener_partidos_calientes(partidos, limite=6)
+    hot_matches = obtener_partidos_calientes(partidos, limite=8)
     league_explorer = construir_league_explorer(partidos, senales_rank)
+
+    # Guardar señales en historial
+    try:
+        guardar_senales_en_historial(senales_rank)
+    except Exception as e:
+        print("Error guardando historial:", e)
+
+    # Resolver predicciones si ya hay partidos finalizados
+    try:
+        partidos_finalizados = [
+            p for p in partidos
+            if str(p.get("estado_partido", "")).lower() in ["finalizado", "finished", "ft", "ended"]
+        ]
+
+        if partidos_finalizados:
+            resueltas = resolver_historial_con_partidos_finalizados(partidos_finalizados)
+            if resueltas > 0:
+                print(f"Predicciones resueltas: {resueltas}")
+    except Exception as e:
+        print("Error resolviendo predicciones:", e)
 
     ts = ahora_ts()
     iso = ahora_iso()
@@ -298,12 +320,6 @@ def escanear_y_actualizar_memoria():
         AUTO_SCAN_DATA["last_scan"] = ts
         AUTO_SCAN_DATA["last_scan_iso"] = iso
         AUTO_SCAN_DATA["ultimo_error"] = None
-
-    if guardar_senales_en_historial:
-        try:
-            guardar_senales_en_historial(senales_rank)
-        except Exception:
-            pass
 
     return partidos, senales_rank, hero_signal, hot_matches, league_explorer
 
@@ -559,76 +575,34 @@ def signals_alias():
 
 
 # ---------------------------------
-# HISTORIAL
+# HISTORIAL Y APRENDIZAJE
 # ---------------------------------
 @app.get("/history")
 def history():
     try:
-        if cargar_historial:
-            data = cargar_historial()
-            if isinstance(data, list):
-                return data
-            return {"data": data}
-
+        historial = cargar_historial()
+        return historial[-100:]
+    except Exception:
         return []
-    except Exception as e:
-        return {
-            "estado": "error",
-            "detalle": str(e)
-        }
 
 
 @app.get("/learning-stats")
 def learning_stats():
     try:
-        if obtener_estadisticas_historial:
-            stats = obtener_estadisticas_historial()
-            if isinstance(stats, dict):
-                return stats
-
-        with DATA_LOCK:
-            senales = list(AUTO_SCAN_DATA["signals"])
-
-        total = len(senales)
-
-        confianza_promedio = 0
-        value_promedio = 0
-        riesgo_medio = 0
-
-        if total > 0:
-            confianza_promedio = round(
-                sum(float(s.get("confidence", 0) or 0) for s in senales) / total,
-                2
-            )
-            value_promedio = round(
-                sum(float(s.get("value", 0) or 0) for s in senales) / total,
-                2
-            )
-            riesgo_medio = round(
-                sum(float(s.get("risk_score", 0) or 0) for s in senales) / total,
-                2
-            )
-
-        elite = sum(1 for s in senales if str(s.get("signal_rank", "")).upper() == "ELITE")
-        top = sum(1 for s in senales if str(s.get("signal_rank", "")).upper() == "TOP")
-
+        return obtener_estadisticas_historial()
+    except Exception as e:
         return {
-            "total_senales": total,
+            "error": str(e),
+            "total_senales": 0,
+            "resueltas": 0,
             "ganadas": 0,
             "perdidas": 0,
             "win_rate": 0,
             "roi_percent": 0,
-            "confianza_promedio": confianza_promedio,
-            "value_promedio": value_promedio,
-            "riesgo_medio": riesgo_medio,
-            "signals_elite": elite,
-            "signals_top": top,
-        }
-
-    except Exception as e:
-        return {
-            "estado": "error",
-            "detalle": str(e)
+            "signals_elite": 0,
+            "signals_top": 0,
+            "value_promedio": 0,
+            "riesgo_medio": 0,
         }
 
 
@@ -650,4 +624,4 @@ def auto_scan_status():
             "hero_signal_disponible": AUTO_SCAN_DATA["hero_signal"] is not None,
             "errores": AUTO_SCAN_DATA["errores"],
             "ultimo_error": AUTO_SCAN_DATA["ultimo_error"],
-}
+    }
