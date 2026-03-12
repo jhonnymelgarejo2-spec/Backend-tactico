@@ -1,5 +1,6 @@
 from typing import List, Dict
 from signal_engine import generar_senal
+from risk_engine import evaluar_riesgo
 
 
 def partido_es_apostable(p: Dict) -> tuple[bool, str]:
@@ -28,7 +29,6 @@ def calcular_tactical_score(p: Dict) -> float:
     momentum = str(p.get("momentum", "MEDIO")).upper()
 
     score = 0.0
-
     score += pressure_score * 1.2
     score += predictor_score * 1.5
     score += chaos_score * 1.0
@@ -73,7 +73,6 @@ def calcular_signal_score(senal: Dict, tactical_score: float) -> float:
     confidence = float(senal.get("confidence", 0) or 0)
     confianza_prediccion = float(senal.get("confianza_prediccion", 0) or 0)
     goal_score = calcular_goal_inminente_score(senal)
-    value_score = float(senal.get("value_score", 0) or 0)
 
     score = 0.0
     score += value * 2.2
@@ -81,9 +80,61 @@ def calcular_signal_score(senal: Dict, tactical_score: float) -> float:
     score += confianza_prediccion * 0.7
     score += tactical_score * 0.9
     score += goal_score * 0.8
-    score += value_score * 4.0
 
     return round(score, 2)
+
+
+def calcular_prob_implicita_cuota(odd: float) -> float:
+    odd = float(odd or 0)
+    if odd <= 0:
+        return 0.0
+    return round(1 / odd, 4)
+
+
+def calcular_value_metrics(senal: Dict) -> Dict:
+    odd = float(senal.get("odd", 0) or 0)
+    prob_real = float(senal.get("prob", 0) or 0)
+
+    prob_implicita = calcular_prob_implicita_cuota(odd)
+    edge_pct = round((prob_real - prob_implicita) * 100, 2)
+    value_pct = edge_pct
+
+    value_score = 0.0
+    if edge_pct >= 15:
+        value_score = 10
+        value_categoria = "VALUE_ELITE"
+        recomendacion_value = "APOSTAR_FUERTE"
+        razon_value = "La cuota está muy por encima del valor esperado"
+    elif edge_pct >= 8:
+        value_score = 8
+        value_categoria = "VALUE_ALTO"
+        recomendacion_value = "APOSTAR"
+        razon_value = "Existe valor positivo claro frente al mercado"
+    elif edge_pct >= 4:
+        value_score = 6
+        value_categoria = "VALUE_MEDIO"
+        recomendacion_value = "APOSTAR_SUAVE"
+        razon_value = "Existe valor positivo razonable en la cuota"
+    elif edge_pct >= 1:
+        value_score = 4
+        value_categoria = "VALUE_BAJO"
+        recomendacion_value = "OBSERVAR"
+        razon_value = "Value leve, no tan fuerte para entrada agresiva"
+    else:
+        value_score = 1
+        value_categoria = "SIN_VALUE"
+        recomendacion_value = "NO_APOSTAR"
+        razon_value = "La cuota no ofrece ventaja real"
+
+    return {
+        "prob_implicita_calculada": prob_implicita,
+        "edge_pct": edge_pct,
+        "value_pct": value_pct,
+        "value_score": value_score,
+        "value_categoria": value_categoria,
+        "recomendacion_value": recomendacion_value,
+        "razon_value": razon_value,
+    }
 
 
 def enriquecer_senal(senal: Dict, partido: Dict) -> Dict:
@@ -104,6 +155,9 @@ def enriquecer_senal(senal: Dict, partido: Dict) -> Dict:
     else:
         senal["signal_rank"] = "NORMAL"
 
+    value_metrics = calcular_value_metrics(senal)
+    senal.update(value_metrics)
+
     return senal
 
 
@@ -123,6 +177,19 @@ def filtrar_value_bets_reales(senal: Dict) -> bool:
         return False
 
     if riesgo == "ALTO" and value < 10:
+        return False
+
+    return True
+
+
+def filtrar_por_riesgo_final(senal: Dict) -> bool:
+    risk_level = str(senal.get("risk_level", "APTO")).upper()
+    apto = bool(senal.get("apto_para_entrar", True))
+
+    if risk_level == "NO_APOSTAR":
+        return False
+
+    if risk_level == "RIESGO_ALTO" and not apto:
         return False
 
     return True
@@ -199,21 +266,22 @@ def generar_senales(partidos: List[Dict]) -> List[Dict]:
             "recomendacion_final": senal.get("recomendacion_final", "OBSERVAR"),
             "riesgo_operativo": senal.get("riesgo_operativo", "MEDIO"),
 
-            # Nueva capa de value
-            "prob_implicita_calculada": senal.get("prob_implicita_calculada", 0.0),
-            "value_pct": senal.get("value_pct", 0.0),
-            "edge_pct": senal.get("edge_pct", 0.0),
-            "value_score": senal.get("value_score", 0.0),
-            "value_categoria": senal.get("value_categoria", "SIN_VALUE"),
-            "recomendacion_value": senal.get("recomendacion_value", "NO_APOSTAR"),
-            "razon_value": senal.get("razon_value", "Sin análisis de value"),
-
             "all_signals": senal.get("senales_posibles", []),
         }
 
         senal_final = enriquecer_senal(senal_final, p)
 
+        # Motor de riesgo V13_ELITE
+        riesgo = evaluar_riesgo(p, senal_final)
+        senal_final["risk_score"] = riesgo["risk_score"]
+        senal_final["risk_level"] = riesgo["risk_level"]
+        senal_final["apto_para_entrar"] = riesgo["apto_para_entrar"]
+        senal_final["motivos_riesgo"] = riesgo["motivos_riesgo"]
+
         if not filtrar_value_bets_reales(senal_final):
+            continue
+
+        if not filtrar_por_riesgo_final(senal_final):
             continue
 
         senales.append(senal_final)
@@ -221,7 +289,6 @@ def generar_senales(partidos: List[Dict]) -> List[Dict]:
     senales.sort(
         key=lambda s: (
             float(s.get("signal_score", 0) or 0),
-            float(s.get("value_score", 0) or 0),
             float(s.get("tactical_score", 0) or 0),
             float(s.get("goal_inminente_score", 0) or 0),
             float(s.get("confidence", 0) or 0),
