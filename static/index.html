@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JHONNY_ELITE V13_ELITE</title>
+  <title>JHONNY_ELITE V14_AI</title>
   <style>
     * {
       box-sizing: border-box;
@@ -14,13 +14,10 @@
     :root {
       --bg: #07111f;
       --panel: #0b1728;
-      --panel-2: #0f1d30;
       --card: linear-gradient(180deg, #0f1c2d, #0a1423);
-      --card-2: linear-gradient(180deg, #13253a, #0c1828);
       --border: rgba(255,255,255,0.08);
       --text: #eaf6ff;
       --muted: #8eb8e8;
-      --blue: #52a8ff;
       --green: #65ff9b;
       --yellow: #ffd66e;
       --red: #ff8d8d;
@@ -464,6 +461,68 @@
       border-color: #a33a3a;
     }
 
+    .ai-control-real {
+      background: #0d3a29;
+      color: #84ffbe;
+      border-color: #2e8f65;
+    }
+
+    .ai-caos-util {
+      background: #173257;
+      color: #8fd0ff;
+      border-color: #3c7eb8;
+    }
+
+    .ai-presion-falsa,
+    .ai-partido-trampa {
+      background: #4a1010;
+      color: #ff9a9a;
+      border-color: #b84646;
+    }
+
+    .ai-cierre-tactico,
+    .ai-partido-muerto {
+      background: #4a4410;
+      color: #ffe670;
+      border-color: #a39a2e;
+    }
+
+    .ai-neutro {
+      background: #2c2c2c;
+      color: #d0d0d0;
+      border-color: #5d5d5d;
+    }
+
+    .ai-reco-fuerte {
+      background: linear-gradient(180deg, #5a3b10, #2f1f08);
+      color: #ffd66e;
+      border-color: #d6a63a;
+    }
+
+    .ai-reco-apostar {
+      background: #10351f;
+      color: #7dffb0;
+      border-color: #2f8a57;
+    }
+
+    .ai-reco-suave {
+      background: #173257;
+      color: #8fd0ff;
+      border-color: #3c7eb8;
+    }
+
+    .ai-reco-observar {
+      background: #4a4410;
+      color: #ffe670;
+      border-color: #a39a2e;
+    }
+
+    .ai-reco-no {
+      background: #4a1010;
+      color: #ff9a9a;
+      border-color: #b84646;
+    }
+
     .signal-meta,
     .match-meta {
       display: flex;
@@ -524,6 +583,77 @@
       background: linear-gradient(180deg, #0f1c2d, #0a1423);
     }
 
+    .match-card-pro {
+      background: linear-gradient(180deg, #132842, #0b1828);
+      border: 1px solid rgba(82,168,255,0.18);
+      border-radius: 22px;
+      padding: 16px;
+      box-shadow: 0 0 0 1px rgba(82,168,255,0.04), 0 10px 24px rgba(0,0,0,0.22);
+    }
+
+    .match-card-pro .match-head {
+      margin-bottom: 12px;
+    }
+
+    .match-topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .match-league-pro {
+      font-size: 12px;
+      font-weight: 700;
+      color: #7cc4ff;
+    }
+
+    .match-ai-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .match-insight {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      color: #c9ddf7;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .match-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .match-stat-box {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px;
+      padding: 10px;
+    }
+
+    .match-stat-title {
+      font-size: 11px;
+      color: #8eb8e8;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .match-stat-value {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+    }
+
     .match-main {
       display: grid;
       grid-template-columns: 1fr 180px 1fr;
@@ -568,14 +698,6 @@
       color: #ff7b7b;
     }
 
-    .green {
-      color: var(--green);
-    }
-
-    .yellow {
-      color: var(--yellow);
-    }
-
     .section-spacer {
       margin-top: 16px;
     }
@@ -605,10 +727,17 @@
       }
     }
 
+    @media (max-width: 900px) {
+      .match-stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
     @media (max-width: 760px) {
       .topbar,
       .hero-grid,
-      .stats-grid {
+      .stats-grid,
+      .match-stats-grid {
         grid-template-columns: 1fr;
       }
 
@@ -638,8 +767,8 @@
   <div class="page">
     <aside class="leftbar">
       <div class="card">
-        <div class="logo">JHONNY_<span>ELITE V13_ELITE</span></div>
-        <div class="subtitle">SCANNER IA LIVE · VALUE BETS · RISK ENGINE · LEAGUE EXPLORER · DETECTOR DE GOL</div>
+        <div class="logo">JHONNY_<span>ELITE V14_AI</span></div>
+        <div class="subtitle">SCANNER IA LIVE · VALUE BETS · RISK ENGINE · AI BRAIN · LEAGUE EXPLORER</div>
 
         <div class="menu">
           <button onclick="cargarTodo()">📡 Actualizar panel</button>
@@ -781,9 +910,6 @@
     let cacheSignals = [];
     let cacheHotMatches = [];
     let cacheLeagueExplorer = {};
-    let ligaSeleccionada = "ALL";
-    let equipoBuscado = "";
-    let estadoSeleccionado = "ALL";
 
     function setStatus(texto, tipo = "ok") {
       const badge = document.getElementById("statusBadge");
@@ -878,15 +1004,12 @@
         confidence: Number(s.confidence ?? s.confianza ?? 0) || 0,
         reason: s.reason || s.razon || "Señal generada por el sistema",
         tier: s.tier || "NORMAL",
-
         estado_partido: s.estado_partido || {},
         gol_inminente: s.gol_inminente || {},
         signal_status: s.signal_status || "OPEN",
-
         goal_prob_5: Number(s.goal_prob_5 ?? 0) || 0,
         goal_prob_10: Number(s.goal_prob_10 ?? 0) || 0,
         goal_prob_15: Number(s.goal_prob_15 ?? 0) || 0,
-
         resultado_probable: s.resultado_probable || "N/A",
         ganador_probable: s.ganador_probable || "N/A",
         doble_oportunidad_probable: s.doble_oportunidad_probable || "N/A",
@@ -896,12 +1019,10 @@
         confianza_prediccion: Number(s.confianza_prediccion ?? 0) || 0,
         recomendacion_final: s.recomendacion_final || "OBSERVAR",
         riesgo_operativo: s.riesgo_operativo || "MEDIO",
-
         tactical_score: Number(s.tactical_score ?? 0) || 0,
         goal_inminente_score: Number(s.goal_inminente_score ?? 0) || 0,
         signal_score: Number(s.signal_score ?? 0) || 0,
         signal_rank: s.signal_rank || "NORMAL",
-
         prob_implicita_calculada: Number(s.prob_implicita_calculada ?? 0) || 0,
         value_pct: Number(s.value_pct ?? 0) || 0,
         edge_pct: Number(s.edge_pct ?? 0) || 0,
@@ -909,12 +1030,19 @@
         value_categoria: s.value_categoria || "SIN_VALUE",
         recomendacion_value: s.recomendacion_value || "NO_APOSTAR",
         razon_value: s.razon_value || "Sin análisis de value",
-
         risk_score: Number(s.risk_score ?? 0) || 0,
         risk_level: s.risk_level || "APTO",
         apto_para_entrar: !!s.apto_para_entrar,
         motivos_riesgo: Array.isArray(s.motivos_riesgo) ? s.motivos_riesgo : [],
-
+        ai_state: s.ai_state || "NEUTRO",
+        ai_score: Number(s.ai_score ?? 0) || 0,
+        ai_reason: s.ai_reason || "Sin lectura IA",
+        ai_fit: s.ai_fit || "NEUTRO",
+        ai_fit_reason: s.ai_fit_reason || "Sin ajuste IA",
+        ai_confidence_adjustment: Number(s.ai_confidence_adjustment ?? 0) || 0,
+        ai_confidence_final: Number(s.ai_confidence_final ?? 0) || 0,
+        ai_decision_score: Number(s.ai_decision_score ?? 0) || 0,
+        ai_recommendation: s.ai_recommendation || "OBSERVAR",
         all_signals: Array.isArray(s.all_signals) ? s.all_signals : []
       };
     }
@@ -922,7 +1050,6 @@
     function getSignalTier(confidence, value) {
       const c = Number(confidence || 0);
       const v = Number(value || 0);
-
       if (c >= 90 && v >= 12) return { label: "🔥 PREMIUM", className: "signal-tier tier-premium" };
       if (c >= 80 && v >= 6) return { label: "⚡ FUERTE", className: "signal-tier tier-fuerte" };
       return { label: "📊 NORMAL", className: "signal-tier tier-normal" };
@@ -956,6 +1083,26 @@
       return "pill";
     }
 
+    function aiStateClass(level) {
+      const r = String(level || "").toUpperCase();
+      if (r === "CONTROL_REAL") return "pill ai-control-real";
+      if (r === "CAOS_UTIL") return "pill ai-caos-util";
+      if (r === "PRESION_FALSA") return "pill ai-presion-falsa";
+      if (r === "PARTIDO_TRAMPA") return "pill ai-partido-trampa";
+      if (r === "CIERRE_TACTICO") return "pill ai-cierre-tactico";
+      if (r === "PARTIDO_MUERTO") return "pill ai-partido-muerto";
+      return "pill ai-neutro";
+    }
+
+    function aiRecoClass(level) {
+      const r = String(level || "").toUpperCase();
+      if (r === "APOSTAR_FUERTE") return "pill ai-reco-fuerte";
+      if (r === "APOSTAR") return "pill ai-reco-apostar";
+      if (r === "APOSTAR_SUAVE") return "pill ai-reco-suave";
+      if (r === "OBSERVAR") return "pill ai-reco-observar";
+      return "pill ai-reco-no";
+    }
+
     function marketLabelDinamico(s) {
       if (s.selection && String(s.selection).trim() !== "") return s.selection;
       if (s.market === "OVER_NEXT_15_DYNAMIC") return "Over próximos 15 min";
@@ -967,10 +1114,7 @@
     function poblarFiltroLigas(partidos) {
       const select = document.getElementById("ligaFiltro");
       const actual = select.value || "ALL";
-
-      const ligas = [...new Set(
-        partidos.map(p => String(p.liga || "").trim()).filter(Boolean)
-      )].sort((a, b) => a.localeCompare(b));
+      const ligas = [...new Set(partidos.map(p => String(p.liga || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
 
       select.innerHTML =
         `<option value="ALL">Todas las ligas</option>` +
@@ -985,22 +1129,16 @@
     }
 
     function filtrarPartidos(partidos) {
-      ligaSeleccionada = document.getElementById("ligaFiltro")?.value || "ALL";
-      equipoBuscado = (document.getElementById("equipoFiltro")?.value || "").toLowerCase().trim();
-      estadoSeleccionado = (document.getElementById("estadoFiltro")?.value || "ALL").toUpperCase();
+      const ligaSeleccionada = document.getElementById("ligaFiltro")?.value || "ALL";
+      const equipoBuscado = (document.getElementById("equipoFiltro")?.value || "").toLowerCase().trim();
+      const estadoSeleccionado = (document.getElementById("estadoFiltro")?.value || "ALL").toUpperCase();
 
       return partidos.filter(p => {
         const ligaOk = ligaSeleccionada === "ALL" || p.liga === ligaSeleccionada;
-
-        const equipoOk =
-          !equipoBuscado ||
-          p.local.toLowerCase().includes(equipoBuscado) ||
-          p.visitante.toLowerCase().includes(equipoBuscado);
-
+        const equipoOk = !equipoBuscado || p.local.toLowerCase().includes(equipoBuscado) || p.visitante.toLowerCase().includes(equipoBuscado);
         const signal = getSignalForMatch(p.id);
         const estado = String(signal?.estado_partido?.estado || "").toUpperCase();
         const estadoOk = estadoSeleccionado === "ALL" || estado === estadoSeleccionado;
-
         return ligaOk && equipoOk && estadoOk;
       });
     }
@@ -1015,8 +1153,8 @@
     function renderLeagueExplorer() {
       const box = document.getElementById("leagueExplorer");
       const data = cacheLeagueExplorer || {};
-
       const regiones = Object.keys(data);
+
       if (!regiones.length) {
         box.innerHTML = `<div class="empty">No hay ligas disponibles.</div>`;
         return;
@@ -1054,12 +1192,7 @@
       const box = document.getElementById("heroSignal");
 
       if (!cacheSignals.length) {
-        box.innerHTML = `
-          <div class="card">
-            <div class="section-title">🎯 SEÑAL PRINCIPAL DEL SISTEMA</div>
-            <div class="empty">No hay señal principal disponible todavía.</div>
-          </div>
-        `;
+        box.innerHTML = `<div class="card"><div class="section-title">🎯 SEÑAL PRINCIPAL DEL SISTEMA</div><div class="empty">No hay señal principal disponible todavía.</div></div>`;
         return;
       }
 
@@ -1091,6 +1224,8 @@
             <span class="pill">${hero.value_categoria}</span>
             <span class="${riskClass(hero.risk_level)}">${hero.risk_level}</span>
             <span class="${estadoClass(estado)}">${estado}</span>
+            <span class="${aiStateClass(hero.ai_state)}">${hero.ai_state}</span>
+            <span class="${aiRecoClass(hero.ai_recommendation)}">${hero.ai_recommendation}</span>
           </div>
 
           <div class="hero-grid">
@@ -1098,36 +1233,45 @@
               <div class="hero-box-title">Signal score</div>
               <div class="hero-box-value">${hero.signal_score}</div>
             </div>
-
             <div class="hero-box">
               <div class="hero-box-title">Tactical score</div>
               <div class="hero-box-value">${hero.tactical_score}</div>
             </div>
-
             <div class="hero-box">
               <div class="hero-box-title">Goal score</div>
               <div class="hero-box-value">${hero.goal_inminente_score}</div>
             </div>
-
             <div class="hero-box">
               <div class="hero-box-title">Value score</div>
               <div class="hero-box-value">${hero.value_score}</div>
             </div>
-
             <div class="hero-box">
               <div class="hero-box-title">Risk score</div>
               <div class="hero-box-value">${hero.risk_score}</div>
             </div>
-
             <div class="hero-box">
               <div class="hero-box-title">Value engine</div>
               <div class="hero-box-value">${hero.recomendacion_value || "NO_APOSTAR"}</div>
+            </div>
+            <div class="hero-box">
+              <div class="hero-box-title">AI score</div>
+              <div class="hero-box-value">${hero.ai_score}</div>
+            </div>
+            <div class="hero-box">
+              <div class="hero-box-title">AI decision score</div>
+              <div class="hero-box-value">${hero.ai_decision_score}</div>
+            </div>
+            <div class="hero-box">
+              <div class="hero-box-title">AI fit</div>
+              <div class="hero-box-value">${hero.ai_fit}</div>
             </div>
           </div>
 
           <div class="hero-reason">
             <strong>Motivo táctico:</strong> ${hero.reason || "Señal generada por el sistema"}<br>
             <strong>Motivo value:</strong> ${hero.razon_value || "Sin análisis de value"}<br>
+            <strong>Lectura IA:</strong> ${hero.ai_reason || "Sin lectura IA"}<br>
+            <strong>Ajuste IA:</strong> ${hero.ai_fit_reason || "Sin ajuste IA"}<br>
             <strong>Riesgo:</strong> ${(hero.motivos_riesgo || []).join(" · ") || "Sin alertas relevantes"}
           </div>
         </div>
@@ -1154,8 +1298,8 @@
             <div class="mini-signal-sub">${s.league} · ${s.country}</div>
             <div class="mini-signal-sub">${marketLabelDinamico(s)}</div>
             <div class="mini-signal-sub">Min ${s.minute} · Marcador ${s.score}</div>
-            <div class="mini-signal-sub">Signal ${s.signal_score} · Tactical ${s.tactical_score}</div>
-            <div class="mini-signal-sub">Value ${s.value_pct}% · ${s.value_categoria}</div>
+            <div class="mini-signal-sub">AI ${s.ai_state} · ${s.ai_recommendation}</div>
+            <div class="mini-signal-sub">Signal ${s.signal_score} · AI ${s.ai_decision_score}</div>
           </div>
         `;
       }).join("");
@@ -1191,19 +1335,22 @@
             <div class="signal-meta">
               <span class="${rankClass(s.signal_rank)}">${s.signal_rank}</span>
               <span class="pill">Signal ${s.signal_score}</span>
-              <span class="pill">Tactical ${s.tactical_score}</span>
+              <span class="pill">AI ${s.ai_decision_score}</span>
               <span class="pill">Goal ${s.goal_inminente_score}</span>
               <span class="pill">Value ${s.value_pct}%</span>
-              <span class="pill">${s.value_categoria}</span>
               <span class="${riskClass(s.risk_level)}">${s.risk_level}</span>
               <span class="${estadoClass(estado)}">${estado}</span>
+              <span class="${aiStateClass(s.ai_state)}">${s.ai_state}</span>
+              <span class="${aiRecoClass(s.ai_recommendation)}">${s.ai_recommendation}</span>
             </div>
 
             <div class="signal-reason">
               <strong>Táctico:</strong> ${s.reason || "Señal generada por el sistema"}<br>
               <strong>Value:</strong> ${s.razon_value || "Sin análisis de value"}<br>
+              <strong>IA:</strong> ${s.ai_reason || "Sin lectura IA"}<br>
+              <strong>Ajuste IA:</strong> ${s.ai_fit_reason || "Sin ajuste IA"}<br>
               <strong>Riesgo:</strong> ${(s.motivos_riesgo || []).join(" · ") || "Sin alertas"}<br>
-              <strong>Recomendación:</strong> ${s.recomendacion_value || "NO_APOSTAR"}
+              <strong>Recomendación:</strong> ${s.ai_recommendation || s.recomendacion_final || "OBSERVAR"}
             </div>
           </div>
         `;
@@ -1212,7 +1359,7 @@
 
     function renderHotMatches() {
       const box = document.getElementById("hotMatches");
-      const partidos = cacheHotMatches.length ? cacheHotMatches : filtrarPartidos(cachePartidos);
+      const partidos = cacheHotMatches.length ? cacheHotMatches.map(normalizarPartido) : filtrarPartidos(cachePartidos);
 
       if (!partidos.length) {
         box.innerHTML = `<div class="empty">No hay partidos calientes todavía.</div>`;
@@ -1220,34 +1367,64 @@
       }
 
       box.innerHTML = partidos.slice(0, 6).map(p => {
-        const partido = normalizarPartido(p);
-        const signal = getSignalForMatch(partido.id);
+        const signal = getSignalForMatch(p.id);
         const estado = signal?.estado_partido?.estado || "SIN DATO";
 
         return `
-          <div class="hot-card">
-            <div class="hot-head">
-              <div>
-                <div class="league">${partido.liga} · ${partido.pais}</div>
-                <div class="hot-title">${partido.local} vs ${partido.visitante}</div>
+          <div class="hot-card match-card-pro">
+            <div class="match-topline">
+              <div class="match-league-pro">${p.liga} · ${p.pais}</div>
+              <div class="signal-meta">
+                <span class="${estadoClass(estado)}">${estado}</span>
+                ${signal ? `<span class="${rankClass(signal.signal_rank)}">${signal.signal_rank}</span>` : ""}
               </div>
-              <span class="${estadoClass(estado)}">${estado}</span>
             </div>
+
+            <div class="hot-title">${p.local} vs ${p.visitante}</div>
 
             <div class="hot-sub">
-              Min ${partido.minuto} · Marcador ${partido.score} · Momentum ${partido.momentum}
+              Min ${p.minuto} · Marcador ${p.score} · Momentum ${p.momentum}
             </div>
 
-            <div class="signal-meta">
-              ${signal ? `<span class="${rankClass(signal.signal_rank)}">${signal.signal_rank}</span>` : ""}
-              ${signal ? `<span class="pill">Signal ${signal.signal_score}</span>` : ""}
-              ${signal ? `<span class="pill">Value ${signal.value_pct}%</span>` : ""}
+            <div class="match-meta">
+              <span class="pill">xG ${p.xG}</span>
+              <span class="pill">Shots ${p.shots || 0}</span>
+              <span class="pill">On Target ${p.shots_on_target || 0}</span>
+              <span class="pill">Danger ${p.dangerous_attacks || 0}</span>
               ${signal ? `<span class="${riskClass(signal.risk_level)}">${signal.risk_level}</span>` : ""}
+              ${signal ? `<span class="${aiStateClass(signal.ai_state)}">${signal.ai_state}</span>` : ""}
             </div>
 
-            <div class="reason-box">
-              ${signal ? (signal.reason || "Partido con señal asociada") : "Sin señal asociada todavía"}
-            </div>
+            ${signal ? `
+              <div class="match-stats-grid">
+                <div class="match-stat-box">
+                  <div class="match-stat-title">Signal</div>
+                  <div class="match-stat-value">${signal.signal_score}</div>
+                </div>
+                <div class="match-stat-box">
+                  <div class="match-stat-title">AI</div>
+                  <div class="match-stat-value">${signal.ai_decision_score}</div>
+                </div>
+                <div class="match-stat-box">
+                  <div class="match-stat-title">Value</div>
+                  <div class="match-stat-value">${signal.value_pct}%</div>
+                </div>
+                <div class="match-stat-box">
+                  <div class="match-stat-title">Reco</div>
+                  <div class="match-stat-value">${signal.ai_recommendation}</div>
+                </div>
+              </div>
+
+              <div class="match-insight">
+                <strong>Mercado:</strong> ${marketLabelDinamico(signal)}<br>
+                <strong>Lectura IA:</strong> ${signal.ai_reason || "Sin lectura IA"}<br>
+                <strong>Motivo táctico:</strong> ${signal.reason || "Sin detalle"}
+              </div>
+            ` : `
+              <div class="match-insight">
+                Partido caliente sin señal activa todavía.
+              </div>
+            `}
           </div>
         `;
       }).join("");
@@ -1267,10 +1444,14 @@
         const estado = signal?.estado_partido?.estado || "SIN DATO";
 
         return `
-          <div class="match-card">
-            <div class="match-head">
-              <div class="match-league">${p.liga} · ${p.pais}</div>
-              <span class="${estadoClass(estado)}">${estado}</span>
+          <div class="match-card match-card-pro">
+            <div class="match-topline">
+              <div class="match-league-pro">${p.liga} · ${p.pais}</div>
+              <div class="signal-meta">
+                <span class="${estadoClass(estado)}">${estado}</span>
+                ${signal ? `<span class="${rankClass(signal.signal_rank)}">${signal.signal_rank}</span>` : ""}
+                ${signal ? `<span class="${riskClass(signal.risk_level)}">${signal.risk_level}</span>` : ""}
+              </div>
             </div>
 
             <div class="match-main">
@@ -1288,18 +1469,52 @@
               <span class="pill">Min ${p.minuto}</span>
               <span class="pill">xG ${p.xG}</span>
               <span class="pill">Momentum ${p.momentum}</span>
+              <span class="pill">Shots ${p.shots || 0}</span>
+              <span class="pill">On Target ${p.shots_on_target || 0}</span>
+              <span class="pill">Danger ${p.dangerous_attacks || 0}</span>
             </div>
 
             ${signal ? `
-              <div class="signal-reason" style="margin-top:12px;">
-                <strong>Señal:</strong> ${marketLabelDinamico(signal)}<br>
-                <strong>Rank:</strong> ${signal.signal_rank}<br>
-                <strong>Signal score:</strong> ${signal.signal_score}<br>
+              <div class="match-stats-grid">
+                <div class="match-stat-box">
+                  <div class="match-stat-title">Signal score</div>
+                  <div class="match-stat-value">${signal.signal_score}</div>
+                </div>
+
+                <div class="match-stat-box">
+                  <div class="match-stat-title">AI score</div>
+                  <div class="match-stat-value">${signal.ai_decision_score}</div>
+                </div>
+
+                <div class="match-stat-box">
+                  <div class="match-stat-title">Value</div>
+                  <div class="match-stat-value">${signal.value_pct}%</div>
+                </div>
+
+                <div class="match-stat-box">
+                  <div class="match-stat-title">Risk</div>
+                  <div class="match-stat-value">${signal.risk_score}</div>
+                </div>
+              </div>
+
+              <div class="match-ai-row">
+                <span class="${aiStateClass(signal.ai_state)}">${signal.ai_state}</span>
+                <span class="${aiRecoClass(signal.ai_recommendation)}">${signal.ai_recommendation}</span>
+                <span class="pill">${marketLabelDinamico(signal)}</span>
+              </div>
+
+              <div class="match-insight">
+                <strong>Lectura IA:</strong> ${signal.ai_reason || "Sin lectura IA"}<br>
+                <strong>Ajuste IA:</strong> ${signal.ai_fit_reason || "Sin ajuste IA"}<br>
                 <strong>Value:</strong> ${signal.razon_value || "Sin análisis de value"}<br>
                 <strong>Riesgo:</strong> ${(signal.motivos_riesgo || []).join(" · ") || "Sin alertas"}<br>
-                <strong>Recomendación:</strong> ${signal.recomendacion_value || "NO_APOSTAR"}
+                <strong>Recomendación:</strong> ${signal.ai_recommendation || signal.recomendacion_final || "OBSERVAR"}
               </div>
-            ` : ""}
+            ` : `
+              <div class="match-insight">
+                <strong>Lectura general:</strong> Partido en observación. Aún no hay señal activa para este encuentro.
+              </div>
+            `}
           </div>
         `;
       }).join("");
@@ -1417,7 +1632,6 @@
           roi_percent: 0,
           signals_elite: 0,
           signals_top: 0,
-          confianza_promedio: 0,
           value_promedio: 0,
           riesgo_medio: 0
         });
