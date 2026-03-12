@@ -31,7 +31,7 @@ except Exception:
 
 app = FastAPI(
     title="JHONNY ELITE API",
-    version="V13_TRADING_PRO"
+    version="V13_ELITE"
 )
 
 app.add_middleware(
@@ -61,13 +61,14 @@ AUTO_SCAN_DATA = {
     "signals": [],
     "hot_matches": [],
     "hero_signal": None,
+    "league_explorer": {},
     "last_scan": None,
     "last_scan_iso": None,
     "auto_scan_activo": True,
     "intervalo_segundos": 60,
     "errores": 0,
     "ultimo_error": None,
-    "backend_version": "V13_TRADING_PRO"
+    "backend_version": "V13_ELITE"
 }
 
 
@@ -82,11 +83,156 @@ def ahora_iso() -> str:
     return datetime.utcnow().isoformat()
 
 
+def construir_league_explorer(partidos, senales):
+    """
+    Agrupa por región/país/liga para el panel estilo Sofascore.
+    """
+    regiones = {
+        "Europa": [],
+        "Sudamérica": [],
+        "Norteamérica": [],
+        "Asia": [],
+        "África": [],
+        "Otros": [],
+    }
+
+    mapa_pais_region = {
+        # Europa
+        "England": "Europa",
+        "Spain": "Europa",
+        "Italy": "Europa",
+        "Germany": "Europa",
+        "France": "Europa",
+        "Portugal": "Europa",
+        "Netherlands": "Europa",
+        "Belgium": "Europa",
+        "Turkey": "Europa",
+        "Scotland": "Europa",
+        "Croatia": "Europa",
+        "Austria": "Europa",
+        "Switzerland": "Europa",
+        "Czech-Republic": "Europa",
+        "Poland": "Europa",
+        "Greece": "Europa",
+        "Romania": "Europa",
+        "Serbia": "Europa",
+        "Denmark": "Europa",
+        "Norway": "Europa",
+        "Sweden": "Europa",
+        "Finland": "Europa",
+        "Ukraine": "Europa",
+        "Europe": "Europa",
+
+        # Sudamérica
+        "Argentina": "Sudamérica",
+        "Brazil": "Sudamérica",
+        "Chile": "Sudamérica",
+        "Colombia": "Sudamérica",
+        "Uruguay": "Sudamérica",
+        "Paraguay": "Sudamérica",
+        "Peru": "Sudamérica",
+        "Bolivia": "Sudamérica",
+        "Ecuador": "Sudamérica",
+        "Venezuela": "Sudamérica",
+        "South-America": "Sudamérica",
+
+        # Norteamérica
+        "USA": "Norteamérica",
+        "Mexico": "Norteamérica",
+        "Canada": "Norteamérica",
+        "Costa-Rica": "Norteamérica",
+        "Honduras": "Norteamérica",
+        "Guatemala": "Norteamérica",
+        "El-Salvador": "Norteamérica",
+        "Panama": "Norteamérica",
+        "North-America": "Norteamérica",
+
+        # Asia
+        "Japan": "Asia",
+        "China": "Asia",
+        "South-Korea": "Asia",
+        "Saudi-Arabia": "Asia",
+        "Qatar": "Asia",
+        "UAE": "Asia",
+        "India": "Asia",
+        "Iran": "Asia",
+        "Iraq": "Asia",
+        "Asia": "Asia",
+
+        # África
+        "Morocco": "África",
+        "Egypt": "África",
+        "Algeria": "África",
+        "Tunisia": "África",
+        "South-Africa": "África",
+        "Africa": "África",
+    }
+
+    contador = {}
+
+    for p in partidos:
+        liga = p.get("liga", "Liga desconocida")
+        pais = p.get("pais", "Otros")
+        region = mapa_pais_region.get(pais, "Otros")
+
+        key = (region, pais, liga)
+        if key not in contador:
+            contador[key] = {
+                "region": region,
+                "country": pais,
+                "league": liga,
+                "matches": 0,
+                "signals": 0,
+                "elite": 0,
+                "top": 0,
+            }
+
+        contador[key]["matches"] += 1
+
+    for s in senales:
+        liga = s.get("league", "Liga desconocida")
+        pais = s.get("country", "Otros")
+        region = mapa_pais_region.get(pais, "Otros")
+        rank = str(s.get("signal_rank", "NORMAL")).upper()
+
+        key = (region, pais, liga)
+        if key not in contador:
+            contador[key] = {
+                "region": region,
+                "country": pais,
+                "league": liga,
+                "matches": 0,
+                "signals": 0,
+                "elite": 0,
+                "top": 0,
+            }
+
+        contador[key]["signals"] += 1
+        if rank == "ELITE":
+            contador[key]["elite"] += 1
+        elif rank == "TOP":
+            contador[key]["top"] += 1
+
+    for item in contador.values():
+        regiones[item["region"]].append(item)
+
+    for region in regiones:
+        regiones[region].sort(
+            key=lambda x: (x["signals"], x["matches"], x["elite"], x["top"]),
+            reverse=True
+        )
+
+    return regiones
+
+
 def normalizar_partido_crudo(p: dict) -> dict:
+    """
+    Normalización defensiva por si algún fetcher devuelve claves distintas.
+    """
     local = p.get("local") or p.get("equipo_local") or p.get("home") or "Local"
     visitante = p.get("visitante") or p.get("equipo_visitante") or p.get("away") or "Visitante"
     liga = p.get("liga") or p.get("torneo") or p.get("league") or "Liga desconocida"
-    pais = p.get("pais") or p.get("country") or "País desconocido"
+    pais = p.get("pais") or p.get("country") or "Otros"
     minuto = int(p.get("minuto", p.get("minute", 0)) or 0)
     estado_partido = p.get("estado_partido") or p.get("estado") or "en_juego"
     match_id = p.get("id", f"{local}-{visitante}-{minuto}")
@@ -97,12 +243,8 @@ def normalizar_partido_crudo(p: dict) -> dict:
     ).replace("–", "-")
 
     partes = score_raw.split("-")
-    marcador_local = int(str(partes[0]).strip()) if len(partes) > 0 and str(partes[0]).strip().isdigit() else 0
-    marcador_visitante = int(str(partes[1]).strip()) if len(partes) > 1 and str(partes[1]).strip().isdigit() else 0
-
-    goal_pressure = p.get("goal_pressure") or {}
-    goal_predictor = p.get("goal_predictor") or {}
-    chaos = p.get("chaos") or {}
+    marcador_local = int(str(partes[0]).strip()) if len(partes) > 0 and str(partes[0]).strip().isdigit() else int(p.get("marcador_local", 0) or 0)
+    marcador_visitante = int(str(partes[1]).strip()) if len(partes) > 1 and str(partes[1]).strip().isdigit() else int(p.get("marcador_visitante", 0) or 0)
 
     return {
         "id": match_id,
@@ -119,23 +261,12 @@ def normalizar_partido_crudo(p: dict) -> dict:
         "cuota": float(p.get("cuota", 1.85) or 1.85),
         "prob_real": float(p.get("prob_real", 0.75) or 0.75),
         "prob_implicita": float(p.get("prob_implicita", 0.54) or 0.54),
-        "goal_pressure": {
-            "pressure_score": float(goal_pressure.get("pressure_score", 0) or 0),
-            "pressure_level": goal_pressure.get("pressure_level", "BAJA"),
-            "pressure_reason": goal_pressure.get("pressure_reason", "Sin datos de presión"),
-        },
-        "goal_predictor": {
-            "goal_next_5_prob": float(goal_predictor.get("goal_next_5_prob", 0) or 0),
-            "goal_next_10_prob": float(goal_predictor.get("goal_next_10_prob", 0) or 0),
-            "predictor_score": float(goal_predictor.get("predictor_score", 0) or 0),
-            "alert_level": goal_predictor.get("alert_level", "BAJA"),
-            "alert_reason": goal_predictor.get("alert_reason", "Sin datos de predictor"),
-        },
-        "chaos": {
-            "chaos_score": float(chaos.get("chaos_score", 0) or 0),
-            "chaos_level": chaos.get("chaos_level", "BAJO"),
-            "chaos_reason": chaos.get("chaos_reason", "Sin datos de caos"),
-        },
+        "goal_pressure": p.get("goal_pressure", {}) or {},
+        "goal_predictor": p.get("goal_predictor", {}) or {},
+        "chaos": p.get("chaos", {}) or {},
+        "shots": float(p.get("shots", 0) or 0),
+        "shots_on_target": float(p.get("shots_on_target", 0) or 0),
+        "dangerous_attacks": float(p.get("dangerous_attacks", 0) or 0),
     }
 
 
@@ -152,7 +283,8 @@ def escanear_y_actualizar_memoria():
 
     senales_rank = rankear_senales(senales)
     hero_signal = obtener_senal_principal(senales_rank)
-    hot_matches = obtener_partidos_calientes(partidos, limite=3)
+    hot_matches = obtener_partidos_calientes(partidos, limite=6)
+    league_explorer = construir_league_explorer(partidos, senales_rank)
 
     ts = ahora_ts()
     iso = ahora_iso()
@@ -162,6 +294,7 @@ def escanear_y_actualizar_memoria():
         AUTO_SCAN_DATA["signals"] = senales_rank
         AUTO_SCAN_DATA["hot_matches"] = hot_matches
         AUTO_SCAN_DATA["hero_signal"] = hero_signal
+        AUTO_SCAN_DATA["league_explorer"] = league_explorer
         AUTO_SCAN_DATA["last_scan"] = ts
         AUTO_SCAN_DATA["last_scan_iso"] = iso
         AUTO_SCAN_DATA["ultimo_error"] = None
@@ -172,7 +305,7 @@ def escanear_y_actualizar_memoria():
         except Exception:
             pass
 
-    return partidos, senales_rank, hero_signal, hot_matches
+    return partidos, senales_rank, hero_signal, hot_matches, league_explorer
 
 
 # ---------------------------------
@@ -211,7 +344,7 @@ def home():
     return JSONResponse({
         "ok": True,
         "mensaje": "Backend táctico funcionando",
-        "version": "V13_TRADING_PRO",
+        "version": "V13_ELITE",
         "frontend": "index.html no encontrado en /static"
     })
 
@@ -231,6 +364,8 @@ def status():
             "ultimo_scan_iso": AUTO_SCAN_DATA["last_scan_iso"],
             "partidos_cache": len(AUTO_SCAN_DATA["partidos"]),
             "senales_cache": len(AUTO_SCAN_DATA["signals"]),
+            "hot_matches_cache": len(AUTO_SCAN_DATA["hot_matches"]),
+            "hero_signal_disponible": AUTO_SCAN_DATA["hero_signal"] is not None,
             "errores": AUTO_SCAN_DATA["errores"],
             "ultimo_error": AUTO_SCAN_DATA["ultimo_error"],
         }
@@ -249,6 +384,7 @@ def debug_routes():
             "/signals",
             "/hero-signal",
             "/hot-matches",
+            "/league-explorer",
             "/history",
             "/learning-stats",
             "/auto-scan/status",
@@ -257,7 +393,7 @@ def debug_routes():
             "/escanear",
             "/senales",
         ],
-        "version": "V13_TRADING_PRO"
+        "version": "V13_ELITE"
     }
 
 
@@ -279,11 +415,12 @@ def debug_routes_alias():
             "/senales",
             "/hero-signal",
             "/hot-matches",
+            "/league-explorer",
             "/history",
             "/learning-stats",
             "/auto-scan/status",
         ],
-        "version": "V13_TRADING_PRO"
+        "version": "V13_ELITE"
     }
 
 
@@ -384,6 +521,28 @@ def hot_matches():
         }
 
 
+@app.get("/league-explorer")
+def league_explorer():
+    try:
+        with DATA_LOCK:
+            data = dict(AUTO_SCAN_DATA["league_explorer"])
+            last_scan = AUTO_SCAN_DATA["last_scan"]
+            last_scan_iso = AUTO_SCAN_DATA["last_scan_iso"]
+
+        return {
+            "estado": "OK",
+            "league_explorer": data,
+            "last_scan": last_scan,
+            "last_scan_iso": last_scan_iso,
+        }
+    except Exception as e:
+        return {
+            "estado": "error",
+            "detalle": str(e),
+            "league_explorer": {}
+        }
+
+
 @app.get("/partidos-en-vivo")
 def partidos_en_vivo():
     return scan()
@@ -434,6 +593,7 @@ def learning_stats():
 
         confianza_promedio = 0
         value_promedio = 0
+        riesgo_medio = 0
 
         if total > 0:
             confianza_promedio = round(
@@ -444,6 +604,13 @@ def learning_stats():
                 sum(float(s.get("value", 0) or 0) for s in senales) / total,
                 2
             )
+            riesgo_medio = round(
+                sum(float(s.get("risk_score", 0) or 0) for s in senales) / total,
+                2
+            )
+
+        elite = sum(1 for s in senales if str(s.get("signal_rank", "")).upper() == "ELITE")
+        top = sum(1 for s in senales if str(s.get("signal_rank", "")).upper() == "TOP")
 
         return {
             "total_senales": total,
@@ -453,6 +620,9 @@ def learning_stats():
             "roi_percent": 0,
             "confianza_promedio": confianza_promedio,
             "value_promedio": value_promedio,
+            "riesgo_medio": riesgo_medio,
+            "signals_elite": elite,
+            "signals_top": top,
         }
 
     except Exception as e:
@@ -481,4 +651,3 @@ def auto_scan_status():
             "errores": AUTO_SCAN_DATA["errores"],
             "ultimo_error": AUTO_SCAN_DATA["ultimo_error"],
 }
-
