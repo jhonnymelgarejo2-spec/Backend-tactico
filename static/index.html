@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JHONNY_ELITE V12_PRO</title>
+  <title>JHONNY_ELITE V13_ELITE</title>
   <style>
     * {
       box-sizing: border-box;
@@ -25,7 +25,6 @@
       --yellow: #ffd66e;
       --red: #ff8d8d;
       --soft: rgba(255,255,255,0.04);
-      --soft-2: rgba(255,255,255,0.06);
     }
 
     body {
@@ -36,7 +35,7 @@
 
     .page {
       display: grid;
-      grid-template-columns: 290px 1fr 360px;
+      grid-template-columns: 310px 1fr 390px;
       gap: 18px;
       min-height: 100vh;
       padding: 18px;
@@ -55,7 +54,7 @@
     }
 
     .logo {
-      font-size: 29px;
+      font-size: 28px;
       font-weight: 800;
       color: #fff;
       margin-bottom: 8px;
@@ -75,7 +74,7 @@
     .menu {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       margin-top: 18px;
     }
 
@@ -95,7 +94,8 @@
 
     .menu button:hover,
     .toolbar button:hover,
-    .refresh-btn:hover {
+    .refresh-btn:hover,
+    .league-item:hover {
       background: #18304f;
     }
 
@@ -118,7 +118,7 @@
       border: 1px solid var(--border);
       border-radius: 18px;
       padding: 16px;
-      min-height: 110px;
+      min-height: 112px;
     }
 
     .metric-title {
@@ -187,6 +187,84 @@
       outline: none;
     }
 
+    .league-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 700px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .league-region {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 12px;
+    }
+
+    .league-region-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .league-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .league-item {
+      background: #12233b;
+      color: #dbeaff;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .league-item-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .league-item-title {
+      font-size: 13px;
+      font-weight: bold;
+      color: #fff;
+      line-height: 1.35;
+    }
+
+    .league-item-country {
+      font-size: 11px;
+      color: #8eb8e8;
+      margin-top: 4px;
+    }
+
+    .league-item-stats {
+      font-size: 11px;
+      color: #b8d6f5;
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+
+    .counter-pill {
+      display: inline-block;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: #fff;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
     .hero-signal {
       background: linear-gradient(180deg, #132842, #0b1828);
       border: 1px solid rgba(82,168,255,0.28);
@@ -195,12 +273,16 @@
       box-shadow: 0 0 0 1px rgba(82,168,255,0.06), 0 12px 26px rgba(0,0,0,0.25);
     }
 
-    .hero-top {
+    .hero-top,
+    .signal-head,
+    .hot-head,
+    .match-head {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      gap: 14px;
-      margin-bottom: 14px;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
     }
 
     .hero-title-wrap {
@@ -216,34 +298,44 @@
       margin-bottom: 8px;
     }
 
-    .hero-sub {
-      font-size: 14px;
+    .hero-sub,
+    .signal-sub,
+    .mini-signal-sub,
+    .history-sub,
+    .reason-box,
+    .signal-reason,
+    .hot-sub {
+      font-size: 13px;
       color: #d7e8ff;
       line-height: 1.5;
     }
 
-    .hero-value {
-      font-size: 36px;
+    .hero-value,
+    .signal-value {
+      font-size: 34px;
       font-weight: 900;
       color: var(--green);
       white-space: nowrap;
     }
 
-    .hero-grid {
+    .hero-grid,
+    .stats-grid {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
       gap: 10px;
       margin-top: 14px;
     }
 
-    .hero-box {
+    .hero-box,
+    .stats-box {
       background: rgba(255,255,255,0.05);
       border: 1px solid rgba(255,255,255,0.07);
       border-radius: 14px;
       padding: 12px;
     }
 
-    .hero-box-title {
+    .hero-box-title,
+    .stats-box-title {
       font-size: 12px;
       color: #8eb8e8;
       margin-bottom: 6px;
@@ -251,9 +343,10 @@
       letter-spacing: 0.04em;
     }
 
-    .hero-box-value {
+    .hero-box-value,
+    .stats-box-value {
       font-size: 18px;
-      font-weight: 700;
+      font-weight: 800;
       color: #fff;
     }
 
@@ -352,6 +445,25 @@
       border-color: #5d5d5d;
     }
 
+    .risk-apto {
+      background: #10351f;
+      color: #7dffb0;
+      border-color: #2f8a57;
+    }
+
+    .risk-medio {
+      background: #4a4410;
+      color: #ffe670;
+      border-color: #a39a2e;
+    }
+
+    .risk-alto,
+    .risk-no-apostar {
+      background: #4a1010;
+      color: #ff8d8d;
+      border-color: #a33a3a;
+    }
+
     .signal-meta,
     .match-meta {
       display: flex;
@@ -381,17 +493,6 @@
       padding: 14px;
     }
 
-    .hot-head,
-    .signal-head,
-    .match-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-    }
-
     .league,
     .match-league {
       color: #7cc4ff;
@@ -412,55 +513,11 @@
       color: var(--yellow);
     }
 
-    .signal-sub,
-    .mini-signal-sub,
-    .history-sub,
-    .reason-box,
-    .signal-reason {
-      font-size: 13px;
-      color: #d7e8ff;
-      line-height: 1.5;
-    }
-
-    .signal-value {
-      font-size: 26px;
-      font-weight: 800;
-      color: var(--green);
-      white-space: nowrap;
-    }
-
     .mini-signal-title,
     .history-title {
       font-size: 14px;
       font-weight: bold;
       margin-bottom: 8px;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .stats-box {
-      background: var(--soft);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 14px;
-      padding: 12px;
-    }
-
-    .stats-box-title {
-      font-size: 12px;
-      color: #8eb8e8;
-      margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .stats-box-value {
-      font-size: 20px;
-      font-weight: 800;
-      color: #fff;
     }
 
     .match-card {
@@ -523,16 +580,17 @@
       margin-top: 16px;
     }
 
-    @media (max-width: 1450px) {
+    @media (max-width: 1500px) {
       .page {
-        grid-template-columns: 270px 1fr 330px;
+        grid-template-columns: 290px 1fr 340px;
       }
 
       .topbar {
         grid-template-columns: repeat(3, 1fr);
       }
 
-      .hero-grid {
+      .hero-grid,
+      .stats-grid {
         grid-template-columns: 1fr 1fr;
       }
     }
@@ -547,7 +605,7 @@
       }
     }
 
-    @media (max-width: 750px) {
+    @media (max-width: 760px) {
       .topbar,
       .hero-grid,
       .stats-grid {
@@ -580,21 +638,21 @@
   <div class="page">
     <aside class="leftbar">
       <div class="card">
-        <div class="logo">JHONNY_<span>ELITE V12_PRO</span></div>
-        <div class="subtitle">SCANNER AUTOMÁTICO PRO · IA TÁCTICA · RANKING DE SEÑALES · VALUE BETS · DETECTOR DE GOL INMINENTE</div>
+        <div class="logo">JHONNY_<span>ELITE V13_ELITE</span></div>
+        <div class="subtitle">SCANNER IA LIVE · VALUE BETS · RISK ENGINE · LEAGUE EXPLORER · DETECTOR DE GOL</div>
 
         <div class="menu">
           <button onclick="cargarTodo()">📡 Actualizar panel</button>
           <button onclick="cargarScan()">⚽ Recargar partidos</button>
           <button onclick="cargarSignals()">🚨 Recargar señales</button>
-          <button onclick="cargarHistory()">🧠 Recargar historial</button>
+          <button onclick="cargarLeagueExplorer()">🌍 Recargar ligas</button>
         </div>
       </div>
 
       <div class="card">
-        <div class="section-title">SEÑALES RÁPIDAS</div>
-        <div id="miniSignalList" class="mini-signal-list">
-          <div class="empty">Cargando señales rápidas...</div>
+        <div class="section-title">🌍 EXPLORADOR DE LIGAS</div>
+        <div id="leagueExplorer" class="league-nav">
+          <div class="empty">Cargando ligas...</div>
         </div>
       </div>
     </aside>
@@ -610,13 +668,13 @@
         <div class="metric-card">
           <div class="metric-title">Partidos escaneados</div>
           <div id="totalMatches" class="metric-value">0</div>
-          <div class="metric-sub">Partidos analizados por el scanner</div>
+          <div class="metric-sub">Total live detectado</div>
         </div>
 
         <div class="metric-card">
-          <div class="metric-title">Señales detectadas</div>
+          <div class="metric-title">Señales activas</div>
           <div id="totalSignals" class="metric-value">0</div>
-          <div class="metric-sub">Oportunidades activas</div>
+          <div class="metric-sub">Oportunidades actuales</div>
         </div>
 
         <div class="metric-card">
@@ -639,7 +697,6 @@
 
       <div class="card">
         <div class="section-title">🔎 FILTROS RÁPIDOS</div>
-
         <div class="filters-row">
           <select id="ligaFiltro" class="filter-control" onchange="aplicarFiltros()">
             <option value="ALL">Todas las ligas</option>
@@ -688,23 +745,30 @@
 
     <aside class="rightbar">
       <div class="card">
-        <div class="section-title">SEÑALES DETECTADAS</div>
-        <div id="signalList" class="signal-list">
-          <div class="empty">Cargando señales...</div>
+        <div class="section-title">🚨 SEÑALES RÁPIDAS</div>
+        <div id="miniSignalList" class="mini-signal-list">
+          <div class="empty">Cargando señales rápidas...</div>
         </div>
       </div>
 
       <div class="card">
-        <div class="section-title">MINI STATS</div>
+        <div class="section-title">📈 RENDIMIENTO DEL SISTEMA</div>
         <div id="miniStats" class="stats-grid">
           <div class="empty">Cargando estadísticas...</div>
         </div>
       </div>
 
       <div class="card">
-        <div class="section-title">HISTORIAL</div>
+        <div class="section-title">📚 ÚLTIMAS PREDICCIONES</div>
         <div id="historyList" class="history-list">
           <div class="empty">Cargando historial...</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">📊 SEÑALES DETECTADAS</div>
+        <div id="signalList" class="signal-list">
+          <div class="empty">Cargando señales...</div>
         </div>
       </div>
     </aside>
@@ -715,6 +779,8 @@
     let autoRefreshInterval = null;
     let cachePartidos = [];
     let cacheSignals = [];
+    let cacheHotMatches = [];
+    let cacheLeagueExplorer = {};
     let ligaSeleccionada = "ALL";
     let equipoBuscado = "";
     let estadoSeleccionado = "ALL";
@@ -770,11 +836,7 @@
       const local = p.local || p.equipo_local || p.home || "Local";
       const visitante = p.visitante || p.equipo_visitante || p.away || "Visitante";
       const liga = p.liga || p.torneo || p.league || "Liga desconocida";
-      const pais = p.pais || p.country || "País desconocido";
-      const score = String(p.score || `${p.marcador_local ?? 0}-${p.marcador_visitante ?? 0}`);
-      const partes = score.replace(/–/g, "-").split("-");
-      const marcador_local = Number((partes[0] || "0").trim()) || 0;
-      const marcador_visitante = Number((partes[1] || "0").trim()) || 0;
+      const pais = p.pais || p.country || "Otros";
 
       return {
         id: p.id ?? `${local}-${visitante}`,
@@ -784,14 +846,17 @@
         pais,
         minuto: Number(p.minuto ?? p.minute ?? 0) || 0,
         estado_partido: p.estado_partido || p.estado || "EN_JUEGO",
-        marcador_local,
-        marcador_visitante,
-        score: `${marcador_local}-${marcador_visitante}`,
+        marcador_local: Number(p.marcador_local ?? 0) || 0,
+        marcador_visitante: Number(p.marcador_visitante ?? 0) || 0,
+        score: `${Number(p.marcador_local ?? 0) || 0}-${Number(p.marcador_visitante ?? 0) || 0}`,
         xG: Number(p.xG ?? p.xg ?? 0) || 0,
         momentum: p.momentum || "MEDIO",
         goal_predictor: p.goal_predictor || {},
         goal_pressure: p.goal_pressure || {},
-        chaos: p.chaos || {}
+        chaos: p.chaos || {},
+        shots: Number(p.shots ?? 0) || 0,
+        shots_on_target: Number(p.shots_on_target ?? 0) || 0,
+        dangerous_attacks: Number(p.dangerous_attacks ?? 0) || 0
       };
     }
 
@@ -801,7 +866,7 @@
         home: s.home || "Local",
         away: s.away || "Visitante",
         league: s.league || "Liga desconocida",
-        country: s.country || "País desconocido",
+        country: s.country || "Otros",
         minute: Number(s.minute ?? s.minuto ?? 0) || 0,
         score: s.score || "0-0",
         market: s.market || s.mercado || "",
@@ -845,6 +910,11 @@
         recomendacion_value: s.recomendacion_value || "NO_APOSTAR",
         razon_value: s.razon_value || "Sin análisis de value",
 
+        risk_score: Number(s.risk_score ?? 0) || 0,
+        risk_level: s.risk_level || "APTO",
+        apto_para_entrar: !!s.apto_para_entrar,
+        motivos_riesgo: Array.isArray(s.motivos_riesgo) ? s.motivos_riesgo : [],
+
         all_signals: Array.isArray(s.all_signals) ? s.all_signals : []
       };
     }
@@ -853,12 +923,8 @@
       const c = Number(confidence || 0);
       const v = Number(value || 0);
 
-      if (c >= 90 && v >= 12) {
-        return { label: "🔥 PREMIUM", className: "signal-tier tier-premium" };
-      }
-      if (c >= 80 && v >= 6) {
-        return { label: "⚡ FUERTE", className: "signal-tier tier-fuerte" };
-      }
+      if (c >= 90 && v >= 12) return { label: "🔥 PREMIUM", className: "signal-tier tier-premium" };
+      if (c >= 80 && v >= 6) return { label: "⚡ FUERTE", className: "signal-tier tier-fuerte" };
       return { label: "📊 NORMAL", className: "signal-tier tier-normal" };
     }
 
@@ -881,12 +947,13 @@
       return "pill rank-normal";
     }
 
-    function traducirGanadorProbable(valor) {
-      const v = String(valor || "").toUpperCase();
-      if (v === "LOCAL") return "Local";
-      if (v === "VISITANTE") return "Visitante";
-      if (v === "EMPATE") return "Empate";
-      return valor || "N/A";
+    function riskClass(level) {
+      const r = String(level || "").toUpperCase();
+      if (r === "APTO") return "pill risk-apto";
+      if (r === "RIESGO_MEDIO") return "pill risk-medio";
+      if (r === "RIESGO_ALTO") return "pill risk-alto";
+      if (r === "NO_APOSTAR") return "pill risk-no-apostar";
+      return "pill";
     }
 
     function marketLabelDinamico(s) {
@@ -938,6 +1005,51 @@
       });
     }
 
+    function seleccionarLigaDesdeExplorer(liga) {
+      const select = document.getElementById("ligaFiltro");
+      if (!select) return;
+      select.value = liga;
+      aplicarFiltros();
+    }
+
+    function renderLeagueExplorer() {
+      const box = document.getElementById("leagueExplorer");
+      const data = cacheLeagueExplorer || {};
+
+      const regiones = Object.keys(data);
+      if (!regiones.length) {
+        box.innerHTML = `<div class="empty">No hay ligas disponibles.</div>`;
+        return;
+      }
+
+      box.innerHTML = regiones.map(region => {
+        const items = Array.isArray(data[region]) ? data[region] : [];
+        if (!items.length) return "";
+
+        return `
+          <div class="league-region">
+            <div class="league-region-title">${region}</div>
+            <div class="league-list">
+              ${items.map(item => `
+                <div class="league-item" onclick="seleccionarLigaDesdeExplorer('${String(item.league).replace(/'/g, "\\'")}')">
+                  <div class="league-item-top">
+                    <div>
+                      <div class="league-item-title">${item.league}</div>
+                      <div class="league-item-country">${item.country}</div>
+                    </div>
+                    <span class="counter-pill">${item.matches}</span>
+                  </div>
+                  <div class="league-item-stats">
+                    Señales: ${item.signals} · Elite: ${item.elite} · Top: ${item.top}
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
     function renderHeroSignal() {
       const box = document.getElementById("heroSignal");
 
@@ -964,9 +1076,8 @@
               <div class="${tier.className}">${tier.label}</div>
               <div class="hero-market">${marketLabelDinamico(hero)}</div>
               <div class="hero-sub">
-                <strong>${hero.home} vs ${hero.away}</strong>
-                · Min ${hero.minute}
-                · Marcador ${hero.score}
+                <strong>${hero.home} vs ${hero.away}</strong><br>
+                ${hero.league} · ${hero.country} · Min ${hero.minute} · Marcador ${hero.score}
               </div>
             </div>
             <div class="hero-value">+${hero.value}%</div>
@@ -978,6 +1089,7 @@
             <span class="pill">Confianza ${hero.confidence}%</span>
             <span class="pill">Value ${hero.value_pct}%</span>
             <span class="pill">${hero.value_categoria}</span>
+            <span class="${riskClass(hero.risk_level)}">${hero.risk_level}</span>
             <span class="${estadoClass(estado)}">${estado}</span>
           </div>
 
@@ -1003,8 +1115,8 @@
             </div>
 
             <div class="hero-box">
-              <div class="hero-box-title">Recomendación</div>
-              <div class="hero-box-value">${hero.recomendacion_final || "OBSERVAR"}</div>
+              <div class="hero-box-title">Risk score</div>
+              <div class="hero-box-value">${hero.risk_score}</div>
             </div>
 
             <div class="hero-box">
@@ -1015,7 +1127,8 @@
 
           <div class="hero-reason">
             <strong>Motivo táctico:</strong> ${hero.reason || "Señal generada por el sistema"}<br>
-            <strong>Motivo value:</strong> ${hero.razon_value || "Sin análisis de value"}
+            <strong>Motivo value:</strong> ${hero.razon_value || "Sin análisis de value"}<br>
+            <strong>Riesgo:</strong> ${(hero.motivos_riesgo || []).join(" · ") || "Sin alertas relevantes"}
           </div>
         </div>
       `;
@@ -1029,7 +1142,7 @@
         return;
       }
 
-      box.innerHTML = cacheSignals.slice(0, 4).map(s => {
+      box.innerHTML = cacheSignals.slice(0, 6).map(s => {
         const tier = getSignalTier(s.confidence, s.value);
         return `
           <div class="mini-signal">
@@ -1038,10 +1151,11 @@
               <span class="${rankClass(s.signal_rank)}" style="margin-left:6px;">${s.signal_rank}</span>
             </div>
             <div class="mini-signal-sub"><strong>${s.home} vs ${s.away}</strong></div>
+            <div class="mini-signal-sub">${s.league} · ${s.country}</div>
             <div class="mini-signal-sub">${marketLabelDinamico(s)}</div>
             <div class="mini-signal-sub">Min ${s.minute} · Marcador ${s.score}</div>
             <div class="mini-signal-sub">Signal ${s.signal_score} · Tactical ${s.tactical_score}</div>
-            <div class="mini-signal-sub">Value <span class="${s.value_pct >= 10 ? 'green' : s.value_pct >= 5 ? 'yellow' : ''}">${s.value_pct}%</span> · ${s.value_categoria}</div>
+            <div class="mini-signal-sub">Value ${s.value_pct}% · ${s.value_categoria}</div>
           </div>
         `;
       }).join("");
@@ -1055,7 +1169,7 @@
         return;
       }
 
-      contenedor.innerHTML = cacheSignals.slice(0, 6).map(s => {
+      contenedor.innerHTML = cacheSignals.slice(0, 8).map(s => {
         const tier = getSignalTier(s.confidence, s.value);
         const estado = s.estado_partido?.estado || "SIN DATO";
 
@@ -1070,9 +1184,8 @@
             </div>
 
             <div class="signal-sub">
-              <strong>${s.home} vs ${s.away}</strong>
-              · Min ${s.minute}
-              · Marcador ${s.score}
+              <strong>${s.home} vs ${s.away}</strong><br>
+              ${s.league} · ${s.country} · Min ${s.minute} · Marcador ${s.score}
             </div>
 
             <div class="signal-meta">
@@ -1082,12 +1195,14 @@
               <span class="pill">Goal ${s.goal_inminente_score}</span>
               <span class="pill">Value ${s.value_pct}%</span>
               <span class="pill">${s.value_categoria}</span>
+              <span class="${riskClass(s.risk_level)}">${s.risk_level}</span>
               <span class="${estadoClass(estado)}">${estado}</span>
             </div>
 
             <div class="signal-reason">
               <strong>Táctico:</strong> ${s.reason || "Señal generada por el sistema"}<br>
               <strong>Value:</strong> ${s.razon_value || "Sin análisis de value"}<br>
+              <strong>Riesgo:</strong> ${(s.motivos_riesgo || []).join(" · ") || "Sin alertas"}<br>
               <strong>Recomendación:</strong> ${s.recomendacion_value || "NO_APOSTAR"}
             </div>
           </div>
@@ -1097,33 +1212,37 @@
 
     function renderHotMatches() {
       const box = document.getElementById("hotMatches");
-      const partidos = filtrarPartidos(cachePartidos);
+      const partidos = cacheHotMatches.length ? cacheHotMatches : filtrarPartidos(cachePartidos);
 
       if (!partidos.length) {
         box.innerHTML = `<div class="empty">No hay partidos calientes todavía.</div>`;
         return;
       }
 
-      const top = partidos.slice(0, 3);
-
-      box.innerHTML = top.map(p => {
-        const signal = getSignalForMatch(p.id);
+      box.innerHTML = partidos.slice(0, 6).map(p => {
+        const partido = normalizarPartido(p);
+        const signal = getSignalForMatch(partido.id);
         const estado = signal?.estado_partido?.estado || "SIN DATO";
 
         return `
           <div class="hot-card">
             <div class="hot-head">
-              <div class="league">${p.liga} · ${p.pais}</div>
+              <div>
+                <div class="league">${partido.liga} · ${partido.pais}</div>
+                <div class="hot-title">${partido.local} vs ${partido.visitante}</div>
+              </div>
               <span class="${estadoClass(estado)}">${estado}</span>
             </div>
 
-            <div class="hot-title">${p.local} vs ${p.visitante}</div>
+            <div class="hot-sub">
+              Min ${partido.minuto} · Marcador ${partido.score} · Momentum ${partido.momentum}
+            </div>
 
             <div class="signal-meta">
-              <span class="pill">Min ${p.minuto}</span>
-              <span class="pill">Marcador ${p.score}</span>
-              <span class="pill">Momentum ${p.momentum}</span>
+              ${signal ? `<span class="${rankClass(signal.signal_rank)}">${signal.signal_rank}</span>` : ""}
               ${signal ? `<span class="pill">Signal ${signal.signal_score}</span>` : ""}
+              ${signal ? `<span class="pill">Value ${signal.value_pct}%</span>` : ""}
+              ${signal ? `<span class="${riskClass(signal.risk_level)}">${signal.risk_level}</span>` : ""}
             </div>
 
             <div class="reason-box">
@@ -1176,8 +1295,8 @@
                 <strong>Señal:</strong> ${marketLabelDinamico(signal)}<br>
                 <strong>Rank:</strong> ${signal.signal_rank}<br>
                 <strong>Signal score:</strong> ${signal.signal_score}<br>
-                <strong>Motivo:</strong> ${signal.reason || "Señal generada por el sistema"}<br>
                 <strong>Value:</strong> ${signal.razon_value || "Sin análisis de value"}<br>
+                <strong>Riesgo:</strong> ${(signal.motivos_riesgo || []).join(" · ") || "Sin alertas"}<br>
                 <strong>Recomendación:</strong> ${signal.recomendacion_value || "NO_APOSTAR"}
               </div>
             ` : ""}
@@ -1259,6 +1378,28 @@
       }
     }
 
+    async function cargarHotMatches() {
+      const data = await safeFetchJSON("/hot-matches", null);
+      if (!data) {
+        cacheHotMatches = [];
+        renderHotMatches();
+        return;
+      }
+      cacheHotMatches = Array.isArray(data.hot_matches) ? data.hot_matches : [];
+      renderHotMatches();
+    }
+
+    async function cargarLeagueExplorer() {
+      const data = await safeFetchJSON("/league-explorer", null);
+      if (!data) {
+        cacheLeagueExplorer = {};
+        renderLeagueExplorer();
+        return;
+      }
+      cacheLeagueExplorer = data.league_explorer || {};
+      renderLeagueExplorer();
+    }
+
     async function cargarHistory() {
       const contenedor = document.getElementById("historyList");
       const statsBox = document.getElementById("miniStats");
@@ -1273,7 +1414,12 @@
           ganadas: 0,
           perdidas: 0,
           win_rate: 0,
-          roi_percent: 0
+          roi_percent: 0,
+          signals_elite: 0,
+          signals_top: 0,
+          confianza_promedio: 0,
+          value_promedio: 0,
+          riesgo_medio: 0
         });
 
         const history = Array.isArray(historyRes) ? historyRes : (historyRes?.data || []);
@@ -1284,6 +1430,7 @@
           contenedor.innerHTML = history.slice(-8).reverse().map(h => `
             <div class="history-item">
               <div class="history-title">${h.home || "Local"} vs ${h.away || "Visitante"}</div>
+              <div class="history-sub">${h.league || "-"} · ${h.country || "-"}</div>
               <div class="history-sub">Mercado: ${h.market || "-"}</div>
               <div class="history-sub">Min ${h.minute ?? 0} · Cuota ${h.odd ?? "-"} · Value ${h.value ?? "-"}%</div>
               <div class="history-sub">Estado: ${h.estado_resultado || "pendiente"}</div>
@@ -1293,6 +1440,14 @@
 
         statsBox.innerHTML = `
           <div class="stats-box">
+            <div class="stats-box-title">Aciertos</div>
+            <div class="stats-box-value">${stats?.ganadas ?? 0}</div>
+          </div>
+          <div class="stats-box">
+            <div class="stats-box-title">Fallos</div>
+            <div class="stats-box-value">${stats?.perdidas ?? 0}</div>
+          </div>
+          <div class="stats-box">
             <div class="stats-box-title">Win Rate</div>
             <div class="stats-box-value">${stats?.win_rate ?? 0}%</div>
           </div>
@@ -1301,12 +1456,20 @@
             <div class="stats-box-value">${stats?.roi_percent ?? 0}%</div>
           </div>
           <div class="stats-box">
-            <div class="stats-box-title">Ganadas</div>
-            <div class="stats-box-value">${stats?.ganadas ?? 0}</div>
+            <div class="stats-box-title">Signals Elite</div>
+            <div class="stats-box-value">${stats?.signals_elite ?? 0}</div>
           </div>
           <div class="stats-box">
-            <div class="stats-box-title">Perdidas</div>
-            <div class="stats-box-value">${stats?.perdidas ?? 0}</div>
+            <div class="stats-box-title">Signals Top</div>
+            <div class="stats-box-value">${stats?.signals_top ?? 0}</div>
+          </div>
+          <div class="stats-box">
+            <div class="stats-box-title">Value Prom.</div>
+            <div class="stats-box-value">${stats?.value_promedio ?? 0}%</div>
+          </div>
+          <div class="stats-box">
+            <div class="stats-box-title">Riesgo Prom.</div>
+            <div class="stats-box-value">${stats?.riesgo_medio ?? 0}</div>
           </div>
         `;
       } catch (err) {
@@ -1325,6 +1488,8 @@
       await cargarAutoScan();
       await cargarScan();
       await cargarSignals();
+      await cargarHotMatches();
+      await cargarLeagueExplorer();
       await cargarHistory();
     }
 
