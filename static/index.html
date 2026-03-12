@@ -238,6 +238,9 @@
     }
 
     .league-item-country {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       font-size: 11px;
       color: #8eb8e8;
       margin-top: 4px;
@@ -689,6 +692,26 @@
       letter-spacing: 0.05em;
     }
 
+    .country-flag {
+      font-size: 16px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .country-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .match-league-pro,
+    .league,
+    .match-league {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
     .empty {
       color: #9eb7d4;
       padding: 10px 0;
@@ -958,6 +981,75 @@
       });
     }
 
+    function countryToFlag(country) {
+      const map = {
+        "Argentina": "🇦🇷",
+        "Brazil": "🇧🇷",
+        "Chile": "🇨🇱",
+        "Colombia": "🇨🇴",
+        "Uruguay": "🇺🇾",
+        "Paraguay": "🇵🇾",
+        "Peru": "🇵🇪",
+        "Bolivia": "🇧🇴",
+        "Ecuador": "🇪🇨",
+        "Venezuela": "🇻🇪",
+        "Mexico": "🇲🇽",
+        "USA": "🇺🇸",
+        "Canada": "🇨🇦",
+        "Guatemala": "🇬🇹",
+        "Costa-Rica": "🇨🇷",
+        "Honduras": "🇭🇳",
+        "El-Salvador": "🇸🇻",
+        "Panama": "🇵🇦",
+        "England": "🏴",
+        "Spain": "🇪🇸",
+        "Italy": "🇮🇹",
+        "Germany": "🇩🇪",
+        "France": "🇫🇷",
+        "Portugal": "🇵🇹",
+        "Netherlands": "🇳🇱",
+        "Belgium": "🇧🇪",
+        "Turkey": "🇹🇷",
+        "Scotland": "🏴",
+        "Croatia": "🇭🇷",
+        "Austria": "🇦🇹",
+        "Switzerland": "🇨🇭",
+        "Czech-Republic": "🇨🇿",
+        "Poland": "🇵🇱",
+        "Greece": "🇬🇷",
+        "Romania": "🇷🇴",
+        "Serbia": "🇷🇸",
+        "Denmark": "🇩🇰",
+        "Norway": "🇳🇴",
+        "Sweden": "🇸🇪",
+        "Finland": "🇫🇮",
+        "Ukraine": "🇺🇦",
+        "Japan": "🇯🇵",
+        "China": "🇨🇳",
+        "South-Korea": "🇰🇷",
+        "Saudi-Arabia": "🇸🇦",
+        "Qatar": "🇶🇦",
+        "UAE": "🇦🇪",
+        "India": "🇮🇳",
+        "Iran": "🇮🇷",
+        "Iraq": "🇮🇶",
+        "Morocco": "🇲🇦",
+        "Egypt": "🇪🇬",
+        "Algeria": "🇩🇿",
+        "Tunisia": "🇹🇳",
+        "South-Africa": "🇿🇦",
+        "Europe": "🌍",
+        "South-America": "🌎",
+        "North-America": "🌎",
+        "Asia": "🌏",
+        "Africa": "🌍",
+        "World": "🌐",
+        "Otros": "🌐"
+      };
+
+      return map[country] || "🌐";
+    }
+
     function normalizarPartido(p) {
       const local = p.local || p.equipo_local || p.home || "Local";
       const visitante = p.visitante || p.equipo_visitante || p.away || "Visitante";
@@ -1173,7 +1265,10 @@
                   <div class="league-item-top">
                     <div>
                       <div class="league-item-title">${item.league}</div>
-                      <div class="league-item-country">${item.country}</div>
+                      <div class="league-item-country">
+                        <span class="country-flag">${countryToFlag(item.country)}</span>
+                        <span>${item.country}</span>
+                      </div>
                     </div>
                     <span class="counter-pill">${item.matches}</span>
                   </div>
@@ -1210,7 +1305,7 @@
               <div class="hero-market">${marketLabelDinamico(hero)}</div>
               <div class="hero-sub">
                 <strong>${hero.home} vs ${hero.away}</strong><br>
-                ${hero.league} · ${hero.country} · Min ${hero.minute} · Marcador ${hero.score}
+                <span class="country-flag">${countryToFlag(hero.country)}</span>${hero.league} · ${hero.country} · Min ${hero.minute} · Marcador ${hero.score}
               </div>
             </div>
             <div class="hero-value">+${hero.value}%</div>
@@ -1295,7 +1390,7 @@
               <span class="${rankClass(s.signal_rank)}" style="margin-left:6px;">${s.signal_rank}</span>
             </div>
             <div class="mini-signal-sub"><strong>${s.home} vs ${s.away}</strong></div>
-            <div class="mini-signal-sub">${s.league} · ${s.country}</div>
+            <div class="mini-signal-sub"><span class="country-flag">${countryToFlag(s.country)}</span>${s.league} · ${s.country}</div>
             <div class="mini-signal-sub">${marketLabelDinamico(s)}</div>
             <div class="mini-signal-sub">Min ${s.minute} · Marcador ${s.score}</div>
             <div class="mini-signal-sub">AI ${s.ai_state} · ${s.ai_recommendation}</div>
@@ -1329,7 +1424,7 @@
 
             <div class="signal-sub">
               <strong>${s.home} vs ${s.away}</strong><br>
-              ${s.league} · ${s.country} · Min ${s.minute} · Marcador ${s.score}
+              <span class="country-flag">${countryToFlag(s.country)}</span>${s.league} · ${s.country} · Min ${s.minute} · Marcador ${s.score}
             </div>
 
             <div class="signal-meta">
@@ -1373,7 +1468,7 @@
         return `
           <div class="hot-card match-card-pro">
             <div class="match-topline">
-              <div class="match-league-pro">${p.liga} · ${p.pais}</div>
+              <div class="match-league-pro"><span class="country-flag">${countryToFlag(p.pais)}</span>${p.liga} · ${p.pais}</div>
               <div class="signal-meta">
                 <span class="${estadoClass(estado)}">${estado}</span>
                 ${signal ? `<span class="${rankClass(signal.signal_rank)}">${signal.signal_rank}</span>` : ""}
@@ -1446,7 +1541,7 @@
         return `
           <div class="match-card match-card-pro">
             <div class="match-topline">
-              <div class="match-league-pro">${p.liga} · ${p.pais}</div>
+              <div class="match-league-pro"><span class="country-flag">${countryToFlag(p.pais)}</span>${p.liga} · ${p.pais}</div>
               <div class="signal-meta">
                 <span class="${estadoClass(estado)}">${estado}</span>
                 ${signal ? `<span class="${rankClass(signal.signal_rank)}">${signal.signal_rank}</span>` : ""}
@@ -1644,7 +1739,7 @@
           contenedor.innerHTML = history.slice(-8).reverse().map(h => `
             <div class="history-item">
               <div class="history-title">${h.home || "Local"} vs ${h.away || "Visitante"}</div>
-              <div class="history-sub">${h.league || "-"} · ${h.country || "-"}</div>
+              <div class="history-sub"><span class="country-flag">${countryToFlag(h.country || "Otros")}</span>${h.league || "-"} · ${h.country || "-"}</div>
               <div class="history-sub">Mercado: ${h.market || "-"}</div>
               <div class="history-sub">Min ${h.minute ?? 0} · Cuota ${h.odd ?? "-"} · Value ${h.value ?? "-"}%</div>
               <div class="history-sub">Estado: ${h.estado_resultado || "pendiente"}</div>
