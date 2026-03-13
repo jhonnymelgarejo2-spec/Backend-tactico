@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JHONNY_ELITE - Partidos</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:Arial,Helvetica,sans-serif;
+      background:
+        linear-gradient(rgba(5,10,18,.88), rgba(5,10,18,.92)),
+        url("https://images.unsplash.com/photo-1508098682722-e99c643e7485?auto=format&fit=crop&w=1600&q=80") center/cover fixed no-repeat;
+      color:#eef6ff;min-height:100vh;
+    }
+    .wrap{max-width:1200px;margin:0 auto;padding:20px}
+    .topbar{
+      display:flex;justify-content:space-between;align-items:center;gap:12px;
+      margin-bottom:20px;padding:18px 20px;border-radius:18px;
+      background:rgba(11,22,40,.82);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(10px);
+    }
+    .title{font-size:28px;font-weight:900}
+    .sub{margin-top:6px;color:#9fc5ef;font-size:13px}
+    .nav{display:flex;gap:10px;flex-wrap:wrap}
+    .nav a{
+      text-decoration:none;color:#fff;background:#183150;border:1px solid rgba(255,255,255,.08);
+      padding:10px 14px;border-radius:12px;font-weight:700
+    }
+    .filters{
+      display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;padding:16px;border-radius:18px;
+      background:rgba(11,22,40,.78);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(10px);
+    }
+    .filters select{
+      background:#11243d;color:#eef6ff;border:1px solid rgba(255,255,255,.08);
+      padding:12px 14px;border-radius:12px;min-width:220px;outline:none;
+    }
+    .section-title{font-size:22px;font-weight:900;margin:14px 0 16px}
+    .match-list{display:flex;flex-direction:column;gap:14px}
+    .match-card{
+      background:rgba(16,31,53,.82);border:1px solid rgba(255,255,255,.08);
+      border-radius:18px;padding:16px;backdrop-filter:blur(10px);box-shadow:0 10px 30px rgba(0,0,0,.25);
+    }
+    .match-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+    .teams{font-size:22px;font-weight:900;line-height:1.25}
+    .meta{margin-top:10px;color:#9fc5ef;font-size:13px}
+    .score{font-size:34px;font-weight:900;white-space:nowrap}
+    .state{
+      display:inline-flex;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:900;margin-top:10px;
+      border:1px solid rgba(255,255,255,.08)
+    }
+    .live{background:#11472a;color:#8fffbe}
+    .finished{background:#474747;color:#ddd}
+    .upcoming{background:#173e6a;color:#9ed0ff}
+    .actions{margin-top:16px}
+    .btn{
+      display:inline-block;text-decoration:none;color:#fff;background:linear-gradient(180deg,#2477ff,#1858c2);
+      padding:11px 16px;border-radius:12px;font-weight:900
+    }
+    .empty{
+      padding:30px;text-align:center;border-radius:18px;background:rgba(16,31,53,.72);
+      border:1px solid rgba(255,255,255,.08);color:#aac8ea
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <div class="title">Lista de Partidos</div>
+        <div class="sub" id="leagueTitle">Cargando liga...</div>
+      </div>
+      <div class="nav">
+        <a href="/leagues">Volver a ligas</a>
+        <a href="/dashboard">Dashboard</a>
+      </div>
+    </div>
+
+    <div class="filters">
+      <select id="sortSelect">
+        <option value="relevance">Ordenar por relevancia</option>
+        <option value="time">Ordenar por hora</option>
+        <option value="popularity">Ordenar por popularidad</option>
+      </select>
+    </div>
+
+    <div class="section-title">Partidos disponibles</div>
+    <div id="matchList" class="match-list">
+      <div class="empty">Cargando partidos...</div>
+    </div>
+  </div>
+
+  <script>
+    const leagueName = decodeURIComponent(location.pathname.split("/matches/")[1] || "");
+
+    function stateClass(status){
+      const s = String(status || "").toUpperCase();
+      if (s === "LIVE" || s === "EN_VIVO") return "state live";
+      if (s === "FINISHED" || s === "FINALIZADO") return "state finished";
+      return "state upcoming";
+    }
+
+    let allMatches = [];
+
+    async function loadMatches(){
+      document.getElementById("leagueTitle").textContent = leagueName;
+      try{
+        const res = await fetch(`/api/matches/${encodeURIComponent(leagueName)}`);
+        const data = await res.json();
+        allMatches = Array.isArray(data) ? data : [];
+        renderMatches();
+      }catch(err){
+        document.getElementById("matchList").innerHTML = `<div class="empty">Error cargando partidos</div>`;
+      }
+    }
+
+    function renderMatches(){
+      const list = document.getElementById("matchList");
+      const sortBy = document.getElementById("sortSelect").value;
+
+      const items = [...allMatches];
+
+      if(sortBy === "time"){
+        items.sort((a,b) => (a.minute ?? 0) - (b.minute ?? 0));
+      }else if(sortBy === "popularity"){
+        items.sort((a,b) => (b.popularity ?? 0) - (a.popularity ?? 0));
+      }else{
+        items.sort((a,b) => (b.relevance ?? 0) - (a.relevance ?? 0));
+      }
+
+      if(!items.length){
+        list.innerHTML = `<div class="empty">No hay partidos para esta liga.</div>`;
+        return;
+      }
+
+      list.innerHTML = items.map(m => `
+        <div class="match-card">
+          <div class="match-top">
+            <div>
+              <div class="teams">${m.home} vs ${m.away}</div>
+              <div class="meta">
+                Estado: ${m.status} · Minuto/Hora: ${m.status === "LIVE" ? (m.minute ?? 0) + "'" : (m.start_time || "-")}
+              </div>
+              <div class="${stateClass(m.status)}">${m.status}</div>
+            </div>
+
+            <div class="score">${m.score || "0-0"}</div>
+          </div>
+
+          <div class="actions">
+            <a class="btn" href="/match/${m.id}">Ver detalle</a>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    document.getElementById("sortSelect").addEventListener("change", renderMatches);
+
+    loadMatches();
+  </script>
+</body>
+</html>
