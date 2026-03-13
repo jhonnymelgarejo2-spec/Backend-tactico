@@ -557,7 +557,37 @@ def league_explorer():
             "detalle": str(e),
             "league_explorer": {}
         }
+@app.route("/match-details/<match_id>")
+def match_details(match_id):
+    global cache_partidos, cache_senales
 
+    partido = next((p for p in cache_partidos if str(p.get("id")) == str(match_id)), None)
+    if not partido:
+        return jsonify({"error": "Partido no encontrado"}), 404
+
+    senal = next((s for s in cache_senales if str(s.get("match_id")) == str(match_id)), None)
+
+    return jsonify({
+        "match_id": partido.get("id"),
+        "home": partido.get("local"),
+        "away": partido.get("visitante"),
+        "league": partido.get("liga"),
+        "country": partido.get("pais"),
+        "minute": partido.get("minuto"),
+        "status": partido.get("estado_partido"),
+        "score": f"{partido.get('marcador_local', 0)}-{partido.get('marcador_visitante', 0)}",
+        "marcador_local": partido.get("marcador_local", 0),
+        "marcador_visitante": partido.get("marcador_visitante", 0),
+        "xg": partido.get("xG", 0),
+        "shots": partido.get("shots", 0),
+        "shots_on_target": partido.get("shots_on_target", 0),
+        "dangerous_attacks": partido.get("dangerous_attacks", 0),
+        "momentum": partido.get("momentum", "MEDIO"),
+        "goal_pressure": partido.get("goal_pressure", {}),
+        "goal_predictor": partido.get("goal_predictor", {}),
+        "chaos": partido.get("chaos", {}),
+        "signal": senal or None
+    })
 
 @app.get("/partidos-en-vivo")
 def partidos_en_vivo():
@@ -625,3 +655,4 @@ def auto_scan_status():
             "errores": AUTO_SCAN_DATA["errores"],
             "ultimo_error": AUTO_SCAN_DATA["ultimo_error"],
     }
+
