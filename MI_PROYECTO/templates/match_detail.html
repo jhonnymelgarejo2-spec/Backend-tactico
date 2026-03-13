@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JHONNY_ELITE - Detalle del partido</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:Arial,Helvetica,sans-serif;
+      background:
+        linear-gradient(rgba(5,10,18,.88), rgba(5,10,18,.94)),
+        url("https://images.unsplash.com/photo-1486286701208-1d58e9338013?auto=format&fit=crop&w=1600&q=80") center/cover fixed no-repeat;
+      color:#eef6ff;min-height:100vh;
+    }
+    .wrap{max-width:1200px;margin:0 auto;padding:20px}
+    .topbar{
+      display:flex;justify-content:space-between;align-items:center;gap:12px;
+      margin-bottom:20px;padding:18px 20px;border-radius:18px;
+      background:rgba(11,22,40,.82);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(10px);
+    }
+    .title{font-size:28px;font-weight:900}
+    .sub{margin-top:6px;color:#9fc5ef;font-size:13px}
+    .nav{display:flex;gap:10px;flex-wrap:wrap}
+    .nav a{
+      text-decoration:none;color:#fff;background:#183150;border:1px solid rgba(255,255,255,.08);
+      padding:10px 14px;border-radius:12px;font-weight:700
+    }
+    .hero{
+      background:linear-gradient(145deg,rgba(20,45,77,.94),rgba(10,24,44,.94));
+      border:1px solid rgba(95,165,245,.16);border-radius:22px;padding:22px;
+      box-shadow:0 10px 30px rgba(0,0,0,.25);
+    }
+    .hero-grid{
+      display:grid;grid-template-columns:1fr 240px 1fr;gap:14px;align-items:center;
+    }
+    .team{text-align:center;font-size:28px;font-weight:900}
+    .scorebox{
+      text-align:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+      border-radius:18px;padding:18px;
+    }
+    .status{font-size:12px;color:#9fc5ef;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+    .score{font-size:52px;font-weight:900}
+    .minute{margin-top:8px;color:#9fc5ef;font-weight:800}
+    .grid{
+      display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px;
+    }
+    .box{
+      background:rgba(16,31,53,.82);border:1px solid rgba(255,255,255,.08);
+      border-radius:16px;padding:14px;backdrop-filter:blur(10px)
+    }
+    .box-title{font-size:12px;color:#9fc5ef;text-transform:uppercase;letter-spacing:.05em}
+    .box-value{font-size:22px;font-weight:900;margin-top:6px}
+    .section{
+      margin-top:18px;background:rgba(16,31,53,.82);border:1px solid rgba(255,255,255,.08);
+      border-radius:18px;padding:16px;backdrop-filter:blur(10px)
+    }
+    .section-title{font-size:18px;font-weight:900;margin-bottom:14px}
+    .momentum-bar{
+      display:flex;align-items:flex-end;gap:3px;height:100px;padding:12px;
+      background:rgba(0,0,0,.18);border-radius:14px;border:1px solid rgba(255,255,255,.05)
+    }
+    .momentum-col{
+      flex:1;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#7dffad,#3dbb70)
+    }
+    .text{font-size:14px;line-height:1.7;color:#d9ebff}
+    .market-list{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .market{
+      background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;padding:14px
+    }
+    .market strong{display:block;margin-bottom:6px}
+    @media(max-width:900px){
+      .hero-grid{grid-template-columns:1fr}
+      .grid{grid-template-columns:1fr 1fr}
+      .market-list{grid-template-columns:1fr}
+    }
+    @media(max-width:600px){
+      .grid{grid-template-columns:1fr}
+      .team{font-size:24px}
+      .score{font-size:42px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <div class="title">Panel de Partido en Vivo</div>
+        <div class="sub" id="leagueLine">Cargando...</div>
+      </div>
+      <div class="nav">
+        <a href="/leagues">Ligas</a>
+        <a href="javascript:history.back()">Volver</a>
+      </div>
+    </div>
+
+    <div class="hero">
+      <div class="hero-grid">
+        <div class="team" id="homeTeam">Local</div>
+
+        <div class="scorebox">
+          <div class="status" id="matchStatus">EN VIVO</div>
+          <div class="score" id="matchScore">0 - 0</div>
+          <div class="minute" id="matchMinute">Min 0</div>
+        </div>
+
+        <div class="team" id="awayTeam">Visitante</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="box"><div class="box-title">Posesión local</div><div class="box-value" id="posHome">0%</div></div>
+      <div class="box"><div class="box-title">Posesión visitante</div><div class="box-value" id="posAway">0%</div></div>
+      <div class="box"><div class="box-title">Tiros</div><div class="box-value" id="shots">0</div></div>
+      <div class="box"><div class="box-title">Tiros al arco</div><div class="box-value" id="shotsOnTarget">0</div></div>
+      <div class="box"><div class="box-title">Ataques peligrosos</div><div class="box-value" id="danger">0</div></div>
+      <div class="box"><div class="box-title">Faltas</div><div class="box-value" id="fouls">0</div></div>
+      <div class="box"><div class="box-title">Tarjetas amarillas</div><div class="box-value" id="yellowCards">0</div></div>
+      <div class="box"><div class="box-title">Tarjetas rojas</div><div class="box-value" id="redCards">0</div></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Attack Momentum</div>
+      <div id="momentumBar" class="momentum-bar"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Predicciones algorítmicas</div>
+      <div class="grid">
+        <div class="box"><div class="box-title">Resultado probable</div><div class="box-value" id="predScore">N/A</div></div>
+        <div class="box"><div class="box-title">Ganador probable</div><div class="box-value" id="predWinner">N/A</div></div>
+        <div class="box"><div class="box-title">Over / Under</div><div class="box-value" id="predOU">N/A</div></div>
+        <div class="box"><div class="box-title">Gol inminente</div><div class="box-value" id="predGoal">N/A</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Mercados destacados</div>
+      <div class="market-list">
+        <div class="market">
+          <strong>Ganador</strong>
+          <span id="marketWinner">N/A</span>
+        </div>
+        <div class="market">
+          <strong>Over / Under</strong>
+          <span id="marketOU">N/A</span>
+        </div>
+        <div class="market">
+          <strong>Hándicap</strong>
+          <span id="marketHandicap">N/A</span>
+        </div>
+        <div class="market">
+          <strong>Doble oportunidad</strong>
+          <span id="marketDouble">N/A</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Explicación del sistema</div>
+      <div class="text" id="systemText">Cargando explicación...</div>
+    </div>
+  </div>
+
+  <script>
+    const matchId = location.pathname.split("/match/")[1] || "";
+
+    function makeMomentum(){
+      const bar = document.getElementById("momentumBar");
+      const cols = Array.from({length: 36}).map((_, i) => {
+        const h = 18 + Math.floor(Math.abs(Math.sin(i * 0.45)) * 60);
+        return `<div class="momentum-col" style="height:${h}px"></div>`;
+      }).join("");
+      bar.innerHTML = cols;
+    }
+
+    async function loadMatch(){
+      try{
+        const res = await fetch(`/api/match-details/${matchId}`);
+        const data = await res.json();
+        const signal = data.signal || {};
+
+        document.getElementById("leagueLine").textContent = `${data.league} · ${data.country}`;
+        document.getElementById("homeTeam").textContent = data.home;
+        document.getElementById("awayTeam").textContent = data.away;
+        document.getElementById("matchStatus").textContent = data.status || "LIVE";
+        document.getElementById("matchScore").textContent = `${data.marcador_local} - ${data.marcador_visitante}`;
+        document.getElementById("matchMinute").textContent = `Min ${data.minute}`;
+
+        document.getElementById("posHome").textContent = `${data.possession_home ?? 0}%`;
+        document.getElementById("posAway").textContent = `${data.possession_away ?? 0}%`;
+        document.getElementById("shots").textContent = data.shots ?? 0;
+        document.getElementById("shotsOnTarget").textContent = data.shots_on_target ?? 0;
+        document.getElementById("danger").textContent = data.dangerous_attacks ?? 0;
+        document.getElementById("fouls").textContent = `${data.fouls_home ?? 0} - ${data.fouls_away ?? 0}`;
+        document.getElementById("yellowCards").textContent = `${data.yellow_cards_home ?? 0} - ${data.yellow_cards_away ?? 0}`;
+        document.getElementById("redCards").textContent = `${data.red_cards_home ?? 0} - ${data.red_cards_away ?? 0}`;
+
+        document.getElementById("predScore").textContent = signal.resultado_probable || "N/A";
+        document.getElementById("predWinner").textContent = signal.ganador_probable || "N/A";
+        document.getElementById("predOU").textContent = signal.over_under_probable || "N/A";
+        document.getElementById("predGoal").textContent = signal.gol_inminente?.gol_inminente ? "SÍ" : "NO";
+
+        document.getElementById("marketWinner").textContent = signal.ganador_probable || "N/A";
+        document.getElementById("marketOU").textContent = signal.over_under_probable || "N/A";
+        document.getElementById("marketHandicap").textContent = signal.handicap_probable || "Sin definir";
+        document.getElementById("marketDouble").textContent = signal.doble_oportunidad_probable || "N/A";
+
+        document.getElementById("systemText").innerHTML = `
+          <strong>Motivo táctico:</strong> ${signal.reason || "Sin detalle"}<br>
+          <strong>Motivo value:</strong> ${signal.razon_value || "Sin análisis value"}<br>
+          <strong>Lectura IA:</strong> ${signal.ai_reason || "Sin lectura IA"}<br>
+          <strong>Recomendación:</strong> ${signal.ai_recommendation || "OBSERVAR"}
+        `;
+
+        makeMomentum();
+      }catch(err){
+        document.getElementById("systemText").textContent = "Error cargando detalle del partido.";
+      }
+    }
+
+    loadMatch();
+    setInterval(loadMatch, 15000);
+  </script>
+</body>
+      </html>
