@@ -3,785 +3,788 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JHONNY_ELITE V14_AI</title>
+  <title>JHONNY_ELITE V15_PRO</title>
+
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
     }
 
-    :root {
-      --bg: #07111f;
-      --panel: #0b1728;
-      --card: linear-gradient(180deg, #0f1c2d, #0a1423);
-      --border: rgba(255,255,255,0.08);
-      --text: #eaf6ff;
-      --muted: #8eb8e8;
-      --green: #65ff9b;
-      --yellow: #ffd66e;
-      --red: #ff8d8d;
-      --soft: rgba(255,255,255,0.04);
+    :root{
+      --bg:#07111f;
+      --panel:rgba(9,18,34,0.78);
+      --panel-strong:rgba(11,23,40,0.90);
+      --panel-soft:rgba(18,35,59,0.72);
+      --card:rgba(16,31,53,0.72);
+      --card-2:rgba(18,38,66,0.75);
+      --border:rgba(255,255,255,0.08);
+      --border-strong:rgba(120,180,255,0.16);
+      --text:#edf6ff;
+      --muted:#9ec4ef;
+      --blue:#4db4ff;
+      --green:#58e394;
+      --yellow:#ffd166;
+      --red:#ff7b7b;
+      --shadow:0 14px 40px rgba(0,0,0,0.42);
+      --blur:blur(10px);
     }
 
-    body {
-      font-family: Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+    body{
+      font-family:Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top, rgba(35,70,120,0.35), transparent 35%),
+        linear-gradient(rgba(6,12,22,0.78), rgba(6,12,22,0.9)),
+        url("https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1600&q=80") center center / cover no-repeat fixed;
+      min-height:100vh;
     }
 
-    .page {
-      display: grid;
-      grid-template-columns: 310px 1fr 390px;
-      gap: 18px;
-      min-height: 100vh;
-      padding: 18px;
+    .page{
+      display:grid;
+      grid-template-columns:300px 1fr 360px;
+      gap:18px;
+      min-height:100vh;
+      padding:18px;
     }
 
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    .glass{
+      background:var(--panel);
+      backdrop-filter:var(--blur);
+      -webkit-backdrop-filter:var(--blur);
+      border:1px solid var(--border);
+      box-shadow:var(--shadow);
+      border-radius:18px;
     }
 
-    .card + .card {
-      margin-top: 16px;
+    .card{
+      background:var(--card);
+      backdrop-filter:var(--blur);
+      -webkit-backdrop-filter:var(--blur);
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:16px;
+      box-shadow:var(--shadow);
     }
 
-    .logo {
-      font-size: 28px;
-      font-weight: 800;
-      color: #fff;
-      margin-bottom: 8px;
-      line-height: 1.1;
+    .card + .card{
+      margin-top:16px;
     }
 
-    .logo span {
-      color: #3ddc97;
+    .logo-wrap{
+      padding:18px;
     }
 
-    .subtitle {
-      font-size: 13px;
-      color: #7cb8ff;
-      line-height: 1.5;
+    .logo{
+      font-size:28px;
+      font-weight:900;
+      line-height:1.05;
+      margin-bottom:8px;
+      letter-spacing:0.02em;
     }
 
-    .menu {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 18px;
+    .logo .main{
+      color:#fff;
+    }
+
+    .logo .accent{
+      color:var(--green);
+    }
+
+    .subtitle{
+      font-size:13px;
+      line-height:1.5;
+      color:#8cb7ea;
+    }
+
+    .menu{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:18px;
     }
 
     .menu button,
     .toolbar button,
-    .refresh-btn {
-      background: #12233b;
-      color: #dbeaff;
-      border: 1px solid rgba(255,255,255,0.08);
-      padding: 12px 14px;
-      border-radius: 12px;
-      text-align: left;
-      cursor: pointer;
-      transition: 0.2s;
-      font-weight: bold;
+    .league-header-btn{
+      width:100%;
+      background:linear-gradient(180deg, rgba(20,38,66,0.95), rgba(15,28,48,0.92));
+      color:#e6f1ff;
+      border:1px solid rgba(255,255,255,0.08);
+      border-radius:12px;
+      padding:12px 14px;
+      text-align:left;
+      cursor:pointer;
+      font-weight:700;
+      transition:0.2s;
     }
 
     .menu button:hover,
     .toolbar button:hover,
-    .refresh-btn:hover,
-    .league-item:hover {
-      background: #18304f;
+    .league-header-btn:hover,
+    .league-item:hover{
+      transform:translateY(-1px);
+      border-color:rgba(120,180,255,0.25);
+      background:linear-gradient(180deg, rgba(24,46,80,0.98), rgba(16,31,53,0.94));
     }
 
-    .section-title {
-      font-size: 17px;
-      font-weight: bold;
-      color: #ffffff;
-      margin-bottom: 12px;
+    .section-title{
+      font-size:18px;
+      font-weight:900;
+      color:#fff;
+      margin-bottom:14px;
+      display:flex;
+      align-items:center;
+      gap:8px;
     }
 
-    .topbar {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 14px;
-      margin-bottom: 16px;
+    .topbar{
+      display:grid;
+      grid-template-columns:repeat(5, 1fr);
+      gap:14px;
+      margin-bottom:16px;
     }
 
-    .metric-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 16px;
-      min-height: 112px;
+    .metric-card{
+      background:var(--panel-soft);
+      backdrop-filter:var(--blur);
+      -webkit-backdrop-filter:var(--blur);
+      border:1px solid var(--border);
+      border-radius:16px;
+      min-height:110px;
+      padding:16px;
+      box-shadow:var(--shadow);
     }
 
-    .metric-title {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 8px;
+    .metric-title{
+      font-size:13px;
+      color:var(--muted);
+      margin-bottom:8px;
     }
 
-    .metric-value {
-      font-size: 28px;
-      font-weight: 800;
-      color: #fff;
+    .metric-value{
+      font-size:28px;
+      font-weight:900;
+      color:#fff;
     }
 
-    .metric-sub {
-      margin-top: 8px;
-      font-size: 12px;
-      color: #9bc1e8;
-      line-height: 1.4;
+    .metric-sub{
+      margin-top:8px;
+      font-size:12px;
+      color:#b7d5f7;
+      line-height:1.4;
     }
 
-    .toolbar {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-      align-items: center;
+    .toolbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:16px;
+      align-items:center;
     }
 
-    .status-badge {
-      display: inline-block;
-      padding: 8px 12px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: bold;
-      background: #173a24;
-      color: #70ffab;
-      border: 1px solid #2d7a4b;
+    .toolbar button{
+      width:auto;
+      padding:10px 14px;
     }
 
-    .status-badge.off {
-      background: #4a1a1a;
-      color: #ff9999;
-      border: 1px solid #a94444;
+    .status-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 14px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      background:rgba(18,65,35,0.85);
+      color:#8dffb8;
+      border:1px solid rgba(80,210,120,0.24);
     }
 
-    .status-badge.warn {
-      background: #4a2f10;
-      color: #ffbf70;
-      border: 1px solid #a36b2e;
+    .status-badge.off{
+      background:rgba(80,20,20,0.85);
+      color:#ff9a9a;
+      border-color:rgba(255,100,100,0.22);
     }
 
-    .filters-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
+    .status-badge.warn{
+      background:rgba(85,58,12,0.85);
+      color:#ffd67b;
+      border-color:rgba(255,205,90,0.24);
     }
 
-    .filter-control {
-      background: #12233b;
-      color: #dbeaff;
-      border: 1px solid rgba(255,255,255,0.08);
-      padding: 12px 14px;
-      border-radius: 12px;
-      min-width: 220px;
-      outline: none;
+    .filters-card{
+      padding:16px;
     }
 
-    .league-nav {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      max-height: 700px;
-      overflow-y: auto;
-      padding-right: 4px;
+    .filters-row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
     }
 
-    .league-region {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 16px;
-      padding: 12px;
+    .filter-control{
+      background:rgba(16,31,53,0.9);
+      color:#e8f2ff;
+      border:1px solid rgba(255,255,255,0.08);
+      padding:12px 14px;
+      border-radius:12px;
+      min-width:220px;
+      outline:none;
     }
 
-    .league-region-title {
-      font-size: 14px;
-      font-weight: 800;
-      color: #fff;
-      margin-bottom: 10px;
+    .league-nav{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      max-height:720px;
+      overflow:auto;
+      padding-right:4px;
     }
 
-    .league-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+    .league-region{
+      background:rgba(255,255,255,0.03);
+      border:1px solid rgba(255,255,255,0.05);
+      border-radius:16px;
+      overflow:hidden;
     }
 
-    .league-item {
-      background: #12233b;
-      color: #dbeaff;
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 12px;
-      padding: 10px 12px;
-      cursor: pointer;
-      transition: 0.2s;
+    .league-header-btn{
+      border:none;
+      border-radius:0;
+      background:rgba(255,255,255,0.03);
+      font-size:14px;
+      font-weight:900;
     }
 
-    .league-item-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: center;
+    .league-list{
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
     }
 
-    .league-item-title {
-      font-size: 13px;
-      font-weight: bold;
-      color: #fff;
-      line-height: 1.35;
+    .league-item{
+      background:rgba(18,35,59,0.84);
+      border:1px solid rgba(255,255,255,0.06);
+      border-radius:12px;
+      padding:10px 12px;
+      cursor:pointer;
+      transition:0.2s;
     }
 
-    .league-item-country {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      color: #8eb8e8;
-      margin-top: 4px;
+    .league-item-top{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
     }
 
-    .league-item-stats {
-      font-size: 11px;
-      color: #b8d6f5;
-      margin-top: 6px;
-      line-height: 1.4;
+    .league-item-title{
+      font-size:13px;
+      font-weight:800;
+      color:#fff;
+      line-height:1.35;
     }
 
-    .counter-pill {
-      display: inline-block;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.08);
-      color: #fff;
-      border-radius: 999px;
-      padding: 4px 8px;
-      font-size: 11px;
-      font-weight: bold;
-      white-space: nowrap;
+    .league-item-country{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-size:11px;
+      color:#9dc4ee;
+      margin-top:4px;
     }
 
-    .hero-signal {
-      background: linear-gradient(180deg, #132842, #0b1828);
-      border: 1px solid rgba(82,168,255,0.28);
-      border-radius: 22px;
-      padding: 18px;
-      box-shadow: 0 0 0 1px rgba(82,168,255,0.06), 0 12px 26px rgba(0,0,0,0.25);
+    .league-item-stats{
+      margin-top:6px;
+      font-size:11px;
+      color:#c8ddf7;
+      line-height:1.35;
     }
 
-    .hero-top,
-    .signal-head,
-    .hot-head,
-    .match-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
+    .counter-pill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:24px;
+      height:24px;
+      border-radius:999px;
+      background:rgba(255,255,255,0.08);
+      border:1px solid rgba(255,255,255,0.06);
+      font-size:11px;
+      font-weight:900;
+      color:#fff;
+      padding:0 8px;
     }
 
-    .hero-title-wrap {
-      flex: 1;
+    .country-flag{
+      font-size:15px;
+      line-height:1;
     }
 
-    .hero-market {
-      font-size: 28px;
-      font-weight: 800;
-      line-height: 1.2;
-      color: var(--yellow);
-      margin-top: 10px;
-      margin-bottom: 8px;
+    .hero-signal{
+      position:relative;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 80% 20%, rgba(110,190,255,0.22), transparent 18%),
+        linear-gradient(145deg, rgba(17,39,70,0.92), rgba(10,22,40,0.90)),
+        url("https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=1200&q=80") center center / cover no-repeat;
+      border:1px solid var(--border-strong);
+      border-radius:22px;
+      padding:20px;
+      box-shadow:0 0 0 1px rgba(100,170,255,0.05), var(--shadow);
     }
 
-    .hero-sub,
-    .signal-sub,
-    .mini-signal-sub,
-    .history-sub,
-    .reason-box,
-    .signal-reason,
-    .hot-sub {
-      font-size: 13px;
-      color: #d7e8ff;
-      line-height: 1.5;
+    .hero-signal::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:linear-gradient(rgba(6,12,22,0.60), rgba(6,12,22,0.78));
+      pointer-events:none;
     }
 
-    .hero-value,
-    .signal-value {
-      font-size: 34px;
-      font-weight: 900;
-      color: var(--green);
-      white-space: nowrap;
+    .hero-inner{
+      position:relative;
+      z-index:1;
     }
 
-    .hero-grid,
-    .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
-      margin-top: 14px;
+    .hero-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
     }
 
-    .hero-box,
-    .stats-box {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 14px;
-      padding: 12px;
+    .hero-market{
+      font-size:22px;
+      font-weight:900;
+      color:#ffd166;
+      margin:10px 0 8px;
+      line-height:1.2;
     }
 
-    .hero-box-title,
-    .stats-box-title {
-      font-size: 12px;
-      color: #8eb8e8;
-      margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+    .hero-sub{
+      font-size:14px;
+      color:#e9f4ff;
+      line-height:1.55;
     }
 
-    .hero-box-value,
-    .stats-box-value {
-      font-size: 18px;
-      font-weight: 800;
-      color: #fff;
+    .hero-value{
+      font-size:42px;
+      font-weight:900;
+      color:#7dffad;
+      text-shadow:0 0 18px rgba(70,255,150,0.18);
+      white-space:nowrap;
     }
 
-    .hero-reason {
-      margin-top: 14px;
-      padding-top: 14px;
-      border-top: 1px solid rgba(255,255,255,0.06);
-      color: #b8d6f5;
-      line-height: 1.55;
-      font-size: 13px;
+    .signal-meta,
+    .match-meta,
+    .match-ai-row{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:12px;
     }
 
     .pill,
     .signal-tier,
-    .state-badge {
-      display: inline-block;
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: bold;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: #18314f;
-      color: #dcecff;
+    .state-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      border:1px solid rgba(255,255,255,0.12);
+      background:rgba(21,49,79,0.92);
+      color:#e2efff;
     }
 
-    .tier-premium {
-      background: linear-gradient(180deg, #4a3410, #2f2008);
-      color: #ffd66e;
-      border-color: #b78a22;
+    .tier-premium{
+      background:linear-gradient(180deg, rgba(84,58,15,0.95), rgba(46,31,8,0.95));
+      color:#ffd77d;
+      border-color:rgba(220,170,50,0.4);
     }
 
-    .tier-fuerte {
-      background: linear-gradient(180deg, #102b4a, #0a1d33);
-      color: #7cc4ff;
-      border-color: #2f6ea3;
+    .tier-fuerte{
+      background:linear-gradient(180deg, rgba(16,50,86,0.98), rgba(10,29,52,0.95));
+      color:#8fd2ff;
+      border-color:rgba(72,150,230,0.32);
     }
 
-    .tier-normal {
-      background: linear-gradient(180deg, #18351f, #102515);
-      color: #8ff0b3;
-      border-color: #2f8a57;
+    .tier-normal{
+      background:linear-gradient(180deg, rgba(20,55,31,0.95), rgba(12,33,19,0.95));
+      color:#97f1ba;
+      border-color:rgba(58,155,95,0.3);
     }
 
-    .state-frio {
-      background: #10351f;
-      color: #7dffb0;
-      border-color: #2f8a57;
+    .state-frio{
+      background:rgba(17,58,31,0.9);
+      color:#8cffb7;
+      border-color:rgba(80,215,120,0.22);
     }
 
-    .state-controlado {
-      background: #4a4410;
-      color: #ffe670;
-      border-color: #a39a2e;
+    .state-controlado{
+      background:rgba(78,63,15,0.9);
+      color:#ffe378;
+      border-color:rgba(255,223,90,0.2);
     }
 
-    .state-caliente {
-      background: #4a2f10;
-      color: #ffbf70;
-      border-color: #a36b2e;
+    .state-caliente{
+      background:rgba(85,42,10,0.9);
+      color:#ffc275;
+      border-color:rgba(255,170,80,0.22);
     }
 
     .state-explosivo,
-    .state-caos {
-      background: #4a1010;
-      color: #ff8d8d;
-      border-color: #a33a3a;
+    .state-caos{
+      background:rgba(88,18,18,0.9);
+      color:#ff9e9e;
+      border-color:rgba(255,110,110,0.24);
     }
 
-    .state-muerto {
-      background: #232323;
-      color: #d0d0d0;
-      border-color: #5f5f5f;
+    .state-muerto{
+      background:rgba(50,50,50,0.88);
+      color:#d4d4d4;
+      border-color:rgba(255,255,255,0.12);
     }
 
-    .rank-elite {
-      background: linear-gradient(180deg, #5a3b10, #2f1f08);
-      color: #ffd66e;
-      border-color: #d6a63a;
+    .rank-elite{
+      background:linear-gradient(180deg, rgba(91,61,12,0.95), rgba(47,30,7,0.95));
+      color:#ffd879;
+      border-color:rgba(225,170,60,0.34);
     }
 
-    .rank-top {
-      background: linear-gradient(180deg, #173257, #0d1f36);
-      color: #8fd0ff;
-      border-color: #3c7eb8;
+    .rank-top{
+      background:linear-gradient(180deg, rgba(19,53,88,0.95), rgba(9,28,50,0.95));
+      color:#8fcfff;
+      border-color:rgba(70,145,225,0.3);
     }
 
-    .rank-alta {
-      background: linear-gradient(180deg, #18351f, #102515);
-      color: #8ff0b3;
-      border-color: #2f8a57;
+    .rank-alta{
+      background:linear-gradient(180deg, rgba(25,56,30,0.95), rgba(14,32,18,0.95));
+      color:#97efb8;
+      border-color:rgba(60,150,90,0.28);
     }
 
-    .rank-normal {
-      background: linear-gradient(180deg, #2c2c2c, #1d1d1d);
-      color: #d0d0d0;
-      border-color: #5d5d5d;
+    .rank-normal{
+      background:rgba(48,48,48,0.9);
+      color:#d5d5d5;
+      border-color:rgba(255,255,255,0.12);
     }
 
-    .risk-apto {
-      background: #10351f;
-      color: #7dffb0;
-      border-color: #2f8a57;
+    .risk-apto{
+      background:rgba(16,58,31,0.9);
+      color:#8cffb7;
+      border-color:rgba(80,215,120,0.22);
     }
 
-    .risk-medio {
-      background: #4a4410;
-      color: #ffe670;
-      border-color: #a39a2e;
+    .risk-medio{
+      background:rgba(78,63,15,0.92);
+      color:#ffe378;
+      border-color:rgba(255,223,90,0.2);
     }
 
     .risk-alto,
-    .risk-no-apostar {
-      background: #4a1010;
-      color: #ff8d8d;
-      border-color: #a33a3a;
+    .risk-no-apostar{
+      background:rgba(88,18,18,0.9);
+      color:#ff9e9e;
+      border-color:rgba(255,110,110,0.24);
     }
 
-    .ai-control-real {
-      background: #0d3a29;
-      color: #84ffbe;
-      border-color: #2e8f65;
+    .ai-control-real{
+      background:rgba(10,62,41,0.95);
+      color:#87ffc0;
+      border-color:rgba(40,200,120,0.24);
     }
 
-    .ai-caos-util {
-      background: #173257;
-      color: #8fd0ff;
-      border-color: #3c7eb8;
+    .ai-caos-util{
+      background:rgba(18,53,88,0.95);
+      color:#8ed2ff;
+      border-color:rgba(80,160,240,0.24);
     }
 
     .ai-presion-falsa,
-    .ai-partido-trampa {
-      background: #4a1010;
-      color: #ff9a9a;
-      border-color: #b84646;
+    .ai-partido-trampa{
+      background:rgba(90,18,18,0.95);
+      color:#ff9e9e;
+      border-color:rgba(255,110,110,0.24);
     }
 
     .ai-cierre-tactico,
-    .ai-partido-muerto {
-      background: #4a4410;
-      color: #ffe670;
-      border-color: #a39a2e;
+    .ai-partido-muerto{
+      background:rgba(78,63,15,0.95);
+      color:#ffe378;
+      border-color:rgba(255,223,90,0.2);
     }
 
-    .ai-neutro {
-      background: #2c2c2c;
-      color: #d0d0d0;
-      border-color: #5d5d5d;
+    .ai-neutro{
+      background:rgba(58,58,58,0.92);
+      color:#e2e2e2;
+      border-color:rgba(255,255,255,0.1);
     }
 
-    .ai-reco-fuerte {
-      background: linear-gradient(180deg, #5a3b10, #2f1f08);
-      color: #ffd66e;
-      border-color: #d6a63a;
+    .ai-reco-fuerte{
+      background:linear-gradient(180deg, rgba(92,62,12,0.98), rgba(48,31,8,0.96));
+      color:#ffd97d;
+      border-color:rgba(220,170,60,0.34);
     }
 
-    .ai-reco-apostar {
-      background: #10351f;
-      color: #7dffb0;
-      border-color: #2f8a57;
+    .ai-reco-apostar{
+      background:rgba(16,58,31,0.92);
+      color:#8cffb7;
+      border-color:rgba(80,215,120,0.22);
     }
 
-    .ai-reco-suave {
-      background: #173257;
-      color: #8fd0ff;
-      border-color: #3c7eb8;
+    .ai-reco-suave{
+      background:rgba(18,53,88,0.95);
+      color:#8fd2ff;
+      border-color:rgba(80,160,240,0.24);
     }
 
-    .ai-reco-observar {
-      background: #4a4410;
-      color: #ffe670;
-      border-color: #a39a2e;
+    .ai-reco-observar{
+      background:rgba(78,63,15,0.95);
+      color:#ffe378;
+      border-color:rgba(255,223,90,0.2);
     }
 
-    .ai-reco-no {
-      background: #4a1010;
-      color: #ff9a9a;
-      border-color: #b84646;
+    .ai-reco-no{
+      background:rgba(88,18,18,0.95);
+      color:#ff9e9e;
+      border-color:rgba(255,110,110,0.24);
     }
 
-    .signal-meta,
-    .match-meta {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 12px;
+    .hero-grid,
+    .stats-grid,
+    .match-stats-grid{
+      display:grid;
+      grid-template-columns:repeat(3, 1fr);
+      gap:10px;
+      margin-top:14px;
+    }
+
+    .hero-box,
+    .stats-box,
+    .match-stat-box{
+      background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.07);
+      border-radius:14px;
+      padding:12px;
+    }
+
+    .hero-box-title,
+    .stats-box-title,
+    .match-stat-title{
+      font-size:12px;
+      color:#a7cbf3;
+      margin-bottom:6px;
+      text-transform:uppercase;
+      letter-spacing:0.04em;
+    }
+
+    .hero-box-value,
+    .stats-box-value,
+    .match-stat-value{
+      font-size:20px;
+      font-weight:900;
+      color:#fff;
+    }
+
+    .hero-reason,
+    .signal-reason,
+    .match-insight,
+    .mini-signal-sub,
+    .history-sub,
+    .reason-box{
+      margin-top:14px;
+      padding-top:14px;
+      border-top:1px solid rgba(255,255,255,0.06);
+      font-size:13px;
+      color:#d8ebff;
+      line-height:1.55;
     }
 
     .hot-grid,
     .signal-list,
     .mini-signal-list,
     .history-list,
-    .match-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+    .match-list{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
     }
 
     .hot-card,
     .signal-card,
     .mini-signal,
     .history-item,
-    .match-card {
-      background: linear-gradient(180deg, #102235, #0a1522);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 18px;
-      padding: 14px;
+    .match-card{
+      background:var(--card);
+      backdrop-filter:var(--blur);
+      -webkit-backdrop-filter:var(--blur);
+      border:1px solid rgba(255,255,255,0.08);
+      border-radius:18px;
+      padding:14px;
+      box-shadow:var(--shadow);
     }
 
-    .league,
-    .match-league {
-      color: #7cc4ff;
-      font-size: 12px;
-      font-weight: bold;
+    .match-card-pro{
+      background:
+        linear-gradient(145deg, rgba(18,41,72,0.88), rgba(11,23,40,0.86));
+      border:1px solid rgba(95,165,245,0.16);
+      border-radius:20px;
+      padding:16px;
     }
 
-    .hot-title,
-    .signal-market {
-      font-size: 20px;
-      font-weight: 800;
-      line-height: 1.3;
-      margin-bottom: 8px;
-      color: #fff;
+    .signal-head,
+    .match-topline,
+    .hot-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
     }
 
-    .signal-market {
-      color: var(--yellow);
+    .signal-market,
+    .hot-title{
+      font-size:20px;
+      font-weight:900;
+      line-height:1.25;
+      color:#fff;
+      margin-bottom:8px;
+    }
+
+    .signal-market{
+      color:#ffd166;
+    }
+
+    .signal-value{
+      font-size:34px;
+      font-weight:900;
+      color:#7dffad;
+      white-space:nowrap;
+    }
+
+    .match-main{
+      display:grid;
+      grid-template-columns:1fr 180px 1fr;
+      gap:10px;
+      align-items:center;
+    }
+
+    .match-team{
+      text-align:center;
+      font-size:20px;
+      font-weight:900;
+      color:#fff;
+    }
+
+    .match-score-box{
+      text-align:center;
+      background:rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.08);
+      border-radius:16px;
+      padding:12px;
+    }
+
+    .match-status{
+      color:#a7cbf3;
+      font-size:12px;
+      margin-bottom:8px;
+      text-transform:uppercase;
+      letter-spacing:0.05em;
+    }
+
+    .match-score{
+      font-size:44px;
+      font-weight:900;
+      line-height:1;
+    }
+
+    .match-league-pro{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-size:12px;
+      font-weight:800;
+      color:#8fcfff;
     }
 
     .mini-signal-title,
-    .history-title {
-      font-size: 14px;
-      font-weight: bold;
-      margin-bottom: 8px;
+    .history-title{
+      font-size:14px;
+      font-weight:900;
+      margin-bottom:8px;
     }
 
-    .match-card {
-      background: linear-gradient(180deg, #0f1c2d, #0a1423);
+    .mini-signal-sub{
+      margin-top:0;
+      padding-top:0;
+      border-top:none;
     }
 
-    .match-card-pro {
-      background: linear-gradient(180deg, #132842, #0b1828);
-      border: 1px solid rgba(82,168,255,0.18);
-      border-radius: 22px;
-      padding: 16px;
-      box-shadow: 0 0 0 1px rgba(82,168,255,0.04), 0 10px 24px rgba(0,0,0,0.22);
+    .empty{
+      color:#a8bfdc;
+      padding:12px 0;
     }
 
-    .match-card-pro .match-head {
-      margin-bottom: 12px;
+    .danger{
+      color:#ff8d8d;
     }
 
-    .match-topline {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 10px;
-    }
-
-    .match-league-pro {
-      font-size: 12px;
-      font-weight: 700;
-      color: #7cc4ff;
-    }
-
-    .match-ai-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 12px;
-    }
-
-    .match-insight {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid rgba(255,255,255,0.06);
-      color: #c9ddf7;
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    .match-stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .match-stat-box {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 14px;
-      padding: 10px;
-    }
-
-    .match-stat-title {
-      font-size: 11px;
-      color: #8eb8e8;
-      margin-bottom: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .match-stat-value {
-      font-size: 16px;
-      font-weight: 800;
-      color: #fff;
-    }
-
-    .match-main {
-      display: grid;
-      grid-template-columns: 1fr 180px 1fr;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .match-team {
-      text-align: center;
-      font-size: 18px;
-      font-weight: 800;
-    }
-
-    .match-score-box {
-      text-align: center;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 16px;
-      padding: 12px;
-    }
-
-    .match-score {
-      font-size: 42px;
-      font-weight: 900;
-      line-height: 1;
-    }
-
-    .match-status {
-      color: #8eb8e8;
-      font-size: 12px;
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .country-flag {
-      font-size: 16px;
-      margin-right: 6px;
-      vertical-align: middle;
-    }
-
-    .country-inline {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .match-league-pro,
-    .league,
-    .match-league {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .empty {
-      color: #9eb7d4;
-      padding: 10px 0;
-    }
-
-    .danger {
-      color: #ff7b7b;
-    }
-
-    .section-spacer {
-      margin-top: 16px;
-    }
-
-    @media (max-width: 1500px) {
-      .page {
-        grid-template-columns: 290px 1fr 340px;
+    @media (max-width:1500px){
+      .page{
+        grid-template-columns:280px 1fr 330px;
       }
 
-      .topbar {
-        grid-template-columns: repeat(3, 1fr);
-      }
-
-      .hero-grid,
-      .stats-grid {
-        grid-template-columns: 1fr 1fr;
+      .topbar{
+        grid-template-columns:repeat(3, 1fr);
       }
     }
 
-    @media (max-width: 1100px) {
-      .page {
-        grid-template-columns: 1fr;
+    @media (max-width:1150px){
+      .page{
+        grid-template-columns:1fr;
       }
 
-      .topbar {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-
-    @media (max-width: 900px) {
-      .match-stats-grid {
-        grid-template-columns: 1fr 1fr;
+      .topbar{
+        grid-template-columns:1fr 1fr;
       }
     }
 
-    @media (max-width: 760px) {
+    @media (max-width:760px){
       .topbar,
       .hero-grid,
       .stats-grid,
-      .match-stats-grid {
-        grid-template-columns: 1fr;
+      .match-stats-grid{
+        grid-template-columns:1fr;
       }
 
-      .match-main {
-        grid-template-columns: 1fr;
+      .match-main{
+        grid-template-columns:1fr;
       }
 
-      .match-score {
-        font-size: 36px;
+      .match-score{
+        font-size:38px;
       }
 
-      .hero-market {
-        font-size: 22px;
+      .hero-value{
+        font-size:32px;
       }
 
-      .hero-value {
-        font-size: 28px;
+      .hero-market{
+        font-size:20px;
       }
 
-      .filter-control {
-        min-width: 100%;
+      .filter-control{
+        min-width:100%;
       }
     }
   </style>
@@ -789,14 +792,18 @@
 <body>
   <div class="page">
     <aside class="leftbar">
-      <div class="card">
-        <div class="logo">JHONNY_<span>ELITE V14_AI</span></div>
-        <div class="subtitle">SCANNER IA LIVE · VALUE BETS · RISK ENGINE · AI BRAIN · LEAGUE EXPLORER</div>
+      <div class="glass logo-wrap">
+        <div class="logo">
+          <span class="main">JHONNY_</span><span class="accent">ELITE V15_PRO</span>
+        </div>
+        <div class="subtitle">
+          SCANNER IA LIVE · VALUE BETS · RISK ENGINE · AI BRAIN · LEAGUE EXPLORER
+        </div>
 
         <div class="menu">
           <button onclick="cargarTodo()">📡 Actualizar panel</button>
-          <button onclick="cargarScan()">⚽ Recargar partidos</button>
-          <button onclick="cargarSignals()">🚨 Recargar señales</button>
+          <button onclick="cargarScan()">📊 Recargar estadísticas</button>
+          <button onclick="cargarSignals()">🚨 Recargar apuestas</button>
           <button onclick="cargarLeagueExplorer()">🌍 Recargar ligas</button>
         </div>
       </div>
@@ -812,13 +819,13 @@
     <main class="mainpanel">
       <div class="topbar">
         <div class="metric-card">
-          <div class="metric-title">Estado backend</div>
+          <div class="metric-title">Estado del sistema</div>
           <div id="backendStatus" class="metric-value">...</div>
           <div id="backendMessage" class="metric-sub">Cargando...</div>
         </div>
 
         <div class="metric-card">
-          <div class="metric-title">Partidos escaneados</div>
+          <div class="metric-title">Señales escaneadas</div>
           <div id="totalMatches" class="metric-value">0</div>
           <div class="metric-sub">Total live detectado</div>
         </div>
@@ -826,28 +833,28 @@
         <div class="metric-card">
           <div class="metric-title">Señales activas</div>
           <div id="totalSignals" class="metric-value">0</div>
-          <div class="metric-sub">Oportunidades actuales</div>
+          <div class="metric-sub">Oportunidades activas</div>
         </div>
 
         <div class="metric-card">
-          <div class="metric-title">Último scan</div>
+          <div class="metric-title">Último escaneo</div>
           <div id="lastScanValue" class="metric-value">-</div>
           <div id="lastScanMessage" class="metric-sub">Esperando datos...</div>
         </div>
 
         <div class="metric-card">
-          <div class="metric-title">Auto-scan</div>
+          <div class="metric-title">Última señal</div>
           <div id="autoScanValue" class="metric-value">...</div>
           <div id="autoScanMessage" class="metric-sub">Cargando...</div>
         </div>
       </div>
 
       <div class="toolbar">
-        <button class="refresh-btn" onclick="cargarTodo()">Actualizar panel</button>
+        <button onclick="cargarTodo()">Actualizar panel</button>
         <span id="statusBadge" class="status-badge">Esperando...</span>
       </div>
 
-      <div class="card">
+      <div class="card filters-card">
         <div class="section-title">🔎 FILTROS RÁPIDOS</div>
         <div class="filters-row">
           <select id="ligaFiltro" class="filter-control" onchange="aplicarFiltros()">
@@ -874,20 +881,18 @@
         </div>
       </div>
 
-      <div class="section-spacer">
-        <div id="heroSignal">
-          <div class="empty">Cargando señal principal...</div>
-        </div>
+      <div style="margin-top:16px" id="heroSignal">
+        <div class="empty">Cargando señal principal...</div>
       </div>
 
-      <div class="card section-spacer">
+      <div class="card" style="margin-top:16px">
         <div class="section-title">🔥 PARTIDOS CALIENTES</div>
         <div id="hotMatches" class="hot-grid">
           <div class="empty">Cargando partidos calientes...</div>
         </div>
       </div>
 
-      <div class="card section-spacer">
+      <div class="card" style="margin-top:16px">
         <div class="section-title">⚽ PARTIDOS EN VIVO</div>
         <div id="matchList" class="match-list">
           <div class="empty">Cargando partidos...</div>
@@ -914,13 +919,6 @@
         <div class="section-title">📚 ÚLTIMAS PREDICCIONES</div>
         <div id="historyList" class="history-list">
           <div class="empty">Cargando historial...</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="section-title">📊 SEÑALES DETECTADAS</div>
-        <div id="signalList" class="signal-list">
-          <div class="empty">Cargando señales...</div>
         </div>
       </div>
     </aside>
@@ -983,70 +981,18 @@
 
     function countryToFlag(country) {
       const map = {
-        "Argentina": "🇦🇷",
-        "Brazil": "🇧🇷",
-        "Chile": "🇨🇱",
-        "Colombia": "🇨🇴",
-        "Uruguay": "🇺🇾",
-        "Paraguay": "🇵🇾",
-        "Peru": "🇵🇪",
-        "Bolivia": "🇧🇴",
-        "Ecuador": "🇪🇨",
-        "Venezuela": "🇻🇪",
-        "Mexico": "🇲🇽",
-        "USA": "🇺🇸",
-        "Canada": "🇨🇦",
-        "Guatemala": "🇬🇹",
-        "Costa-Rica": "🇨🇷",
-        "Honduras": "🇭🇳",
-        "El-Salvador": "🇸🇻",
-        "Panama": "🇵🇦",
-        "England": "🏴",
-        "Spain": "🇪🇸",
-        "Italy": "🇮🇹",
-        "Germany": "🇩🇪",
-        "France": "🇫🇷",
-        "Portugal": "🇵🇹",
-        "Netherlands": "🇳🇱",
-        "Belgium": "🇧🇪",
-        "Turkey": "🇹🇷",
-        "Scotland": "🏴",
-        "Croatia": "🇭🇷",
-        "Austria": "🇦🇹",
-        "Switzerland": "🇨🇭",
-        "Czech-Republic": "🇨🇿",
-        "Poland": "🇵🇱",
-        "Greece": "🇬🇷",
-        "Romania": "🇷🇴",
-        "Serbia": "🇷🇸",
-        "Denmark": "🇩🇰",
-        "Norway": "🇳🇴",
-        "Sweden": "🇸🇪",
-        "Finland": "🇫🇮",
-        "Ukraine": "🇺🇦",
-        "Japan": "🇯🇵",
-        "China": "🇨🇳",
-        "South-Korea": "🇰🇷",
-        "Saudi-Arabia": "🇸🇦",
-        "Qatar": "🇶🇦",
-        "UAE": "🇦🇪",
-        "India": "🇮🇳",
-        "Iran": "🇮🇷",
-        "Iraq": "🇮🇶",
-        "Morocco": "🇲🇦",
-        "Egypt": "🇪🇬",
-        "Algeria": "🇩🇿",
-        "Tunisia": "🇹🇳",
-        "South-Africa": "🇿🇦",
-        "Europe": "🌍",
-        "South-America": "🌎",
-        "North-America": "🌎",
-        "Asia": "🌏",
-        "Africa": "🌍",
-        "World": "🌐",
-        "Otros": "🌐"
+        "Argentina":"🇦🇷","Brazil":"🇧🇷","Chile":"🇨🇱","Colombia":"🇨🇴","Uruguay":"🇺🇾","Paraguay":"🇵🇾",
+        "Peru":"🇵🇪","Bolivia":"🇧🇴","Ecuador":"🇪🇨","Venezuela":"🇻🇪","Mexico":"🇲🇽","USA":"🇺🇸",
+        "Canada":"🇨🇦","Guatemala":"🇬🇹","Costa-Rica":"🇨🇷","Honduras":"🇭🇳","El-Salvador":"🇸🇻",
+        "Panama":"🇵🇦","England":"🏴","Spain":"🇪🇸","Italy":"🇮🇹","Germany":"🇩🇪","France":"🇫🇷",
+        "Portugal":"🇵🇹","Netherlands":"🇳🇱","Belgium":"🇧🇪","Turkey":"🇹🇷","Scotland":"🏴",
+        "Croatia":"🇭🇷","Austria":"🇦🇹","Switzerland":"🇨🇭","Czech-Republic":"🇨🇿","Poland":"🇵🇱",
+        "Greece":"🇬🇷","Romania":"🇷🇴","Serbia":"🇷🇸","Denmark":"🇩🇰","Norway":"🇳🇴","Sweden":"🇸🇪",
+        "Finland":"🇫🇮","Ukraine":"🇺🇦","Japan":"🇯🇵","China":"🇨🇳","South-Korea":"🇰🇷",
+        "Saudi-Arabia":"🇸🇦","Qatar":"🇶🇦","UAE":"🇦🇪","India":"🇮🇳","Iran":"🇮🇷","Iraq":"🇮🇶",
+        "Morocco":"🇲🇦","Egypt":"🇪🇬","Algeria":"🇩🇿","Tunisia":"🇹🇳","South-Africa":"🇿🇦",
+        "Europe":"🌍","South-America":"🌎","North-America":"🌎","Asia":"🌏","Africa":"🌍","World":"🌐","Otros":"🌐"
       };
-
       return map[country] || "🌐";
     }
 
@@ -1115,27 +1061,21 @@
         goal_inminente_score: Number(s.goal_inminente_score ?? 0) || 0,
         signal_score: Number(s.signal_score ?? 0) || 0,
         signal_rank: s.signal_rank || "NORMAL",
-        prob_implicita_calculada: Number(s.prob_implicita_calculada ?? 0) || 0,
-        value_pct: Number(s.value_pct ?? 0) || 0,
-        edge_pct: Number(s.edge_pct ?? 0) || 0,
         value_score: Number(s.value_score ?? 0) || 0,
+        value_pct: Number(s.value_pct ?? 0) || 0,
         value_categoria: s.value_categoria || "SIN_VALUE",
         recomendacion_value: s.recomendacion_value || "NO_APOSTAR",
         razon_value: s.razon_value || "Sin análisis de value",
         risk_score: Number(s.risk_score ?? 0) || 0,
         risk_level: s.risk_level || "APTO",
-        apto_para_entrar: !!s.apto_para_entrar,
         motivos_riesgo: Array.isArray(s.motivos_riesgo) ? s.motivos_riesgo : [],
         ai_state: s.ai_state || "NEUTRO",
         ai_score: Number(s.ai_score ?? 0) || 0,
         ai_reason: s.ai_reason || "Sin lectura IA",
         ai_fit: s.ai_fit || "NEUTRO",
         ai_fit_reason: s.ai_fit_reason || "Sin ajuste IA",
-        ai_confidence_adjustment: Number(s.ai_confidence_adjustment ?? 0) || 0,
-        ai_confidence_final: Number(s.ai_confidence_final ?? 0) || 0,
         ai_decision_score: Number(s.ai_decision_score ?? 0) || 0,
-        ai_recommendation: s.ai_recommendation || "OBSERVAR",
-        all_signals: Array.isArray(s.all_signals) ? s.all_signals : []
+        ai_recommendation: s.ai_recommendation || "OBSERVAR"
       };
     }
 
@@ -1208,9 +1148,7 @@
       const actual = select.value || "ALL";
       const ligas = [...new Set(partidos.map(p => String(p.liga || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
 
-      select.innerHTML =
-        `<option value="ALL">Todas las ligas</option>` +
-        ligas.map(l => `<option value="${l}">${l}</option>`).join("");
+      select.innerHTML = `<option value="ALL">Todas las ligas</option>` + ligas.map(l => `<option value="${l}">${l}</option>`).join("");
 
       if (ligas.includes(actual)) select.value = actual;
       else select.value = "ALL";
@@ -1242,6 +1180,12 @@
       aplicarFiltros();
     }
 
+    function toggleRegion(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.display = el.style.display === "none" ? "block" : "none";
+    }
+
     function renderLeagueExplorer() {
       const box = document.getElementById("leagueExplorer");
       const data = cacheLeagueExplorer || {};
@@ -1252,14 +1196,14 @@
         return;
       }
 
-      box.innerHTML = regiones.map(region => {
+      box.innerHTML = regiones.map((region, i) => {
         const items = Array.isArray(data[region]) ? data[region] : [];
-        if (!items.length) return "";
+        const regionId = `region_${i}`;
 
         return `
           <div class="league-region">
-            <div class="league-region-title">${region}</div>
-            <div class="league-list">
+            <button class="league-header-btn" onclick="toggleRegion('${regionId}')">▶ ${region}</button>
+            <div id="${regionId}" class="league-list">
               ${items.map(item => `
                 <div class="league-item" onclick="seleccionarLigaDesdeExplorer('${String(item.league).replace(/'/g, "\\'")}')">
                   <div class="league-item-top">
@@ -1297,77 +1241,80 @@
 
       box.innerHTML = `
         <div class="hero-signal">
-          <div class="section-title">🎯 SEÑAL PRINCIPAL DEL SISTEMA</div>
+          <div class="hero-inner">
+            <div class="section-title">🎯 SEÑAL PRINCIPAL DEL SISTEMA</div>
 
-          <div class="hero-top">
-            <div class="hero-title-wrap">
-              <div class="${tier.className}">${tier.label}</div>
-              <div class="hero-market">${marketLabelDinamico(hero)}</div>
-              <div class="hero-sub">
-                <strong>${hero.home} vs ${hero.away}</strong><br>
-                <span class="country-flag">${countryToFlag(hero.country)}</span>${hero.league} · ${hero.country} · Min ${hero.minute} · Marcador ${hero.score}
+            <div class="hero-top">
+              <div style="flex:1">
+                <div class="${tier.className}">${tier.label}</div>
+                <div class="hero-market">${marketLabelDinamico(hero)}</div>
+                <div class="hero-sub">
+                  <strong>${hero.home} vs ${hero.away}</strong><br>
+                  <span class="country-flag">${countryToFlag(hero.country)}</span>${hero.league} · ${hero.country} · Min ${hero.minute} · Marcador ${hero.score}
+                </div>
+
+                <div class="signal-meta">
+                  <span class="${rankClass(hero.signal_rank)}">RANK ${hero.signal_rank}</span>
+                  <span class="pill">Cuota ${hero.odd}</span>
+                  <span class="pill">Confianza ${hero.confidence}%</span>
+                  <span class="pill">Value ${hero.value_pct}%</span>
+                  <span class="pill">${hero.value_categoria}</span>
+                  <span class="${riskClass(hero.risk_level)}">${hero.risk_level}</span>
+                  <span class="${estadoClass(estado)}">${estado}</span>
+                  <span class="${aiStateClass(hero.ai_state)}">${hero.ai_state}</span>
+                  <span class="${aiRecoClass(hero.ai_recommendation)}">${hero.ai_recommendation}</span>
+                </div>
+              </div>
+
+              <div class="hero-value">+${hero.value}%</div>
+            </div>
+
+            <div class="hero-grid">
+              <div class="hero-box">
+                <div class="hero-box-title">Signal score</div>
+                <div class="hero-box-value">${hero.signal_score}</div>
+              </div>
+              <div class="hero-box">
+                <div class="hero-box-title">Tactical score</div>
+                <div class="hero-box-value">${hero.tactical_score}</div>
+              </div>
+              <div class="hero-box">
+                <div class="hero-box-title">Goal score</div>
+                <div class="hero-box-value">${hero.goal_inminente_score}</div>
+              </div>
+              <div class="hero-box">
+                <div class="hero-box-title">Value score</div>
+                <div class="hero-box-value">${hero.value_score}</div>
+              </div>
+              <div class="hero-box">
+                <div class="hero-box-title">Risk score</div>
+                <div class="hero-box-value">${hero.risk_score}</div>
+              </div>
+              <div class="hero-box">
+                <div class="hero-box-title">Value engine</div>
+                <div class="hero-box-value">${hero.recomendacion_value || "NO_APOSTAR"}</div>
+              </div>
+              <div class="hero-box">
+                <div class="hero-box-title">AI score</div>
+                <div class="hero-box-value">${hero.ai_score}</div>
+              </div>
+              <div class="hero-box">
+                <div class="hero-box-title">AI decision score</div>
+                <div class="hero-box-value">${hero.ai_decision_score}</div>
+              </div>
+              <div class="hero-box">
+                <div class="hero-box-title">AI fit</div>
+                <div class="hero-box-value">${hero.ai_fit}</div>
               </div>
             </div>
-            <div class="hero-value">+${hero.value}%</div>
-          </div>
 
-          <div class="signal-meta">
-            <span class="${rankClass(hero.signal_rank)}">RANK ${hero.signal_rank}</span>
-            <span class="pill">Cuota ${hero.odd}</span>
-            <span class="pill">Confianza ${hero.confidence}%</span>
-            <span class="pill">Value ${hero.value_pct}%</span>
-            <span class="pill">${hero.value_categoria}</span>
-            <span class="${riskClass(hero.risk_level)}">${hero.risk_level}</span>
-            <span class="${estadoClass(estado)}">${estado}</span>
-            <span class="${aiStateClass(hero.ai_state)}">${hero.ai_state}</span>
-            <span class="${aiRecoClass(hero.ai_recommendation)}">${hero.ai_recommendation}</span>
-          </div>
-
-          <div class="hero-grid">
-            <div class="hero-box">
-              <div class="hero-box-title">Signal score</div>
-              <div class="hero-box-value">${hero.signal_score}</div>
+            <div class="hero-reason">
+              <strong>Motivo táctico:</strong> ${hero.reason || "Señal generada por el sistema"}<br>
+              <strong>Motivo value:</strong> ${hero.razon_value || "Sin análisis de value"}<br>
+              <strong>Lectura IA:</strong> ${hero.ai_reason || "Sin lectura IA"}<br>
+              <strong>Ajuste IA:</strong> ${hero.ai_fit_reason || "Sin ajuste IA"}<br>
+              <strong>Riesgo:</strong> ${(hero.motivos_riesgo || []).join(" · ") || "Sin alertas relevantes"}
             </div>
-            <div class="hero-box">
-              <div class="hero-box-title">Tactical score</div>
-              <div class="hero-box-value">${hero.tactical_score}</div>
-            </div>
-            <div class="hero-box">
-              <div class="hero-box-title">Goal score</div>
-              <div class="hero-box-value">${hero.goal_inminente_score}</div>
-            </div>
-            <div class="hero-box">
-              <div class="hero-box-title">Value score</div>
-              <div class="hero-box-value">${hero.value_score}</div>
-            </div>
-            <div class="hero-box">
-              <div class="hero-box-title">Risk score</div>
-              <div class="hero-box-value">${hero.risk_score}</div>
-            </div>
-            <div class="hero-box">
-              <div class="hero-box-title">Value engine</div>
-              <div class="hero-box-value">${hero.recomendacion_value || "NO_APOSTAR"}</div>
-            </div>
-            <div class="hero-box">
-              <div class="hero-box-title">AI score</div>
-              <div class="hero-box-value">${hero.ai_score}</div>
-            </div>
-            <div class="hero-box">
-              <div class="hero-box-title">AI decision score</div>
-              <div class="hero-box-value">${hero.ai_decision_score}</div>
-            </div>
-            <div class="hero-box">
-              <div class="hero-box-title">AI fit</div>
-              <div class="hero-box-value">${hero.ai_fit}</div>
-            </div>
-          </div>
-
-          <div class="hero-reason">
-            <strong>Motivo táctico:</strong> ${hero.reason || "Señal generada por el sistema"}<br>
-            <strong>Motivo value:</strong> ${hero.razon_value || "Sin análisis de value"}<br>
-            <strong>Lectura IA:</strong> ${hero.ai_reason || "Sin lectura IA"}<br>
-            <strong>Ajuste IA:</strong> ${hero.ai_fit_reason || "Sin ajuste IA"}<br>
-            <strong>Riesgo:</strong> ${(hero.motivos_riesgo || []).join(" · ") || "Sin alertas relevantes"}
           </div>
         </div>
       `;
@@ -1387,66 +1334,13 @@
           <div class="mini-signal">
             <div class="mini-signal-title">
               <span class="${tier.className}">${tier.label}</span>
-              <span class="${rankClass(s.signal_rank)}" style="margin-left:6px;">${s.signal_rank}</span>
+              <span class="${rankClass(s.signal_rank)}" style="margin-left:6px">${s.signal_rank}</span>
             </div>
             <div class="mini-signal-sub"><strong>${s.home} vs ${s.away}</strong></div>
             <div class="mini-signal-sub"><span class="country-flag">${countryToFlag(s.country)}</span>${s.league} · ${s.country}</div>
             <div class="mini-signal-sub">${marketLabelDinamico(s)}</div>
-            <div class="mini-signal-sub">Min ${s.minute} · Marcador ${s.score}</div>
             <div class="mini-signal-sub">AI ${s.ai_state} · ${s.ai_recommendation}</div>
             <div class="mini-signal-sub">Signal ${s.signal_score} · AI ${s.ai_decision_score}</div>
-          </div>
-        `;
-      }).join("");
-    }
-
-    function renderSignals() {
-      const contenedor = document.getElementById("signalList");
-
-      if (!cacheSignals.length) {
-        contenedor.innerHTML = `<div class="empty">No se detectaron señales.</div>`;
-        return;
-      }
-
-      contenedor.innerHTML = cacheSignals.slice(0, 8).map(s => {
-        const tier = getSignalTier(s.confidence, s.value);
-        const estado = s.estado_partido?.estado || "SIN DATO";
-
-        return `
-          <div class="signal-card">
-            <div class="signal-head">
-              <div>
-                <div class="${tier.className}">${tier.label}</div>
-                <div class="signal-market">${marketLabelDinamico(s)}</div>
-              </div>
-              <div class="signal-value">+${s.value}%</div>
-            </div>
-
-            <div class="signal-sub">
-              <strong>${s.home} vs ${s.away}</strong><br>
-              <span class="country-flag">${countryToFlag(s.country)}</span>${s.league} · ${s.country} · Min ${s.minute} · Marcador ${s.score}
-            </div>
-
-            <div class="signal-meta">
-              <span class="${rankClass(s.signal_rank)}">${s.signal_rank}</span>
-              <span class="pill">Signal ${s.signal_score}</span>
-              <span class="pill">AI ${s.ai_decision_score}</span>
-              <span class="pill">Goal ${s.goal_inminente_score}</span>
-              <span class="pill">Value ${s.value_pct}%</span>
-              <span class="${riskClass(s.risk_level)}">${s.risk_level}</span>
-              <span class="${estadoClass(estado)}">${estado}</span>
-              <span class="${aiStateClass(s.ai_state)}">${s.ai_state}</span>
-              <span class="${aiRecoClass(s.ai_recommendation)}">${s.ai_recommendation}</span>
-            </div>
-
-            <div class="signal-reason">
-              <strong>Táctico:</strong> ${s.reason || "Señal generada por el sistema"}<br>
-              <strong>Value:</strong> ${s.razon_value || "Sin análisis de value"}<br>
-              <strong>IA:</strong> ${s.ai_reason || "Sin lectura IA"}<br>
-              <strong>Ajuste IA:</strong> ${s.ai_fit_reason || "Sin ajuste IA"}<br>
-              <strong>Riesgo:</strong> ${(s.motivos_riesgo || []).join(" · ") || "Sin alertas"}<br>
-              <strong>Recomendación:</strong> ${s.ai_recommendation || s.recomendacion_final || "OBSERVAR"}
-            </div>
           </div>
         `;
       }).join("");
@@ -1466,9 +1360,11 @@
         const estado = signal?.estado_partido?.estado || "SIN DATO";
 
         return `
-          <div class="hot-card match-card-pro">
+          <div class="match-card match-card-pro">
             <div class="match-topline">
-              <div class="match-league-pro"><span class="country-flag">${countryToFlag(p.pais)}</span>${p.liga} · ${p.pais}</div>
+              <div class="match-league-pro">
+                <span class="country-flag">${countryToFlag(p.pais)}</span>${p.liga} · ${p.pais}
+              </div>
               <div class="signal-meta">
                 <span class="${estadoClass(estado)}">${estado}</span>
                 ${signal ? `<span class="${rankClass(signal.signal_rank)}">${signal.signal_rank}</span>` : ""}
@@ -1477,7 +1373,7 @@
 
             <div class="hot-title">${p.local} vs ${p.visitante}</div>
 
-            <div class="hot-sub">
+            <div class="hero-sub">
               Min ${p.minuto} · Marcador ${p.score} · Momentum ${p.momentum}
             </div>
 
@@ -1486,8 +1382,6 @@
               <span class="pill">Shots ${p.shots || 0}</span>
               <span class="pill">On Target ${p.shots_on_target || 0}</span>
               <span class="pill">Danger ${p.dangerous_attacks || 0}</span>
-              ${signal ? `<span class="${riskClass(signal.risk_level)}">${signal.risk_level}</span>` : ""}
-              ${signal ? `<span class="${aiStateClass(signal.ai_state)}">${signal.ai_state}</span>` : ""}
             </div>
 
             ${signal ? `
@@ -1504,16 +1398,12 @@
                   <div class="match-stat-title">Value</div>
                   <div class="match-stat-value">${signal.value_pct}%</div>
                 </div>
-                <div class="match-stat-box">
-                  <div class="match-stat-title">Reco</div>
-                  <div class="match-stat-value">${signal.ai_recommendation}</div>
-                </div>
               </div>
 
               <div class="match-insight">
                 <strong>Mercado:</strong> ${marketLabelDinamico(signal)}<br>
-                <strong>Lectura IA:</strong> ${signal.ai_reason || "Sin lectura IA"}<br>
-                <strong>Motivo táctico:</strong> ${signal.reason || "Sin detalle"}
+                <strong>IA:</strong> ${signal.ai_reason || "Sin lectura IA"}<br>
+                <strong>Motivo:</strong> ${signal.reason || "Sin detalle"}
               </div>
             ` : `
               <div class="match-insight">
@@ -1541,7 +1431,9 @@
         return `
           <div class="match-card match-card-pro">
             <div class="match-topline">
-              <div class="match-league-pro"><span class="country-flag">${countryToFlag(p.pais)}</span>${p.liga} · ${p.pais}</div>
+              <div class="match-league-pro">
+                <span class="country-flag">${countryToFlag(p.pais)}</span>${p.liga} · ${p.pais}
+              </div>
               <div class="signal-meta">
                 <span class="${estadoClass(estado)}">${estado}</span>
                 ${signal ? `<span class="${rankClass(signal.signal_rank)}">${signal.signal_rank}</span>` : ""}
@@ -1551,12 +1443,10 @@
 
             <div class="match-main">
               <div class="match-team">${p.local}</div>
-
               <div class="match-score-box">
                 <div class="match-status">${p.estado_partido}</div>
                 <div class="match-score">${p.marcador_local} - ${p.marcador_visitante}</div>
               </div>
-
               <div class="match-team">${p.visitante}</div>
             </div>
 
@@ -1575,20 +1465,13 @@
                   <div class="match-stat-title">Signal score</div>
                   <div class="match-stat-value">${signal.signal_score}</div>
                 </div>
-
                 <div class="match-stat-box">
                   <div class="match-stat-title">AI score</div>
                   <div class="match-stat-value">${signal.ai_decision_score}</div>
                 </div>
-
                 <div class="match-stat-box">
                   <div class="match-stat-title">Value</div>
                   <div class="match-stat-value">${signal.value_pct}%</div>
-                </div>
-
-                <div class="match-stat-box">
-                  <div class="match-stat-title">Risk</div>
-                  <div class="match-stat-value">${signal.risk_score}</div>
                 </div>
               </div>
 
@@ -1607,7 +1490,7 @@
               </div>
             ` : `
               <div class="match-insight">
-                <strong>Lectura general:</strong> Partido en observación. Aún no hay señal activa para este encuentro.
+                Partido en observación. Aún no hay señal activa para este encuentro.
               </div>
             `}
           </div>
@@ -1620,7 +1503,7 @@
         const data = await fetchJSON("/status");
         document.getElementById("backendStatus").textContent = data.status || "ok";
         document.getElementById("backendMessage").textContent = data.service || "Backend operativo";
-        setStatus("Backend conectado", "ok");
+        setStatus("Sistema conectado", "ok");
       } catch (err) {
         document.getElementById("backendStatus").textContent = "error";
         document.getElementById("backendMessage").textContent = err.message;
@@ -1651,13 +1534,12 @@
         const partidosRaw = Array.isArray(data) ? data : (data.partidos || []);
         cachePartidos = partidosRaw.map(normalizarPartido);
 
-        document.getElementById("totalMatches").textContent =
-          data.partidos_analizados ?? data.total_partidos ?? cachePartidos.length;
+        document.getElementById("totalMatches").textContent = data.partidos_analizados ?? data.total_partidos ?? cachePartidos.length;
 
         poblarFiltroLigas(cachePartidos);
         renderHotMatches();
         renderMatchList();
-        setStatus("Partidos actualizados", "ok");
+        setStatus("Panel actualizado", "ok");
       } catch (err) {
         document.getElementById("hotMatches").innerHTML = `<div class="empty danger">Error cargando partidos: ${err.message}</div>`;
         document.getElementById("matchList").innerHTML = `<div class="empty danger">Error cargando partidos: ${err.message}</div>`;
@@ -1671,19 +1553,16 @@
         const senalesRaw = Array.isArray(data) ? data : (data.signals || []);
         cacheSignals = senalesRaw.map(normalizarSignal);
 
-        document.getElementById("totalSignals").textContent =
-          data.total_senales ?? cacheSignals.length;
+        document.getElementById("totalSignals").textContent = data.total_senales ?? cacheSignals.length;
 
         renderHeroSignal();
         renderMiniSignals();
-        renderSignals();
         renderHotMatches();
         renderMatchList();
         setStatus("Señales actualizadas", "ok");
       } catch (err) {
         document.getElementById("heroSignal").innerHTML = `<div class="card"><div class="section-title">🎯 SEÑAL PRINCIPAL DEL SISTEMA</div><div class="empty danger">Error cargando señal principal: ${err.message}</div></div>`;
         document.getElementById("miniSignalList").innerHTML = `<div class="empty danger">Error cargando señales rápidas: ${err.message}</div>`;
-        document.getElementById("signalList").innerHTML = `<div class="empty danger">Error cargando señales: ${err.message}</div>`;
         setStatus("Error en /signals", "off");
       }
     }
@@ -1739,10 +1618,12 @@
           contenedor.innerHTML = history.slice(-8).reverse().map(h => `
             <div class="history-item">
               <div class="history-title">${h.home || "Local"} vs ${h.away || "Visitante"}</div>
-              <div class="history-sub"><span class="country-flag">${countryToFlag(h.country || "Otros")}</span>${h.league || "-"} · ${h.country || "-"}</div>
-              <div class="history-sub">Mercado: ${h.market || "-"}</div>
-              <div class="history-sub">Min ${h.minute ?? 0} · Cuota ${h.odd ?? "-"} · Value ${h.value ?? "-"}%</div>
-              <div class="history-sub">Estado: ${h.estado_resultado || "pendiente"}</div>
+              <div class="history-sub">
+                <span class="country-flag">${countryToFlag(h.country || "Otros")}</span>${h.league || "-"} · ${h.country || "-"}<br>
+                Mercado: ${h.market || "-"}<br>
+                Min ${h.minute ?? 0} · Cuota ${h.odd ?? "-"} · Value ${h.value ?? "-"}%<br>
+                Estado: ${h.estado_resultado || "pendiente"}
+              </div>
             </div>
           `).join("");
         }
