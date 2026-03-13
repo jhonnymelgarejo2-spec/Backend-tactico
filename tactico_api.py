@@ -1,573 +1,292 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
-from pathlib import Path
-from threading import Thread, Lock
-from datetime import datetime
+from flask import Flask, jsonify
+from flask_cors import CORS
+import random
 import time
-import traceback
 
-from live_router import router as live_router
-from api_football_fetcher import obtener_partidos_en_vivo
-from signals import generar_senales
-from ranking_engine import (
-    rankear_senales,
-    obtener_senal_principal,
-    obtener_partidos_calientes,
-)
+app = Flask(__name__)
+CORS(app)
 
-from history_store import (
-    cargar_historial,
-    guardar_senales_en_historial,
-    obtener_estadisticas_historial,
-)
+# =========================================
+# CACHE DEL SISTEMA
+# =========================================
 
-from prediction_resolver import resolver_historial_con_partidos_finalizados
+cache_partidos = []
+cache_senales = []
+cache_historial = []
 
+# =========================================
+# GENERADOR DEMO DE PARTIDOS
+# =========================================
 
-app = FastAPI(
-    title="JHONNY ELITE API",
-    version="V13_ELITE"
-)
+def generar_partidos_demo():
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    partidos = []
 
-app.include_router(live_router)
+    equipos = [
+        ("Arsenal","Chelsea","Premier League","England"),
+        ("Barcelona","Valencia","La Liga","Spain"),
+        ("Juventus","Milan","Serie A","Italy"),
+        ("River Plate","Boca Juniors","Liga Profesional Argentina","Argentina"),
+        ("Flamengo","Palmeiras","Brasileirao","Brazil"),
+        ("Toluca W","Pumas UNAM W","Liga MX Femenil","Mexico"),
+        ("Guapore","Rondoniense","Rondoniense","Brazil")
+    ]
 
-# ---------------------------------
-# RUTAS DE ARCHIVOS
-# ---------------------------------
-BASE_DIR = Path(__file__).resolve().parent
-STATIC_DIR = BASE_DIR / "static"
-INDEX_FILE = STATIC_DIR / "index.html"
+    for i,(home,away,league,country) in enumerate(equipos):
 
-# ---------------------------------
-# MEMORIA GLOBAL
-# ---------------------------------
-DATA_LOCK = Lock()
+        marcador_local=random.randint(0,3)
+        marcador_visitante=random.randint(0,3)
 
-AUTO_SCAN_DATA = {
-    "partidos": [],
-    "signals": [],
-    "hot_matches": [],
-    "hero_signal": None,
-    "league_explorer": {},
-    "last_scan": None,
-    "last_scan_iso": None,
-    "auto_scan_activo": True,
-    "intervalo_segundos": 60,
-    "errores": 0,
-    "ultimo_error": None,
-    "backend_version": "V13_ELITE"
-}
+        partidos.append({
 
+            "id":i+1,
+            "local":home,
+            "visitante":away,
+            "liga":league,
+            "pais":country,
+            "minuto":random.randint(10,85),
+            "estado_partido":"EN_JUEGO",
 
-# ---------------------------------
-# UTILIDADES
-# ---------------------------------
-def ahora_ts() -> int:
-    return int(time.time())
+            "marcador_local":marcador_local,
+            "marcador_visitante":marcador_visitante,
 
+            "xG":round(random.uniform(0.2,3.2),2),
 
-def ahora_iso() -> str:
-    return datetime.utcnow().isoformat()
+            "shots":random.randint(3,15),
+            "shots_on_target":random.randint(1,7),
+            "dangerous_attacks":random.randint(10,60),
 
+            "momentum":random.choice(["BAJO","MEDIO","ALTO"]),
 
-def construir_league_explorer(partidos, senales):
-    regiones = {
-        "Europa": [],
-        "Sudamérica": [],
-        "Norteamérica": [],
-        "Asia": [],
-        "África": [],
-        "Otros": [],
-    }
+            "goal_pressure":{
+                "pressure":random.randint(0,100)
+            },
 
-    mapa_pais_region = {
-        # Europa
-        "England": "Europa",
-        "Spain": "Europa",
-        "Italy": "Europa",
-        "Germany": "Europa",
-        "France": "Europa",
-        "Portugal": "Europa",
-        "Netherlands": "Europa",
-        "Belgium": "Europa",
-        "Turkey": "Europa",
-        "Scotland": "Europa",
-        "Croatia": "Europa",
-        "Austria": "Europa",
-        "Switzerland": "Europa",
-        "Czech-Republic": "Europa",
-        "Poland": "Europa",
-        "Greece": "Europa",
-        "Romania": "Europa",
-        "Serbia": "Europa",
-        "Denmark": "Europa",
-        "Norway": "Europa",
-        "Sweden": "Europa",
-        "Finland": "Europa",
-        "Ukraine": "Europa",
-        "Europe": "Europa",
+            "goal_predictor":{
+                "prob_10":random.randint(0,100)
+            },
 
-        # Sudamérica
-        "Argentina": "Sudamérica",
-        "Brazil": "Sudamérica",
-        "Chile": "Sudamérica",
-        "Colombia": "Sudamérica",
-        "Uruguay": "Sudamérica",
-        "Paraguay": "Sudamérica",
-        "Peru": "Sudamérica",
-        "Bolivia": "Sudamérica",
-        "Ecuador": "Sudamérica",
-        "Venezuela": "Sudamérica",
-        "South-America": "Sudamérica",
+            "chaos":{
+                "chaos_level":random.randint(0,100)
+            }
 
-        # Norteamérica
-        "USA": "Norteamérica",
-        "Mexico": "Norteamérica",
-        "Canada": "Norteamérica",
-        "Costa-Rica": "Norteamérica",
-        "Honduras": "Norteamérica",
-        "Guatemala": "Norteamérica",
-        "El-Salvador": "Norteamérica",
-        "Panama": "Norteamérica",
-        "North-America": "Norteamérica",
-        "World": "Otros",
+        })
 
-        # Asia
-        "Japan": "Asia",
-        "China": "Asia",
-        "South-Korea": "Asia",
-        "Saudi-Arabia": "Asia",
-        "Qatar": "Asia",
-        "UAE": "Asia",
-        "India": "Asia",
-        "Iran": "Asia",
-        "Iraq": "Asia",
-        "Asia": "Asia",
+    return partidos
 
-        # África
-        "Morocco": "África",
-        "Egypt": "África",
-        "Algeria": "África",
-        "Tunisia": "África",
-        "South-Africa": "África",
-        "Africa": "África",
-    }
+# =========================================
+# GENERADOR DE SEÑALES DEMO
+# =========================================
 
-    contador = {}
+def generar_senales_demo(partidos):
+
+    senales=[]
 
     for p in partidos:
-        liga = p.get("liga", "Liga desconocida")
-        pais = p.get("pais", "Otros")
-        region = mapa_pais_region.get(pais, "Otros")
 
-        key = (region, pais, liga)
-        if key not in contador:
-            contador[key] = {
-                "region": region,
-                "country": pais,
-                "league": liga,
-                "matches": 0,
-                "signals": 0,
-                "elite": 0,
-                "top": 0,
+        confianza=random.randint(60,95)
+        value=random.randint(3,25)
+
+        senales.append({
+
+            "match_id":p["id"],
+            "home":p["local"],
+            "away":p["visitante"],
+            "league":p["liga"],
+            "country":p["pais"],
+            "minute":p["minuto"],
+            "score":f"{p['marcador_local']}-{p['marcador_visitante']}",
+
+            "market":"RESULT_HOLDS_NEXT_15",
+            "selection":"Se mantiene resultado próximos 15 min",
+
+            "odd":round(random.uniform(1.6,2.3),2),
+
+            "confidence":confianza,
+            "value":value,
+
+            "signal_score":round(random.uniform(150,260),2),
+            "tactical_score":round(random.uniform(5,25),2),
+            "goal_inminente_score":round(random.uniform(1,5),2),
+
+            "value_score":random.randint(1,10),
+            "risk_score":random.randint(1,6),
+
+            "signal_rank":random.choice(["ELITE","TOP","ALTA"]),
+            "risk_level":random.choice(["APTO","RIESGO_MEDIO"]),
+
+            "ai_state":random.choice([
+                "CONTROL_REAL",
+                "CIERRE_TACTICO",
+                "CAOS_UTIL",
+                "NEUTRO"
+            ]),
+
+            "ai_score":random.randint(20,100),
+            "ai_decision_score":random.randint(30,140),
+
+            "ai_recommendation":random.choice([
+                "APOSTAR_FUERTE",
+                "APOSTAR",
+                "APOSTAR_SUAVE",
+                "OBSERVAR"
+            ]),
+
+            "reason":"Ritmo controlado + ventaja táctica local",
+            "razon_value":"Cuota inflada por mercado",
+            "ai_reason":"IA detecta control territorial",
+
+            "resultado_probable":"2-1",
+            "ganador_probable":p["local"],
+            "over_under_probable":"OVER 2.5",
+
+            "gol_inminente":{
+                "gol_inminente":random.choice([True,False])
             }
 
-        contador[key]["matches"] += 1
+        })
 
-    for s in senales:
-        liga = s.get("league", "Liga desconocida")
-        pais = s.get("country", "Otros")
-        region = mapa_pais_region.get(pais, "Otros")
-        rank = str(s.get("signal_rank", "NORMAL")).upper()
+    return senales
 
-        key = (region, pais, liga)
-        if key not in contador:
-            contador[key] = {
-                "region": region,
-                "country": pais,
-                "league": liga,
-                "matches": 0,
-                "signals": 0,
-                "elite": 0,
-                "top": 0,
-            }
+# =========================================
+# STATUS
+# =========================================
 
-        contador[key]["signals"] += 1
-        if rank == "ELITE":
-            contador[key]["elite"] += 1
-        elif rank == "TOP":
-            contador[key]["top"] += 1
+@app.route("/status")
+def status():
 
-    for item in contador.values():
-        regiones[item["region"]].append(item)
+    return jsonify({
 
-    for region in regiones:
-        regiones[region].sort(
-            key=lambda x: (x["signals"], x["matches"], x["elite"], x["top"]),
-            reverse=True
-        )
+        "status":"ok",
+        "service":"JHONNY_ELITE_BACKEND"
 
-    return regiones
-
-
-def normalizar_partido_crudo(p: dict) -> dict:
-    local = p.get("local") or p.get("equipo_local") or p.get("home") or "Local"
-    visitante = p.get("visitante") or p.get("equipo_visitante") or p.get("away") or "Visitante"
-    liga = p.get("liga") or p.get("torneo") or p.get("league") or "Liga desconocida"
-    pais = p.get("pais") or p.get("country") or "Otros"
-    minuto = int(p.get("minuto", p.get("minute", 0)) or 0)
-    estado_partido = p.get("estado_partido") or p.get("estado") or p.get("status") or "en_juego"
-    match_id = p.get("id", f"{local}-{visitante}-{minuto}")
-
-    score_raw = str(
-        p.get("score")
-        or f"{p.get('marcador_local', 0)}-{p.get('marcador_visitante', 0)}"
-    ).replace("–", "-")
-
-    partes = score_raw.split("-")
-
-    marcador_local = (
-        int(str(partes[0]).strip())
-        if len(partes) > 0 and str(partes[0]).strip().isdigit()
-        else int(p.get("marcador_local", 0) or 0)
-    )
-
-    marcador_visitante = (
-        int(str(partes[1]).strip())
-        if len(partes) > 1 and str(partes[1]).strip().isdigit()
-        else int(p.get("marcador_visitante", 0) or 0)
-    )
-
-    return {
-        "id": match_id,
-        "liga": liga,
-        "pais": pais,
-        "local": local,
-        "visitante": visitante,
-        "minuto": minuto,
-        "marcador_local": marcador_local,
-        "marcador_visitante": marcador_visitante,
-        "estado_partido": estado_partido,
-        "score": f"{marcador_local}-{marcador_visitante}",
-        "xG": float(p.get("xG", p.get("xg", 0)) or 0),
-        "momentum": p.get("momentum", "MEDIO"),
-        "cuota": float(p.get("cuota", 1.85) or 1.85),
-        "prob_real": float(p.get("prob_real", 0.75) or 0.75),
-        "prob_implicita": float(p.get("prob_implicita", 0.54) or 0.54),
-        "goal_pressure": p.get("goal_pressure", {}) or {},
-        "goal_predictor": p.get("goal_predictor", {}) or {},
-        "chaos": p.get("chaos", {}) or {},
-        "shots": float(p.get("shots", 0) or 0),
-        "shots_on_target": float(p.get("shots_on_target", 0) or 0),
-        "dangerous_attacks": float(p.get("dangerous_attacks", 0) or 0),
-    }
-
-
-def escanear_y_actualizar_memoria():
-    partidos_crudos = obtener_partidos_en_vivo()
-    if not isinstance(partidos_crudos, list):
-        partidos_crudos = []
-
-    partidos = [normalizar_partido_crudo(p) for p in partidos_crudos]
-
-    senales = generar_senales(partidos)
-    if not isinstance(senales, list):
-        senales = []
-
-    senales_rank = rankear_senales(senales)
-    hero_signal = obtener_senal_principal(senales_rank)
-    hot_matches = obtener_partidos_calientes(partidos, limite=8)
-    league_explorer = construir_league_explorer(partidos, senales_rank)
-
-    # Guardar señales en historial
-    try:
-        guardar_senales_en_historial(senales_rank)
-    except Exception as e:
-        print("Error guardando historial:", e)
-
-    # Resolver predicciones si ya hay partidos finalizados
-    try:
-        partidos_finalizados = [
-            p for p in partidos
-            if str(p.get("estado_partido", "")).lower() in ["finalizado", "finished", "ft", "ended"]
-        ]
-
-        if partidos_finalizados:
-            resueltas = resolver_historial_con_partidos_finalizados(partidos_finalizados)
-            if resueltas > 0:
-                print(f"Predicciones resueltas: {resueltas}")
-    except Exception as e:
-        print("Error resolviendo predicciones:", e)
-
-    ts = ahora_ts()
-    iso = ahora_iso()
-
-    with DATA_LOCK:
-        AUTO_SCAN_DATA["partidos"] = partidos
-        AUTO_SCAN_DATA["signals"] = senales_rank
-        AUTO_SCAN_DATA["hot_matches"] = hot_matches
-        AUTO_SCAN_DATA["hero_signal"] = hero_signal
-        AUTO_SCAN_DATA["league_explorer"] = league_explorer
-        AUTO_SCAN_DATA["last_scan"] = ts
-        AUTO_SCAN_DATA["last_scan_iso"] = iso
-        AUTO_SCAN_DATA["ultimo_error"] = None
-
-    return partidos, senales_rank, hero_signal, hot_matches, league_explorer
-
-
-# ---------------------------------
-# AUTO SCAN
-# ---------------------------------
-def auto_scan_loop():
-    while True:
-        try:
-            escanear_y_actualizar_memoria()
-            print("AUTO SCAN ejecutado correctamente")
-        except Exception as e:
-            with DATA_LOCK:
-                AUTO_SCAN_DATA["errores"] += 1
-                AUTO_SCAN_DATA["ultimo_error"] = str(e)
-
-            print("Error en auto scan:", str(e))
-            print(traceback.format_exc())
-
-        time.sleep(AUTO_SCAN_DATA["intervalo_segundos"])
-
-
-@app.on_event("startup")
-def startup_event():
-    thread = Thread(target=auto_scan_loop, daemon=True)
-    thread.start()
-
-
-# ---------------------------------
-# FRONTEND
-# ---------------------------------
-@app.get("/")
-def home():
-    if INDEX_FILE.exists():
-        return FileResponse(INDEX_FILE)
-
-    return JSONResponse({
-        "ok": True,
-        "mensaje": "Backend táctico funcionando",
-        "version": "V13_ELITE",
-        "frontend": "index.html no encontrado en /static"
     })
 
+# =========================================
+# SCAN PARTIDOS
+# =========================================
 
-# ---------------------------------
-# ESTADO
-# ---------------------------------
-@app.get("/status")
-def status():
-    with DATA_LOCK:
-        return {
-            "status": "ok",
-            "service": "backend-tactico",
-            "version": AUTO_SCAN_DATA["backend_version"],
-            "auto_scan_activo": AUTO_SCAN_DATA["auto_scan_activo"],
-            "ultimo_scan": AUTO_SCAN_DATA["last_scan"],
-            "ultimo_scan_iso": AUTO_SCAN_DATA["last_scan_iso"],
-            "partidos_cache": len(AUTO_SCAN_DATA["partidos"]),
-            "senales_cache": len(AUTO_SCAN_DATA["signals"]),
-            "hot_matches_cache": len(AUTO_SCAN_DATA["hot_matches"]),
-            "hero_signal_disponible": AUTO_SCAN_DATA["hero_signal"] is not None,
-            "errores": AUTO_SCAN_DATA["errores"],
-            "ultimo_error": AUTO_SCAN_DATA["ultimo_error"],
-        }
-
-
-@app.get("/debug-routes")
-def debug_routes():
-    return {
-        "ok": True,
-        "routes": [
-            "/",
-            "/status",
-            "/debug-routes",
-            "/partidos-en-vivo",
-            "/scan",
-            "/signals",
-            "/hero-signal",
-            "/hot-matches",
-            "/league-explorer",
-            "/history",
-            "/learning-stats",
-            "/auto-scan/status",
-            "/estado",
-            "/rutas-de-depuracion",
-            "/escanear",
-            "/senales",
-        ],
-        "version": "V13_ELITE"
-    }
-
-
-@app.get("/estado")
-def estado_alias():
-    return status()
-
-
-@app.get("/rutas-de-depuracion")
-def debug_routes_alias():
-    return {
-        "ok": True,
-        "rutas": [
-            "/",
-            "/estado",
-            "/rutas-de-depuracion",
-            "/partidos-en-vivo",
-            "/escanear",
-            "/senales",
-            "/hero-signal",
-            "/hot-matches",
-            "/league-explorer",
-            "/history",
-            "/learning-stats",
-            "/auto-scan/status",
-        ],
-        "version": "V13_ELITE"
-    }
-
-
-# ---------------------------------
-# RUTAS PRINCIPALES
-# ---------------------------------
-@app.get("/scan")
+@app.route("/scan")
 def scan():
-    try:
-        with DATA_LOCK:
-            partidos = list(AUTO_SCAN_DATA["partidos"])
-            last_scan = AUTO_SCAN_DATA["last_scan"]
-            last_scan_iso = AUTO_SCAN_DATA["last_scan_iso"]
 
-        return {
-            "estado": "OK",
-            "total_partidos": len(partidos),
-            "partidos_analizados": len(partidos),
-            "partidos": partidos,
-            "last_scan": last_scan,
-            "last_scan_iso": last_scan_iso,
-        }
-    except Exception as e:
-        return {
-            "estado": "error",
-            "detalle": str(e),
-            "partidos": []
-        }
+    global cache_partidos
 
+    cache_partidos=generar_partidos_demo()
 
-@app.get("/signals")
-def signals_endpoint():
-    try:
-        with DATA_LOCK:
-            partidos = list(AUTO_SCAN_DATA["partidos"])
-            senales = list(AUTO_SCAN_DATA["signals"])
-            last_scan = AUTO_SCAN_DATA["last_scan"]
-            last_scan_iso = AUTO_SCAN_DATA["last_scan_iso"]
+    return jsonify({
 
-        return {
-            "estado": "OK",
-            "total_partidos": len(partidos),
-            "total_senales": len(senales),
-            "signals": senales,
-            "last_scan": last_scan,
-            "last_scan_iso": last_scan_iso,
-        }
-    except Exception as e:
-        return {
-            "estado": "error",
-            "detalle": str(e),
-            "signals": []
-        }
+        "partidos_analizados":len(cache_partidos),
+        "partidos":cache_partidos
 
+    })
 
-@app.get("/hero-signal")
-def hero_signal():
-    try:
-        with DATA_LOCK:
-            hero = AUTO_SCAN_DATA["hero_signal"]
-            last_scan = AUTO_SCAN_DATA["last_scan"]
-            last_scan_iso = AUTO_SCAN_DATA["last_scan_iso"]
+# =========================================
+# SIGNALS
+# =========================================
 
-        return {
-            "estado": "OK",
-            "hero_signal": hero,
-            "last_scan": last_scan,
-            "last_scan_iso": last_scan_iso,
-        }
-    except Exception as e:
-        return {
-            "estado": "error",
-            "detalle": str(e),
-            "hero_signal": None
-        }
+@app.route("/signals")
+def signals():
 
+    global cache_senales
 
-@app.get("/hot-matches")
-def hot_matches():
-    try:
-        with DATA_LOCK:
-            partidos = list(AUTO_SCAN_DATA["hot_matches"])
-            last_scan = AUTO_SCAN_DATA["last_scan"]
-            last_scan_iso = AUTO_SCAN_DATA["last_scan_iso"]
+    if not cache_partidos:
+        cache_partidos.extend(generar_partidos_demo())
 
-        return {
-            "estado": "OK",
-            "total_hot_matches": len(partidos),
-            "hot_matches": partidos,
-            "last_scan": last_scan,
-            "last_scan_iso": last_scan_iso,
-        }
-    except Exception as e:
-        return {
-            "estado": "error",
-            "detalle": str(e),
-            "hot_matches": []
-        }
+    cache_senales=generar_senales_demo(cache_partidos)
 
+    return jsonify({
 
-@app.get("/league-explorer")
+        "total_senales":len(cache_senales),
+        "signals":cache_senales
+
+    })
+
+# =========================================
+# EXPLORADOR DE LIGAS
+# =========================================
+
+@app.route("/league-explorer")
 def league_explorer():
-    try:
-        with DATA_LOCK:
-            data = dict(AUTO_SCAN_DATA["league_explorer"])
-            last_scan = AUTO_SCAN_DATA["last_scan"]
-            last_scan_iso = AUTO_SCAN_DATA["last_scan_iso"]
 
-        return {
-            "estado": "OK",
-            "league_explorer": data,
-            "last_scan": last_scan,
-            "last_scan_iso": last_scan_iso,
-        }
-    except Exception as e:
-        return {
-            "estado": "error",
-            "detalle": str(e),
-            "league_explorer": {}
-        }
+    ligas={}
+
+    for p in cache_partidos:
+
+        region="Europe"
+
+        if p["pais"] in ["Brazil","Argentina"]:
+            region="South America"
+
+        if p["pais"]=="Mexico":
+            region="North America"
+
+        if region not in ligas:
+            ligas[region]=[]
+
+        ligas[region].append({
+
+            "league":p["liga"],
+            "country":p["pais"],
+            "matches":1,
+            "signals":1,
+            "elite":0,
+            "top":1
+
+        })
+
+    return jsonify({
+
+        "league_explorer":ligas
+
+    })
+
+# =========================================
+# HISTORIAL
+# =========================================
+
+@app.route("/history")
+def history():
+
+    return jsonify(cache_historial)
+
+# =========================================
+# STATS DEL SISTEMA
+# =========================================
+
+@app.route("/learning-stats")
+def learning_stats():
+
+    return jsonify({
+
+        "ganadas":0,
+        "perdidas":0,
+        "win_rate":0,
+        "roi_percent":0,
+        "signals_elite":0,
+        "signals_top":len(cache_senales),
+        "value_promedio":21,
+        "riesgo_medio":4.6
+
+    })
+
+# =========================================
+# DETALLE DEL PARTIDO
+# =========================================
+
 @app.route("/match-details/<match_id>")
 def match_details(match_id):
+
     global cache_partidos, cache_senales
 
     partido = next((p for p in cache_partidos if str(p.get("id")) == str(match_id)), None)
+
     if not partido:
         return jsonify({"error": "Partido no encontrado"}), 404
 
     senal = next((s for s in cache_senales if str(s.get("match_id")) == str(match_id)), None)
 
     return jsonify({
+
         "match_id": partido.get("id"),
         "home": partido.get("local"),
         "away": partido.get("visitante"),
@@ -575,84 +294,31 @@ def match_details(match_id):
         "country": partido.get("pais"),
         "minute": partido.get("minuto"),
         "status": partido.get("estado_partido"),
-        "score": f"{partido.get('marcador_local', 0)}-{partido.get('marcador_visitante', 0)}",
-        "marcador_local": partido.get("marcador_local", 0),
-        "marcador_visitante": partido.get("marcador_visitante", 0),
-        "xg": partido.get("xG", 0),
-        "shots": partido.get("shots", 0),
-        "shots_on_target": partido.get("shots_on_target", 0),
-        "dangerous_attacks": partido.get("dangerous_attacks", 0),
-        "momentum": partido.get("momentum", "MEDIO"),
-        "goal_pressure": partido.get("goal_pressure", {}),
-        "goal_predictor": partido.get("goal_predictor", {}),
-        "chaos": partido.get("chaos", {}),
+
+        "score": f"{partido.get('marcador_local',0)}-{partido.get('marcador_visitante',0)}",
+
+        "marcador_local": partido.get("marcador_local",0),
+        "marcador_visitante": partido.get("marcador_visitante",0),
+
+        "xg": partido.get("xG",0),
+
+        "shots": partido.get("shots",0),
+        "shots_on_target": partido.get("shots_on_target",0),
+        "dangerous_attacks": partido.get("dangerous_attacks",0),
+
+        "momentum": partido.get("momentum","MEDIO"),
+
+        "goal_pressure": partido.get("goal_pressure",{}),
+        "goal_predictor": partido.get("goal_predictor",{}),
+        "chaos": partido.get("chaos",{}),
+
         "signal": senal or None
+
     })
 
-@app.get("/partidos-en-vivo")
-def partidos_en_vivo():
-    return scan()
+# =========================================
+# RUN SERVER
+# =========================================
 
-
-@app.get("/escanear")
-def scan_alias():
-    return scan()
-
-
-@app.get("/senales")
-def signals_alias():
-    return signals_endpoint()
-
-
-# ---------------------------------
-# HISTORIAL Y APRENDIZAJE
-# ---------------------------------
-@app.get("/history")
-def history():
-    try:
-        historial = cargar_historial()
-        return historial[-100:]
-    except Exception:
-        return []
-
-
-@app.get("/learning-stats")
-def learning_stats():
-    try:
-        return obtener_estadisticas_historial()
-    except Exception as e:
-        return {
-            "error": str(e),
-            "total_senales": 0,
-            "resueltas": 0,
-            "ganadas": 0,
-            "perdidas": 0,
-            "win_rate": 0,
-            "roi_percent": 0,
-            "signals_elite": 0,
-            "signals_top": 0,
-            "value_promedio": 0,
-            "riesgo_medio": 0,
-        }
-
-
-# ---------------------------------
-# AUTO SCAN STATUS
-# ---------------------------------
-@app.get("/auto-scan/status")
-def auto_scan_status():
-    with DATA_LOCK:
-        return {
-            "status": "ok",
-            "auto_scan_activo": AUTO_SCAN_DATA["auto_scan_activo"],
-            "intervalo_segundos": AUTO_SCAN_DATA["intervalo_segundos"],
-            "ultimo_scan": AUTO_SCAN_DATA["last_scan"],
-            "ultimo_scan_iso": AUTO_SCAN_DATA["last_scan_iso"],
-            "partidos_cache": len(AUTO_SCAN_DATA["partidos"]),
-            "senales_cache": len(AUTO_SCAN_DATA["signals"]),
-            "hot_matches_cache": len(AUTO_SCAN_DATA["hot_matches"]),
-            "hero_signal_disponible": AUTO_SCAN_DATA["hero_signal"] is not None,
-            "errores": AUTO_SCAN_DATA["errores"],
-            "ultimo_error": AUTO_SCAN_DATA["ultimo_error"],
-    }
-
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)
