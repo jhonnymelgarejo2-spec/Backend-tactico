@@ -7,29 +7,6 @@ from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
 
 
-# =========================================================
-# IMPORTS DEL SISTEMA
-# =========================================================
-try:
-    from MI_PROYECTO.signal_engine import generar_senal
-except Exception:
-    try:
-        from signal_engine import generar_senal
-    except Exception:
-        generar_senal = None
-
-try:
-    from MI_PROYECTO.live_fetcher import obtener_partidos_en_vivo
-except Exception:
-    try:
-        from live_fetcher import obtener_partidos_en_vivo
-    except Exception:
-        obtener_partidos_en_vivo = None
-
-
-# =========================================================
-# APP FLASK
-# =========================================================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
@@ -37,10 +14,6 @@ STATIC_DIR = os.path.join(BASE_DIR, "static")
 app = Flask(__name__, template_folder=TEMPLATES_DIR, static_folder=STATIC_DIR)
 CORS(app)
 
-
-# =========================================================
-# CONFIG
-# =========================================================
 AUTO_SCAN_INTERVAL = 60
 MAX_MINUTE_FOR_SIGNAL = 88
 MIN_CONFIDENCE = 68
@@ -55,7 +28,27 @@ auto_scan_activo = True
 
 
 # =========================================================
-# HELPERS GENERALES
+# IMPORTS OPCIONALES
+# =========================================================
+try:
+    from MI_PROYECTO.signal_engine import generar_senal as generar_senal_real
+except Exception:
+    try:
+        from signal_engine import generar_senal as generar_senal_real
+    except Exception:
+        generar_senal_real = None
+
+try:
+    from MI_PROYECTO.live_fetcher import obtener_partidos_en_vivo as obtener_partidos_en_vivo_real
+except Exception:
+    try:
+        from live_fetcher import obtener_partidos_en_vivo as obtener_partidos_en_vivo_real
+    except Exception:
+        obtener_partidos_en_vivo_real = None
+
+
+# =========================================================
+# HELPERS
 # =========================================================
 def now_ts() -> float:
     return time.time()
@@ -95,44 +88,20 @@ def to_float(valor: Any, default: float = 0.0) -> float:
 # FILTRO MAESTRO DE PARTIDO VIVO
 # =========================================================
 ESTADOS_FINALIZADOS = {
-    "ft",
-    "finished",
-    "finalizado",
-    "ended",
-    "end",
-    "after penalties",
-    "pen",
-    "pens",
-    "aet",
-    "final",
-    "fulltime",
-    "match finished",
+    "ft", "finished", "finalizado", "ended", "end",
+    "after penalties", "pen", "pens", "aet", "final",
+    "fulltime", "match finished"
 }
 
 ESTADOS_NO_VALIDOS = {
-    "cancelled",
-    "canceled",
-    "postponed",
-    "suspended",
-    "abandoned",
-    "deleted",
-    "walkover",
-    "interrupted",
+    "cancelled", "canceled", "postponed", "suspended",
+    "abandoned", "deleted", "walkover", "interrupted"
 }
 
 ESTADOS_VIVOS = {
-    "live",
-    "inplay",
-    "in_play",
-    "en_juego",
-    "activo",
-    "1h",
-    "2h",
-    "ht",
-    "halftime",
-    "descanso",
-    "extra time",
-    "et",
+    "live", "inplay", "in_play", "en_juego", "activo",
+    "1h", "2h", "ht", "halftime", "descanso",
+    "extra time", "et"
 }
 
 
@@ -145,9 +114,9 @@ def extraer_estado_partido(p: Dict[str, Any]) -> str:
         p.get("status"),
         p.get("estado"),
         p.get("match_status"),
-        fixture.get("status"),
         fixture_status.get("short"),
         fixture_status.get("long"),
+        fixture.get("status"),
     ]
 
     for c in candidatos:
@@ -211,21 +180,6 @@ def partido_esta_vivo(p: Dict[str, Any]) -> bool:
     estado = extraer_estado_partido(p)
     minuto = extraer_minuto_partido(p)
 
-    print(
-        "DEBUG VIVO ->",
-        p.get("local"),
-        "vs",
-        p.get("visitante"),
-        "| estado:",
-        estado,
-        "| minuto:",
-        minuto,
-        "| live:",
-        p.get("live"),
-        "| is_live:",
-        p.get("is_live"),
-    )
-
     if partido_esta_suspendido_o_invalido(p):
         return False
 
@@ -259,8 +213,6 @@ def partido_es_apostable(p: Dict[str, Any]) -> Tuple[bool, str]:
 # NORMALIZACION
 # =========================================================
 def normalizar_partido(raw: Dict[str, Any]) -> Dict[str, Any]:
-    print("PARTIDO RAW NORMALIZAR:", raw)
-
     fixture = raw.get("fixture") or {}
     teams = raw.get("teams") or {}
     goals = raw.get("goals") or {}
@@ -328,8 +280,6 @@ def limpiar_cache_partidos(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any
     for p in solo_vivos:
         unicos[str(p.get("id"))] = p
 
-    print("TOTAL NORMALIZADOS:", len(normalizados))
-    print("TOTAL VIVOS:", len(solo_vivos))
     return list(unicos.values())
 
 
@@ -437,10 +387,8 @@ def filtrar_value_bets_reales(senal: Dict[str, Any]) -> bool:
 
     if value < MIN_VALUE:
         return False
-
     if confidence < MIN_CONFIDENCE:
         return False
-
     if riesgo == "ALTO" and value < 10:
         return False
 
@@ -448,147 +396,7 @@ def filtrar_value_bets_reales(senal: Dict[str, Any]) -> bool:
 
 
 # =========================================================
-# GENERACION DE SEÑALES
-# =========================================================
-def generar_senal_fallback(datos: Dict[str, Any]) -> Dict[str, Any]:
-    xg = to_float(datos.get("xG"), 0)
-    marcador_local = to_int(datos.get("marcador_local"), 0)
-    marcador_visitante = to_int(datos.get("marcador_visitante"), 0)
-
-    market = "OVER_NEXT_15_DYNAMIC" if xg >= 1.4 else "RESULT_HOLDS_NEXT_15"
-    apuesta = "Over próximos 15 min" if market == "OVER_NEXT_15_DYNAMIC" else "Se mantiene el resultado próximos 15 min"
-
-    return {
-        "mercado": market,
-        "apuesta": apuesta,
-        "linea": 1.5 if market == "OVER_NEXT_15_DYNAMIC" else None,
-        "cuota": 2.03 if market == "OVER_NEXT_15_DYNAMIC" else 1.88,
-        "prob_real": 0.66,
-        "valor": 3.46,
-        "confianza": 88,
-        "razon": "Presión ofensiva + lectura táctica favorable"
-        if market == "OVER_NEXT_15_DYNAMIC"
-        else "Ritmo estable y resultado con probabilidad de mantenerse",
-        "tier": "TOP",
-        "estado_partido": {"estado": "CONTROLADO"},
-        "gol_inminente": {"gol_inminente": xg >= 1.8},
-        "signal_status": "OPEN",
-        "goal_prob_5": 34,
-        "goal_prob_10": 41,
-        "goal_prob_15": 49,
-        "resultado_probable": f"{marcador_local}-{marcador_visitante}",
-        "ganador_probable": "LOCAL" if marcador_local >= marcador_visitante else "VISITANTE",
-        "doble_oportunidad_probable": "1X",
-        "total_goles_estimado": marcador_local + marcador_visitante + 1,
-        "linea_goles_probable": "2.5",
-        "over_under_probable": "OVER 2.5" if xg >= 1.4 else "UNDER 3.5",
-        "confianza_prediccion": 80,
-        "recomendacion_final": "APOSTAR",
-        "riesgo_operativo": "MEDIO",
-        "senales_posibles": [],
-    }
-
-
-def generar_senales(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    senales: List[Dict[str, Any]] = []
-
-    for p in partidos:
-        ok, _motivo = partido_es_apostable(p)
-        if not ok:
-            continue
-
-        datos = {
-            "id": p.get("id", ""),
-            "momentum": p.get("momentum", "MEDIO"),
-            "xG": p.get("xG", 0),
-            "prob_real": p.get("prob_real", 0.75),
-            "prob_implicita": p.get("prob_implicita", 0.54),
-            "cuota": p.get("cuota", 1.85),
-            "minuto": p.get("minuto", 0),
-            "marcador_local": p.get("marcador_local", 0),
-            "marcador_visitante": p.get("marcador_visitante", 0),
-            "goal_pressure": p.get("goal_pressure", {}),
-            "goal_predictor": p.get("goal_predictor", {}),
-            "chaos": p.get("chaos", {}),
-            "estado_partido": p.get("estado_partido", "activo"),
-        }
-
-        if generar_senal:
-            try:
-                senal = generar_senal(datos)
-            except Exception as e:
-                print("ERROR generar_senal -> usando fallback:", e)
-                senal = generar_senal_fallback(datos)
-        else:
-            senal = generar_senal_fallback(datos)
-
-        if not senal:
-            continue
-
-        if senal.get("mercado") == "SIN_SEÑAL":
-            continue
-
-        if to_float(senal.get("valor"), 0) <= 0:
-            continue
-
-        senal_final = {
-            "match_id": p.get("id", ""),
-            "home": p.get("local", ""),
-            "away": p.get("visitante", ""),
-            "league": p.get("liga", ""),
-            "country": p.get("pais", ""),
-            "minute": p.get("minuto", 0),
-            "score": f'{p.get("marcador_local", 0)}-{p.get("marcador_visitante", 0)}',
-            "market": senal.get("mercado", ""),
-            "selection": senal.get("apuesta", ""),
-            "line": senal.get("linea"),
-            "odd": senal.get("cuota", 1.85),
-            "prob": senal.get("prob_real", 0.0),
-            "value": senal.get("valor", 0.0),
-            "confidence": senal.get("confianza", 0),
-            "reason": senal.get("razon", ""),
-            "tier": senal.get("tier", "NORMAL"),
-            "estado_partido": senal.get("estado_partido", {}),
-            "gol_inminente": senal.get("gol_inminente", {}),
-            "signal_status": senal.get("signal_status", "OPEN"),
-            "goal_prob_5": senal.get("goal_prob_5", 0),
-            "goal_prob_10": senal.get("goal_prob_10", 0),
-            "goal_prob_15": senal.get("goal_prob_15", 0),
-            "resultado_probable": senal.get("resultado_probable", ""),
-            "ganador_probable": senal.get("ganador_probable", ""),
-            "doble_oportunidad_probable": senal.get("doble_oportunidad_probable", ""),
-            "total_goles_estimado": senal.get("total_goles_estimado", 0),
-            "linea_goles_probable": senal.get("linea_goles_probable", ""),
-            "over_under_probable": senal.get("over_under_probable", ""),
-            "confianza_prediccion": senal.get("confianza_prediccion", 0),
-            "recomendacion_final": senal.get("recomendacion_final", "OBSERVAR"),
-            "riesgo_operativo": senal.get("riesgo_operativo", "MEDIO"),
-            "all_signals": senal.get("senales_posibles", []),
-        }
-
-        senal_final = enriquecer_senal(senal_final, p)
-
-        if not filtrar_value_bets_reales(senal_final):
-            continue
-
-        senales.append(senal_final)
-
-    senales.sort(
-        key=lambda s: (
-            to_float(s.get("signal_score"), 0),
-            to_float(s.get("tactical_score"), 0),
-            to_float(s.get("goal_inminente_score"), 0),
-            to_float(s.get("confidence"), 0),
-            to_float(s.get("value"), 0),
-        ),
-        reverse=True,
-    )
-
-    return senales
-
-
-# =========================================================
-# DATOS LIVE
+# FALLBACKS
 # =========================================================
 def obtener_partidos_fallback() -> List[Dict[str, Any]]:
     return [
@@ -672,33 +480,163 @@ def obtener_partidos_fallback() -> List[Dict[str, Any]]:
     ]
 
 
+def generar_senal_fallback(datos: Dict[str, Any]) -> Dict[str, Any]:
+    xg = to_float(datos.get("xG"), 0)
+    marcador_local = to_int(datos.get("marcador_local"), 0)
+    marcador_visitante = to_int(datos.get("marcador_visitante"), 0)
+
+    market = "OVER_NEXT_15_DYNAMIC" if xg >= 1.4 else "RESULT_HOLDS_NEXT_15"
+    apuesta = "Over próximos 15 min" if market == "OVER_NEXT_15_DYNAMIC" else "Se mantiene el resultado próximos 15 min"
+
+    return {
+        "mercado": market,
+        "apuesta": apuesta,
+        "linea": 1.5 if market == "OVER_NEXT_15_DYNAMIC" else None,
+        "cuota": 2.03 if market == "OVER_NEXT_15_DYNAMIC" else 1.88,
+        "prob_real": 0.66,
+        "valor": 3.46,
+        "confianza": 88,
+        "razon": "Presión ofensiva + lectura táctica favorable" if market == "OVER_NEXT_15_DYNAMIC" else "Ritmo estable y resultado con probabilidad de mantenerse",
+        "tier": "TOP",
+        "estado_partido": {"estado": "CONTROLADO"},
+        "gol_inminente": {"gol_inminente": xg >= 1.8},
+        "signal_status": "OPEN",
+        "goal_prob_5": 34,
+        "goal_prob_10": 41,
+        "goal_prob_15": 49,
+        "resultado_probable": f"{marcador_local}-{marcador_visitante}",
+        "ganador_probable": "LOCAL" if marcador_local >= marcador_visitante else "VISITANTE",
+        "doble_oportunidad_probable": "1X",
+        "total_goles_estimado": marcador_local + marcador_visitante + 1,
+        "linea_goles_probable": "2.5",
+        "over_under_probable": "OVER 2.5" if xg >= 1.4 else "UNDER 3.5",
+        "confianza_prediccion": 80,
+        "recomendacion_final": "APOSTAR",
+        "riesgo_operativo": "MEDIO",
+        "senales_posibles": [],
+    }
+
+
+# =========================================================
+# CACHE
+# =========================================================
+def generar_senales(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    senales: List[Dict[str, Any]] = []
+
+    for p in partidos:
+        ok, _motivo = partido_es_apostable(p)
+        if not ok:
+            continue
+
+        datos = {
+            "id": p.get("id", ""),
+            "momentum": p.get("momentum", "MEDIO"),
+            "xG": p.get("xG", 0),
+            "prob_real": p.get("prob_real", 0.75),
+            "prob_implicita": p.get("prob_implicita", 0.54),
+            "cuota": p.get("cuota", 1.85),
+            "minuto": p.get("minuto", 0),
+            "marcador_local": p.get("marcador_local", 0),
+            "marcador_visitante": p.get("marcador_visitante", 0),
+            "goal_pressure": p.get("goal_pressure", {}),
+            "goal_predictor": p.get("goal_predictor", {}),
+            "chaos": p.get("chaos", {}),
+            "estado_partido": p.get("estado_partido", "activo"),
+        }
+
+        if generar_senal_real:
+            try:
+                senal = generar_senal_real(datos)
+            except Exception:
+                senal = generar_senal_fallback(datos)
+        else:
+            senal = generar_senal_fallback(datos)
+
+        if not senal:
+            continue
+        if senal.get("mercado") == "SIN_SEÑAL":
+            continue
+        if to_float(senal.get("valor"), 0) <= 0:
+            continue
+
+        odd = senal.get("cuota", 1.85)
+        value = senal.get("valor", 0.0)
+        confidence = senal.get("confianza", 0)
+
+        senal_final = {
+            "match_id": p.get("id", ""),
+            "home": p.get("local", ""),
+            "away": p.get("visitante", ""),
+            "league": p.get("liga", ""),
+            "country": p.get("pais", ""),
+            "minute": p.get("minuto", 0),
+            "score": f'{p.get("marcador_local", 0)}-{p.get("marcador_visitante", 0)}',
+            "market": senal.get("mercado", ""),
+            "selection": senal.get("apuesta", ""),
+            "line": senal.get("linea"),
+            "odd": odd,
+            "cuota": odd,
+            "prob": senal.get("prob_real", 0.0),
+            "value": value,
+            "valor": value,
+            "confidence": confidence,
+            "confianza": confidence,
+            "reason": senal.get("razon", ""),
+            "tier": senal.get("tier", "NORMAL"),
+            "estado_partido": senal.get("estado_partido", {}),
+            "gol_inminente": senal.get("gol_inminente", {}),
+            "signal_status": senal.get("signal_status", "OPEN"),
+            "goal_prob_5": senal.get("goal_prob_5", 0),
+            "goal_prob_10": senal.get("goal_prob_10", 0),
+            "goal_prob_15": senal.get("goal_prob_15", 0),
+            "resultado_probable": senal.get("resultado_probable", ""),
+            "ganador_probable": senal.get("ganador_probable", ""),
+            "doble_oportunidad_probable": senal.get("doble_oportunidad_probable", ""),
+            "total_goles_estimado": senal.get("total_goles_estimado", 0),
+            "linea_goles_probable": senal.get("linea_goles_probable", ""),
+            "over_under_probable": senal.get("over_under_probable", ""),
+            "confianza_prediccion": senal.get("confianza_prediccion", 0),
+            "recomendacion_final": senal.get("recomendacion_final", "OBSERVAR"),
+            "riesgo_operativo": senal.get("riesgo_operativo", "MEDIO"),
+            "all_signals": senal.get("senales_posibles", []),
+        }
+
+        senal_final = enriquecer_senal(senal_final, p)
+
+        if not filtrar_value_bets_reales(senal_final):
+            continue
+
+        senales.append(senal_final)
+
+    senales.sort(
+        key=lambda s: (
+            to_float(s.get("signal_score"), 0),
+            to_float(s.get("tactical_score"), 0),
+            to_float(s.get("goal_inminente_score"), 0),
+            to_float(s.get("confidence"), 0),
+            to_float(s.get("value"), 0),
+        ),
+        reverse=True,
+    )
+
+    return senales
+
+
 def refrescar_datos() -> None:
     global cache_partidos, cache_senales, ultimo_scan_ts
 
-    if obtener_partidos_en_vivo:
+    if obtener_partidos_en_vivo_real:
         try:
-            raw = obtener_partidos_en_vivo()
-
-            print("RAW PARTIDOS:", raw[:3] if isinstance(raw, list) else raw)
-            print("TOTAL RAW:", len(raw) if isinstance(raw, list) else "NO ES LISTA")
-
+            raw = obtener_partidos_en_vivo_real()
             if not raw:
-                print("FETCHER VACIO -> usando fallback")
                 raw = obtener_partidos_fallback()
-
-        except Exception as e:
-            print("ERROR FETCHER:", e)
+        except Exception:
             raw = obtener_partidos_fallback()
     else:
-        print("SIN FETCHER REAL -> usando fallback")
         raw = obtener_partidos_fallback()
 
     cache_partidos = limpiar_cache_partidos(raw)
-    print("TOTAL PARTIDOS LIMPIOS:", len(cache_partidos))
-
     cache_senales = generar_senales(cache_partidos)
-    print("TOTAL SENALES:", len(cache_senales))
-
     ultimo_scan_ts = now_ts()
 
 
@@ -708,19 +646,34 @@ def asegurar_cache() -> None:
 
 
 # =========================================================
-# HISTORIAL / STATS
+# STATS
 # =========================================================
 def get_learning_stats() -> Dict[str, Any]:
-    total = len(cache_historial)
+    total_historial = len(cache_historial)
     ganadas = sum(1 for x in cache_historial if x.get("estado_resultado") == "ganada")
     perdidas = sum(1 for x in cache_historial if x.get("estado_resultado") == "perdida")
     resueltas = ganadas + perdidas
+
+    if total_historial == 0:
+        total_senales_panel = len(cache_senales)
+        return {
+            "total_senales": total_senales_panel,
+            "resueltas": 0,
+            "ganadas": 0,
+            "perdidas": 0,
+            "win_rate": 0,
+            "roi_percent": 0,
+            "signals_elite": sum(1 for x in cache_senales if x.get("signal_rank") == "ELITE"),
+            "signals_top": sum(1 for x in cache_senales if x.get("signal_rank") == "TOP"),
+            "value_promedio": round(sum(to_float(x.get("value"), 0) for x in cache_senales) / total_senales_panel, 2) if total_senales_panel else 0,
+            "riesgo_medio": round(sum(to_float(x.get("risk_score"), 0) for x in cache_senales) / total_senales_panel, 2) if total_senales_panel else 0,
+        }
 
     win_rate = round((ganadas / resueltas) * 100, 2) if resueltas else 0
     roi_percent = round(((ganadas - perdidas) / resueltas) * 100, 2) if resueltas else 0
 
     return {
-        "total_senales": total,
+        "total_senales": total_historial,
         "resueltas": resueltas,
         "ganadas": ganadas,
         "perdidas": perdidas,
@@ -728,8 +681,8 @@ def get_learning_stats() -> Dict[str, Any]:
         "roi_percent": roi_percent,
         "signals_elite": sum(1 for x in cache_historial if x.get("signal_rank") == "ELITE"),
         "signals_top": sum(1 for x in cache_historial if x.get("signal_rank") == "TOP"),
-        "value_promedio": round(sum(to_float(x.get("value"), 0) for x in cache_historial) / total, 2) if total else 0,
-        "riesgo_medio": round(sum(to_float(x.get("risk_score"), 0) for x in cache_historial) / total, 2) if total else 0,
+        "value_promedio": round(sum(to_float(x.get("value"), 0) for x in cache_historial) / total_historial, 2) if total_historial else 0,
+        "riesgo_medio": round(sum(to_float(x.get("risk_score"), 0) for x in cache_historial) / total_historial, 2) if total_historial else 0,
     }
 
 
@@ -738,37 +691,31 @@ def get_learning_stats() -> Dict[str, Any]:
 # =========================================================
 @app.route("/status")
 def status():
-    return jsonify(
-        {
-            "status": "ok",
-            "service": "JHONNY_ELITE_BACKEND",
-            "time": utc_iso_now(),
-        }
-    )
+    return jsonify({
+        "status": "ok",
+        "service": "JHONNY_ELITE_BACKEND",
+        "time": utc_iso_now()
+    })
 
 
 @app.route("/scan")
 def scan():
     refrescar_datos()
-    return jsonify(
-        {
-            "ok": True,
-            "partidos_analizados": len(cache_partidos),
-            "total_partidos": len(cache_partidos),
-            "ultimo_scan": ultimo_scan_ts,
-        }
-    )
+    return jsonify({
+        "ok": True,
+        "partidos_analizados": len(cache_partidos),
+        "total_partidos": len(cache_partidos),
+        "ultimo_scan": ultimo_scan_ts
+    })
 
 
 @app.route("/signals")
 def signals():
     asegurar_cache()
-    return jsonify(
-        {
-            "total_senales": len(cache_senales),
-            "signals": cache_senales,
-        }
-    )
+    return jsonify({
+        "total_senales": len(cache_senales),
+        "signals": cache_senales
+    })
 
 
 @app.route("/hot-matches")
@@ -790,53 +737,80 @@ def hot_matches():
         reverse=True,
     )
 
-    return jsonify(
-        {
-            "total": len(partidos_hot),
-            "hot_matches": partidos_hot[:20],
-        }
+    return jsonify({
+        "total": len(partidos_hot),
+        "hot_matches": partidos_hot[:20]
+    })
+
+
+@app.route("/live-matches")
+def live_matches():
+    asegurar_cache()
+
+    partidos = [p for p in cache_partidos if partido_esta_vivo(p)]
+    partidos.sort(
+        key=lambda p: (
+            to_float(p.get("xG"), 0),
+            to_int(p.get("shots_on_target"), 0),
+            to_int(p.get("dangerous_attacks"), 0),
+            to_int(p.get("minuto"), 0),
+        ),
+        reverse=True,
     )
+
+    return jsonify({
+        "total": len(partidos),
+        "matches": partidos
+    })
 
 
 @app.route("/history")
 def history():
-    return jsonify(cache_historial[-30:])
+    if cache_historial:
+        return jsonify(cache_historial[-30:])
+
+    # fallback visual para que el panel no quede muerto
+    historial_demo = []
+    for s in cache_senales[:10]:
+        historial_demo.append({
+            "match_id": s.get("match_id"),
+            "home": s.get("home"),
+            "away": s.get("away"),
+            "league": s.get("league"),
+            "country": s.get("country"),
+            "market": s.get("market"),
+            "selection": s.get("selection"),
+            "odd": s.get("odd"),
+            "value": s.get("value"),
+            "confidence": s.get("confidence"),
+            "signal_rank": s.get("signal_rank"),
+            "estado_resultado": "pendiente",
+        })
+    return jsonify(historial_demo)
 
 
 @app.route("/learning-stats")
 def learning_stats():
+    asegurar_cache()
     return jsonify(get_learning_stats())
 
 
 @app.route("/auto-scan/status")
 def auto_scan_status():
-    asegurar_cache()
-    return jsonify(
-        {
-            "auto_scan_activo": auto_scan_activo,
-            "intervalo_segundos": AUTO_SCAN_INTERVAL,
-            "ultimo_scan": ultimo_scan_ts,
-            "partidos_cache": len(cache_partidos),
-            "senales_cache": len(cache_senales),
-        }
-    )
+    return jsonify({
+        "auto_scan_activo": auto_scan_activo,
+        "intervalo_segundos": AUTO_SCAN_INTERVAL,
+        "ultimo_scan": ultimo_scan_ts,
+        "partidos_cache": len(cache_partidos),
+        "senales_cache": len(cache_senales),
+    })
 
 
 @app.route("/api/leagues")
 def api_leagues():
     asegurar_cache()
 
-    date_filter = request.args.get("date", "today")
-    state_filter = request.args.get("state", "live")
-
-    partidos = cache_partidos[:]
-
-    if state_filter == "live":
-        partidos = [p for p in partidos if partido_esta_vivo(p)]
-    elif state_filter == "finished":
-        partidos = [p for p in cache_partidos if partido_esta_finalizado(p)]
-
-    _ = date_filter
+    partidos = [p for p in cache_partidos if partido_esta_vivo(p)]
 
     agrupado: Dict[Tuple[str, str], Dict[str, Any]] = {}
     for p in partidos:
@@ -849,8 +823,7 @@ def api_leagues():
                 "matches_total": 0,
             }
         agrupado[key]["matches_total"] += 1
-        if partido_esta_vivo(p):
-            agrupado[key]["matches_live"] += 1
+        agrupado[key]["matches_live"] += 1
 
     ligas = list(agrupado.values())
     ligas.sort(key=lambda x: (x["matches_live"], x["matches_total"], x["league"]), reverse=True)
@@ -871,37 +844,35 @@ def match_details(match_id: str):
     posesion_local = 60 if partido.get("local") == "Barcelona" else 52
     posesion_visitante = 40 if posesion_local == 60 else 48
 
-    return jsonify(
-        {
-            "match_id": partido.get("id"),
-            "home": partido.get("local"),
-            "away": partido.get("visitante"),
-            "league": partido.get("liga"),
-            "country": partido.get("pais"),
-            "minute": partido.get("minuto"),
-            "status": partido.get("estado_partido"),
-            "score": f"{partido.get('marcador_local', 0)}-{partido.get('marcador_visitante', 0)}",
-            "marcador_local": partido.get("marcador_local", 0),
-            "marcador_visitante": partido.get("marcador_visitante", 0),
-            "xg": partido.get("xG", 0),
-            "shots": partido.get("shots", 0),
-            "shots_on_target": partido.get("shots_on_target", 0),
-            "dangerous_attacks": partido.get("dangerous_attacks", 0),
-            "momentum": partido.get("momentum", "MEDIO"),
-            "goal_pressure": partido.get("goal_pressure", {}),
-            "goal_predictor": partido.get("goal_predictor", {}),
-            "chaos": partido.get("chaos", {}),
-            "posesion_local": posesion_local,
-            "posesion_visitante": posesion_visitante,
-            "faltas_local": 13,
-            "faltas_visitante": 14,
-            "amarillas_local": 2,
-            "amarillas_visitante": 2,
-            "rojas_local": 1,
-            "rojas_visitante": 1,
-            "signal": senal or None,
-        }
-    )
+    return jsonify({
+        "match_id": partido.get("id"),
+        "home": partido.get("local"),
+        "away": partido.get("visitante"),
+        "league": partido.get("liga"),
+        "country": partido.get("pais"),
+        "minute": partido.get("minuto"),
+        "status": partido.get("estado_partido"),
+        "score": f"{partido.get('marcador_local', 0)}-{partido.get('marcador_visitante', 0)}",
+        "marcador_local": partido.get("marcador_local", 0),
+        "marcador_visitante": partido.get("marcador_visitante", 0),
+        "xg": partido.get("xG", 0),
+        "shots": partido.get("shots", 0),
+        "shots_on_target": partido.get("shots_on_target", 0),
+        "dangerous_attacks": partido.get("dangerous_attacks", 0),
+        "momentum": partido.get("momentum", "MEDIO"),
+        "goal_pressure": partido.get("goal_pressure", {}),
+        "goal_predictor": partido.get("goal_predictor", {}),
+        "chaos": partido.get("chaos", {}),
+        "posesion_local": posesion_local,
+        "posesion_visitante": posesion_visitante,
+        "faltas_local": 13,
+        "faltas_visitante": 14,
+        "amarillas_local": 2,
+        "amarillas_visitante": 2,
+        "rojas_local": 1,
+        "rojas_visitante": 1,
+        "signal": senal or None
+    })
 
 
 # =========================================================
@@ -909,13 +880,11 @@ def match_details(match_id: str):
 # =========================================================
 @app.route("/")
 def index():
-    asegurar_cache()
     return render_template("index.html")
 
 
 @app.route("/dashboard")
 def dashboard():
-    asegurar_cache()
     return render_template("dashboard.html")
 
 
@@ -936,7 +905,7 @@ def leagues():
             agrupado[key] = {
                 "league": liga,
                 "country": pais,
-                "count": 0,
+                "count": 0
             }
 
         agrupado[key]["count"] += 1
@@ -981,7 +950,7 @@ def matches_by_league(league_name: str):
         "matches.html",
         league_name=league_name,
         matches=partidos,
-        sort_by=sort_by,
+        sort_by=sort_by
     )
 
 
@@ -1003,6 +972,5 @@ def match_page(match_id: str):
 # MAIN
 # =========================================================
 if __name__ == "__main__":
-    refrescar_datos()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
