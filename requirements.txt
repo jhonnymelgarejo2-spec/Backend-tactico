@@ -1,11 +1,8 @@
-fastapi
-uvicorn
-pydantic
-sqlalchemy
-python-dotenv
-requests
-psycopg2-binary
-httpx
 flask
 flask-cors
+jinja2
 gunicorn
+requests
+uvicorn
+fastapi
+python-dotenv
