@@ -1,349 +1,124 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JHONNY_ELITE - Dashboard</title>
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JHONNY_ELITE V15_PRO</title>
   <style>
-    *{box-sizing:border-box;margin:0;padding:0}
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+    }
+
+    :root{
+      --bg:#07111c;
+      --panel:#0c1b2d;
+      --panel-2:#10243a;
+      --line:rgba(255,255,255,0.07);
+      --text:#f4f8ff;
+      --muted:#9fb8d6;
+      --blue:#27a2ff;
+      --blue-2:#4fc3ff;
+      --green:#36d27e;
+      --green-2:#1fb95d;
+      --yellow:#f5c14d;
+      --orange:#ff9e47;
+      --red:#ff6363;
+      --shadow:0 18px 45px rgba(0,0,0,0.28);
+      --radius:22px;
+    }
 
     body{
-      font-family:Arial,Helvetica,sans-serif;
-      color:#eef6ff;
-      min-height:100vh;
+      font-family:Arial, Helvetica, sans-serif;
       background:
-        linear-gradient(rgba(5,10,18,.82), rgba(5,10,18,.9)),
-        url("https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1600&q=80") center/cover fixed no-repeat;
+        radial-gradient(circle at top right, rgba(52,152,255,0.10), transparent 18%),
+        radial-gradient(circle at left center, rgba(48,214,124,0.09), transparent 18%),
+        linear-gradient(180deg, #07111c, #081523 40%, #09131c 100%);
+      color:var(--text);
+      min-height:100vh;
     }
 
-    .page{
+    a{
+      color:inherit;
+      text-decoration:none;
+    }
+
+    .app{
+      max-width:1600px;
+      margin:0 auto;
+      padding:18px;
       display:grid;
-      grid-template-columns:290px 1fr 360px;
+      grid-template-columns:280px minmax(0,1fr) 330px;
       gap:18px;
-      min-height:100vh;
-      padding:18px;
     }
 
-    .glass{
-      background:rgba(11,22,40,.78);
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:20px;
-      box-shadow:0 10px 30px rgba(0,0,0,.28);
-      backdrop-filter:blur(10px);
-      -webkit-backdrop-filter:blur(10px);
-    }
-
-    .card{
-      background:rgba(16,31,53,.78);
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:18px;
-      box-shadow:0 10px 30px rgba(0,0,0,.25);
-      backdrop-filter:blur(10px);
-      -webkit-backdrop-filter:blur(10px);
-      padding:16px;
-    }
-
-    .card + .card{
-      margin-top:16px;
-    }
-
-    .logo-wrap{
-      padding:18px;
-    }
-
-    .logo{
-      font-size:28px;
-      font-weight:900;
-      line-height:1.05;
-      margin-bottom:8px;
-    }
-
-    .logo .w{color:#fff}
-    .logo .g{color:#66f0a7}
-
-    .subtitle{
-      font-size:13px;
-      line-height:1.5;
-      color:#9fc5ef;
-    }
-
-    .menu{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      margin-top:18px;
-    }
-
-    .menu a,
-    .menu button,
-    .toolbar button{
-      text-decoration:none;
-      display:block;
-      width:100%;
-      background:linear-gradient(180deg,#1f4068,#173150);
-      color:#eef6ff;
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:12px;
-      padding:12px 14px;
-      font-weight:800;
-      cursor:pointer;
-      text-align:left;
-    }
-
-    .menu a:hover,
-    .menu button:hover,
-    .toolbar button:hover{
-      background:linear-gradient(180deg,#25507f,#1b3a5d);
-    }
-
-    .section-title{
-      font-size:18px;
-      font-weight:900;
-      color:#fff;
-      margin-bottom:14px;
-    }
-
-    .topbar{
-      display:grid;
-      grid-template-columns:repeat(5,1fr);
-      gap:14px;
-      margin-bottom:16px;
-    }
-
-    .metric-card{
-      background:rgba(16,31,53,.78);
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:16px;
-      padding:16px;
-      box-shadow:0 10px 30px rgba(0,0,0,.25);
-      backdrop-filter:blur(10px);
-      -webkit-backdrop-filter:blur(10px);
-      min-height:110px;
-    }
-
-    .metric-title{
-      font-size:13px;
-      color:#9fc5ef;
-      margin-bottom:8px;
-    }
-
-    .metric-value{
-      font-size:28px;
-      font-weight:900;
-      color:#fff;
-    }
-
-    .metric-sub{
-      margin-top:8px;
-      font-size:12px;
-      color:#cfe4fb;
-      line-height:1.4;
-    }
-
-    .toolbar{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-      margin-bottom:16px;
-    }
-
-    .toolbar button{
-      width:auto;
-      padding:10px 14px;
-    }
-
-    .status-badge{
-      display:inline-flex;
-      align-items:center;
-      padding:8px 14px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:900;
-      background:#11472a;
-      color:#8fffbe;
-      border:1px solid rgba(90,255,170,.18);
-    }
-
-    .status-badge.off{
-      background:#5b1d1d;
-      color:#ffaaaa;
-      border-color:rgba(255,120,120,.18);
-    }
-
-    .status-badge.warn{
-      background:#5c4b12;
-      color:#ffe18a;
-      border-color:rgba(255,210,100,.18);
-    }
-
-    .hero{
-      position:relative;
-      overflow:hidden;
+    .panel{
       background:
-        radial-gradient(circle at 80% 20%, rgba(110,190,255,.10), transparent 18%),
-        linear-gradient(145deg, rgba(17,39,70,.92), rgba(10,22,40,.94)),
-        url("https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=1200&q=80") center/cover no-repeat;
-      border:1px solid rgba(95,165,245,.16);
-      border-radius:22px;
-      padding:20px;
-      box-shadow:0 10px 30px rgba(0,0,0,.28);
+        linear-gradient(160deg, rgba(16,36,58,0.96), rgba(9,20,34,0.97));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
     }
 
-    .hero::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:linear-gradient(rgba(6,12,22,.58), rgba(6,12,22,.74));
-      pointer-events:none;
-    }
-
-    .hero-inner{
-      position:relative;
-      z-index:1;
-    }
-
-    .hero-top{
-      display:flex;
-      justify-content:space-between;
-      gap:16px;
-      flex-wrap:wrap;
-      margin-bottom:14px;
-    }
-
-    .hero-market{
-      font-size:22px;
-      font-weight:900;
-      color:#ffd166;
-      margin:10px 0 8px;
-      line-height:1.2;
-    }
-
-    .hero-sub{
-      font-size:14px;
-      line-height:1.55;
-      color:#eef6ff;
-    }
-
-    .hero-value{
-      font-size:40px;
-      font-weight:900;
-      color:#7dffad;
-      white-space:nowrap;
-    }
-
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:800;
-      border:1px solid rgba(255,255,255,.12);
-      background:#1a3b5e;
-      color:#e4f1ff;
-    }
-
-    .meta-row{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-top:12px;
-    }
-
-    .hero-grid,
-    .stats-grid{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:10px;
-      margin-top:14px;
-    }
-
-    .mini-box{
-      background:rgba(255,255,255,.05);
-      border:1px solid rgba(255,255,255,.07);
-      border-radius:14px;
-      padding:12px;
-    }
-
-    .mini-box-title{
-      font-size:12px;
-      color:#a7cbf3;
-      margin-bottom:6px;
-      text-transform:uppercase;
-      letter-spacing:.04em;
-    }
-
-    .mini-box-value{
-      font-size:20px;
-      font-weight:900;
-      color:#fff;
-    }
-
-    .hero-text,
-    .info-text{
-      margin-top:14px;
-      padding-top:14px;
-      border-top:1px solid rgba(255,255,255,.06);
-      font-size:13px;
-      line-height:1.6;
-      color:#d8ebff;
-    }
-
-    .list{
+    .sidebar{
+      padding:18px;
       display:flex;
       flex-direction:column;
-      gap:12px;
+      gap:16px;
+      position:sticky;
+      top:16px;
+      height:fit-content;
     }
 
-    .item{
-      background:rgba(16,31,53,.78);
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:16px;
-      padding:14px;
+    .brand{
+      padding:4px 2px 6px;
     }
 
-    .item-top{
+    .brand h1{
+      font-size:34px;
+      font-weight:900;
+      letter-spacing:0.02em;
+      line-height:1;
+    }
+
+    .brand .green{
+      color:#79f59b;
+    }
+
+    .brand p{
+      margin-top:8px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.45;
+      text-transform:uppercase;
+    }
+
+    .side-buttons{
       display:flex;
-      justify-content:space-between;
+      flex-direction:column;
       gap:10px;
-      align-items:flex-start;
-      flex-wrap:wrap;
-      margin-bottom:8px;
     }
 
-    .item-title{
-      font-size:18px;
-      font-weight:900;
-      color:#fff;
-      line-height:1.25;
-    }
-
-    .item-sub{
-      font-size:13px;
-      line-height:1.55;
-      color:#cfe4fb;
-    }
-
-    .item-actions{
-      margin-top:12px;
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-
-    .btn{
-      text-decoration:none;
-      display:inline-block;
-      background:linear-gradient(180deg,#2477ff,#1858c2);
-      color:#fff;
-      padding:10px 14px;
-      border-radius:12px;
-      font-weight:900;
+    .side-btn{
+      width:100%;
       border:none;
+      border-radius:16px;
+      padding:14px 14px;
+      background:
+        linear-gradient(180deg, rgba(18,44,77,0.98), rgba(11,28,51,0.98));
+      color:#fff;
+      font-weight:800;
       cursor:pointer;
+      border:1px solid rgba(104,170,255,0.14);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+
+    .side-title{
+      font-size:14px;
+      font-weight:900;
+      margin-bottom:10px;
+      text-transform:uppercase;
     }
 
     .league-list{
@@ -352,491 +127,1199 @@
       gap:10px;
     }
 
-    .league-mini{
-      background:rgba(16,31,53,.72);
-      border:1px solid rgba(255,255,255,.08);
+    .league-item{
+      background:rgba(255,255,255,0.03);
+      border:1px solid rgba(255,255,255,0.05);
+      border-radius:16px;
+      padding:12px;
+    }
+
+    .league-name{
+      font-size:15px;
+      font-weight:800;
+      margin-bottom:6px;
+    }
+
+    .league-meta{
+      color:var(--muted);
+      font-size:12px;
+      margin-bottom:10px;
+    }
+
+    .league-btn{
+      display:inline-block;
+      background:linear-gradient(180deg, #2ca7ff, #1677ff);
+      color:white;
+      font-weight:800;
+      font-size:13px;
+      padding:10px 14px;
+      border-radius:12px;
+    }
+
+    .main{
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+      min-width:0;
+    }
+
+    .top-stats{
+      display:grid;
+      grid-template-columns:repeat(5, 1fr);
+      gap:14px;
+    }
+
+    .stat-box{
+      padding:18px;
+      min-height:108px;
+    }
+
+    .stat-label{
+      font-size:13px;
+      color:var(--muted);
+      margin-bottom:10px;
+      text-transform:uppercase;
+    }
+
+    .stat-value{
+      font-size:20px;
+      font-weight:900;
+      line-height:1.1;
+    }
+
+    .stat-sub{
+      color:var(--muted);
+      font-size:12px;
+      margin-top:10px;
+    }
+
+    .action-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+    }
+
+    .btn{
+      border:none;
+      border-radius:14px;
+      padding:12px 16px;
+      font-weight:900;
+      cursor:pointer;
+      color:#fff;
+    }
+
+    .btn-primary{
+      background:linear-gradient(180deg, #2ca7ff, #1677ff);
+    }
+
+    .btn-success{
+      background:linear-gradient(180deg, #39d97f, #1ca557);
+    }
+
+    .filters{
+      padding:18px;
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:12px;
+    }
+
+    .field{
+      background:rgba(255,255,255,0.03);
+      border:1px solid rgba(255,255,255,0.05);
+      border-radius:14px;
+      padding:10px 12px;
+    }
+
+    .field select,
+    .field input{
+      width:100%;
+      background:transparent;
+      border:none;
+      outline:none;
+      color:#fff;
+      font-size:14px;
+    }
+
+    .field select option{
+      color:#000;
+    }
+
+    .hero{
+      padding:20px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .hero::before{
+      content:"";
+      position:absolute;
+      inset:auto -80px -80px auto;
+      width:260px;
+      height:260px;
+      background:radial-gradient(circle, rgba(56,176,255,0.22), transparent 65%);
+      pointer-events:none;
+    }
+
+    .section-title{
+      font-size:15px;
+      font-weight:900;
+      margin-bottom:14px;
+      text-transform:uppercase;
+    }
+
+    .hero-tags{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-bottom:14px;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:7px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+      border:1px solid rgba(255,255,255,0.05);
+      background:rgba(255,255,255,0.05);
+    }
+
+    .pill.green{ background:rgba(22,161,72,0.18); color:#aef7ca; }
+    .pill.yellow{ background:rgba(214,160,30,0.18); color:#ffe398; }
+    .pill.blue{ background:rgba(43,142,255,0.18); color:#bfe2ff; }
+    .pill.red{ background:rgba(255,80,80,0.18); color:#ffc0c0; }
+    .pill.gray{ background:rgba(255,255,255,0.08); color:#d2dfef; }
+
+    .hero-main{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) 180px;
+      gap:20px;
+      align-items:start;
+    }
+
+    .hero-title{
+      font-size:37px;
+      font-weight:900;
+      line-height:1.05;
+      margin-bottom:10px;
+    }
+
+    .hero-match{
+      font-size:20px;
+      font-weight:900;
+      margin-bottom:8px;
+    }
+
+    .hero-meta{
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.5;
+      margin-bottom:14px;
+    }
+
+    .hero-score{
+      text-align:right;
+      font-size:56px;
+      font-weight:900;
+      color:#9bffac;
+      line-height:1;
+      padding-top:6px;
+    }
+
+    .hero-grid{
+      margin-top:18px;
+      display:grid;
+      grid-template-columns:repeat(4, 1fr);
+      gap:12px;
+    }
+
+    .mini-card{
+      background:rgba(255,255,255,0.035);
+      border:1px solid rgba(255,255,255,0.05);
+      border-radius:16px;
+      padding:14px;
+    }
+
+    .mini-label{
+      color:var(--muted);
+      font-size:12px;
+      margin-bottom:8px;
+      text-transform:uppercase;
+    }
+
+    .mini-value{
+      font-size:28px;
+      font-weight:900;
+    }
+
+    .mini-value.small{
+      font-size:22px;
+    }
+
+    .hero-desc{
+      margin-top:18px;
+      color:#d4e6f8;
+      font-size:13px;
+      line-height:1.6;
+    }
+
+    .content-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:18px;
+    }
+
+    .list-section{
+      padding:18px;
+    }
+
+    .match-card{
+      background:rgba(255,255,255,0.035);
+      border:1px solid rgba(255,255,255,0.05);
+      border-radius:18px;
+      padding:16px;
+      display:grid;
+      grid-template-columns:minmax(0,1fr) 120px;
+      gap:16px;
+      margin-bottom:12px;
+    }
+
+    .match-card:last-child{
+      margin-bottom:0;
+    }
+
+    .match-league{
+      color:#9ec4ef;
+      font-size:12px;
+      margin-bottom:8px;
+    }
+
+    .match-name{
+      font-size:28px;
+      font-weight:900;
+      margin-bottom:8px;
+      line-height:1.05;
+    }
+
+    .match-meta{
+      color:var(--muted);
+      font-size:13px;
+      margin-bottom:12px;
+    }
+
+    .match-badges{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-bottom:12px;
+    }
+
+    .match-stats{
+      display:grid;
+      grid-template-columns:repeat(3, 1fr);
+      gap:10px;
+      margin-bottom:12px;
+    }
+
+    .match-stat{
+      background:rgba(255,255,255,0.03);
+      border:1px solid rgba(255,255,255,0.04);
       border-radius:14px;
       padding:12px;
     }
 
-    .league-mini-title{
-      font-size:15px;
+    .match-stat .label{
+      color:var(--muted);
+      font-size:11px;
+      text-transform:uppercase;
+      margin-bottom:6px;
+    }
+
+    .match-stat .value{
+      font-size:24px;
       font-weight:900;
-      color:#fff;
     }
 
-    .league-mini-sub{
-      font-size:12px;
-      color:#9fc5ef;
-      margin-top:6px;
+    .match-info{
+      color:#d7e7f8;
+      font-size:13px;
+      line-height:1.55;
     }
 
-    .empty{
-      color:#aac8ea;
-      padding:20px 0;
+    .match-right{
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:12px;
+    }
+
+    .score-badge{
+      background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.06);
+      border-radius:16px;
+      padding:12px 14px;
+      font-size:28px;
+      font-weight:900;
+      min-width:100px;
       text-align:center;
     }
 
-    .state-live{background:#11472a;color:#8fffbe}
-    .state-finished{background:#474747;color:#ddd}
-    .state-upcoming{background:#173e6a;color:#9ed0ff}
+    .quick-signals{
+      padding:18px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
 
-    @media (max-width:1500px){
-      .page{
-        grid-template-columns:270px 1fr 330px;
+    .quick-item{
+      background:rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.05);
+      border-radius:16px;
+      padding:14px;
+    }
+
+    .quick-top{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-bottom:10px;
+    }
+
+    .quick-name{
+      font-size:20px;
+      font-weight:900;
+      margin-bottom:6px;
+    }
+
+    .quick-meta{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.5;
+      margin-bottom:10px;
+    }
+
+    .right-col{
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+      min-width:0;
+    }
+
+    .performance{
+      padding:18px;
+    }
+
+    .performance-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:12px;
+    }
+
+    .performance-box{
+      background:rgba(255,255,255,0.035);
+      border:1px solid rgba(255,255,255,0.05);
+      border-radius:16px;
+      padding:14px;
+    }
+
+    .performance-box .label{
+      color:var(--muted);
+      font-size:12px;
+      margin-bottom:8px;
+      text-transform:uppercase;
+    }
+
+    .performance-box .value{
+      font-size:24px;
+      font-weight:900;
+    }
+
+    .history{
+      padding:18px;
+    }
+
+    .history-item{
+      background:rgba(255,255,255,0.035);
+      border:1px solid rgba(255,255,255,0.05);
+      border-radius:16px;
+      padding:14px;
+      margin-bottom:10px;
+    }
+
+    .history-item:last-child{
+      margin-bottom:0;
+    }
+
+    .empty{
+      color:var(--muted);
+      padding:8px 0;
+      font-size:15px;
+    }
+
+    .hidden{
+      display:none !important;
+    }
+
+    .mobile-top{
+      display:none;
+      margin-bottom:14px;
+    }
+
+    .mobile-toggle{
+      width:100%;
+      background:linear-gradient(180deg, #2ca7ff, #1677ff);
+      border:none;
+      color:#fff;
+      font-weight:900;
+      border-radius:16px;
+      padding:14px;
+      cursor:pointer;
+    }
+
+    @media (max-width:1280px){
+      .app{
+        grid-template-columns:250px minmax(0,1fr);
       }
-      .topbar{
-        grid-template-columns:repeat(3,1fr);
+
+      .right-col{
+        grid-column:1 / -1;
+      }
+
+      .top-stats{
+        grid-template-columns:repeat(3, 1fr);
       }
     }
 
-    @media (max-width:1150px){
-      .page{
+    @media (max-width:980px){
+      .app{
         grid-template-columns:1fr;
       }
-      .topbar{
+
+      .sidebar{
+        position:static;
+      }
+
+      .mobile-top{
+        display:block;
+      }
+
+      .sidebar{
+        display:none;
+      }
+
+      .sidebar.show{
+        display:flex;
+      }
+
+      .top-stats{
         grid-template-columns:1fr 1fr;
       }
-    }
 
-    @media (max-width:760px){
-      .topbar,
-      .hero-grid,
-      .stats-grid{
+      .filters{
         grid-template-columns:1fr;
       }
 
-      .hero-value{
-        font-size:32px;
+      .hero-main{
+        grid-template-columns:1fr;
       }
 
-      .hero-market{
-        font-size:20px;
+      .hero-score{
+        text-align:left;
+      }
+
+      .hero-grid{
+        grid-template-columns:1fr 1fr;
+      }
+
+      .match-card{
+        grid-template-columns:1fr;
+      }
+
+      .match-right{
+        align-items:flex-start;
+      }
+    }
+
+    @media (max-width:640px){
+      .app{
+        padding:12px;
+        gap:14px;
+      }
+
+      .top-stats{
+        grid-template-columns:1fr;
+      }
+
+      .hero-title{
+        font-size:28px;
+      }
+
+      .hero-match{
+        font-size:24px;
+      }
+
+      .hero-score{
+        font-size:42px;
+      }
+
+      .hero-grid{
+        grid-template-columns:1fr;
+      }
+
+      .match-name{
+        font-size:22px;
+      }
+
+      .match-stats{
+        grid-template-columns:1fr;
       }
     }
   </style>
 </head>
 <body>
-
-  <div class="page">
-
-    <aside>
-      <div class="glass logo-wrap">
-        <div class="logo">
-          <span class="w">JHONNY_</span><span class="g">ELITE</span>
-        </div>
-        <div class="subtitle">
-          Dashboard principal · Centro de control del sistema · Entrada a ligas, partidos y detalle IA
-        </div>
-
-        <div class="menu">
-          <a href="/leagues">🌍 Explorar ligas</a>
-          <button onclick="cargarTodo()">📡 Actualizar dashboard</button>
-          <button onclick="cargarSignals()">🚨 Recargar señales</button>
-          <button onclick="cargarHotMatches()">🔥 Recargar calientes</button>
-        </div>
+  <div class="app">
+    <aside class="sidebar panel" id="sidebar">
+      <div class="brand">
+        <h1>JHONNY_<span class="green">ELITE</span> V15_PRO</h1>
+        <p>Scanner IA live · Value bets · Risk engine · AI brain · League explorer</p>
       </div>
 
-      <div class="card">
-        <div class="section-title">🌍 LIGAS DESTACADAS</div>
-        <div id="leaguePreview" class="league-list">
+      <div class="side-buttons">
+        <button class="side-btn" onclick="actualizarTodo()">Actualizar panel</button>
+        <button class="side-btn" onclick="recargarEstadisticas()">Recargar estadísticas</button>
+        <button class="side-btn" onclick="recargarApuestas()">Recargar apuestas</button>
+        <button class="side-btn" onclick="cargarLigas()">Recargar ligas</button>
+      </div>
+
+      <div>
+        <div class="side-title">Explorador de ligas</div>
+        <div class="league-list" id="leagueList">
           <div class="empty">Cargando ligas...</div>
         </div>
       </div>
     </aside>
 
-    <main>
-      <div class="topbar">
-        <div class="metric-card">
-          <div class="metric-title">Estado sistema</div>
-          <div id="backendStatus" class="metric-value">...</div>
-          <div id="backendMessage" class="metric-sub">Cargando...</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-title">Partidos escaneados</div>
-          <div id="totalMatches" class="metric-value">0</div>
-          <div class="metric-sub">Total del motor live</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-title">Señales activas</div>
-          <div id="totalSignals" class="metric-value">0</div>
-          <div class="metric-sub">Oportunidades detectadas</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-title">Último scan</div>
-          <div id="lastScanValue" class="metric-value">-</div>
-          <div id="lastScanMessage" class="metric-sub">Esperando datos...</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-title">Auto-scan</div>
-          <div id="autoScanValue" class="metric-value">...</div>
-          <div id="autoScanMessage" class="metric-sub">Cargando...</div>
-        </div>
+    <main class="main">
+      <div class="mobile-top">
+        <button class="mobile-toggle" onclick="toggleSidebar()">Abrir menú del sistema</button>
       </div>
 
-      <div class="toolbar">
-        <button onclick="cargarTodo()">Actualizar dashboard</button>
-        <a class="btn" href="/leagues">Ir a ligas</a>
-        <span id="statusBadge" class="status-badge">Esperando...</span>
-      </div>
-
-      <div id="heroSignal">
-        <div class="empty">Cargando señal principal...</div>
-      </div>
-
-      <div class="card" style="margin-top:16px">
-        <div class="section-title">🔥 PARTIDOS CALIENTES</div>
-        <div id="hotMatches" class="list">
-          <div class="empty">Cargando partidos calientes...</div>
+      <section class="top-stats">
+        <div class="panel stat-box">
+          <div class="stat-label">Estado del sistema</div>
+          <div class="stat-value" id="statusValue">...</div>
+          <div class="stat-sub" id="statusSub">Esperando respuesta</div>
         </div>
+
+        <div class="panel stat-box">
+          <div class="stat-label">Señales escaneadas</div>
+          <div class="stat-value" id="signalsCount">0</div>
+          <div class="stat-sub">Total live detectado</div>
+        </div>
+
+        <div class="panel stat-box">
+          <div class="stat-label">Señales activas</div>
+          <div class="stat-value" id="signalsActive">0</div>
+          <div class="stat-sub">Oportunidades activas</div>
+        </div>
+
+        <div class="panel stat-box">
+          <div class="stat-label">Último scan</div>
+          <div class="stat-value" id="lastScan">--:--:--</div>
+          <div class="stat-sub" id="lastScanSub">Cache sin partidos</div>
+        </div>
+
+        <div class="panel stat-box">
+          <div class="stat-label">Auto scan</div>
+          <div class="stat-value" id="autoScanValue">ACTIVO</div>
+          <div class="stat-sub" id="autoScanSub">Cada 60s</div>
+        </div>
+      </section>
+
+      <div class="action-row">
+        <button class="btn btn-primary" onclick="actualizarTodo()">Actualizar panel</button>
+        <button class="btn btn-success" onclick="scanNow()">Señales actualizadas</button>
       </div>
+
+      <section class="panel filters">
+        <div class="field">
+          <select id="leagueFilter" onchange="renderAll()">
+            <option value="">Todas las ligas</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <input type="text" id="teamFilter" placeholder="Buscar equipo..." oninput="renderAll()" />
+        </div>
+
+        <div class="field">
+          <select id="stateFilter" onchange="renderAll()">
+            <option value="">Todos los estados</option>
+            <option value="LIVE">En vivo</option>
+            <option value="HT">Descanso</option>
+            <option value="1H">Primer tiempo</option>
+            <option value="2H">Segundo tiempo</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="panel hero" id="mainSignalSection">
+        <div class="section-title">Señal principal del sistema</div>
+        <div id="mainSignalContent">
+          <div class="empty">Cargando señal principal...</div>
+        </div>
+      </section>
+
+      <section class="content-grid">
+        <div class="panel list-section">
+          <div class="section-title">Partidos calientes</div>
+          <div id="hotMatchesList">
+            <div class="empty">Cargando partidos calientes...</div>
+          </div>
+        </div>
+
+        <div class="panel list-section">
+          <div class="section-title">Partidos en vivo</div>
+          <div id="liveMatchesList">
+            <div class="empty">Cargando partidos en vivo...</div>
+          </div>
+        </div>
+      </section>
     </main>
 
-    <aside>
-      <div class="card">
-        <div class="section-title">🚨 SEÑALES RÁPIDAS</div>
-        <div id="miniSignals" class="list">
-          <div class="empty">Cargando señales...</div>
+    <aside class="right-col">
+      <section class="panel quick-signals">
+        <div class="section-title">Señales rápidas</div>
+        <div id="quickSignalsList">
+          <div class="empty">Cargando señales rápidas...</div>
         </div>
-      </div>
+      </section>
 
-      <div class="card">
-        <div class="section-title">📈 RENDIMIENTO</div>
-        <div id="statsBox" class="stats-grid">
-          <div class="empty">Cargando estadísticas...</div>
+      <section class="panel performance">
+        <div class="section-title">📈 Rendimiento del sistema</div>
+        <div class="performance-grid" id="performanceGrid">
+          <div class="performance-box">
+            <div class="label">Cargando...</div>
+            <div class="value">0</div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div class="card">
-        <div class="section-title">📚 HISTORIAL</div>
-        <div id="historyBox" class="list">
+      <section class="panel history">
+        <div class="section-title">📚 Últimas predicciones</div>
+        <div id="historyList">
           <div class="empty">Cargando historial...</div>
         </div>
-      </div>
+      </section>
     </aside>
-
   </div>
 
   <script>
-    function setStatus(texto, tipo="ok"){
-      const badge = document.getElementById("statusBadge");
-      badge.textContent = texto;
-      badge.className = "status-badge";
-      if(tipo === "off") badge.classList.add("off");
-      if(tipo === "warn") badge.classList.add("warn");
+    let appState = {
+      status: null,
+      scan: null,
+      signals: [],
+      hotMatches: [],
+      leagues: [],
+      learningStats: null,
+      history: []
+    };
+
+    async function fetchJSON(url){
+      const res = await fetch(url, { cache: "no-store" });
+      if(!res.ok){
+        throw new Error(`Error ${res.status} en ${url}`);
+      }
+      return res.json();
     }
 
-    function formatTimestamp(ts){
-      if(!ts) return "-";
-      const d = new Date(Number(ts) * 1000);
-      if(Number.isNaN(d.getTime())) return "-";
-      return d.toLocaleTimeString("es-ES", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit"
-      });
+    function toggleSidebar(){
+      document.getElementById("sidebar").classList.toggle("show");
     }
 
-    function countryToFlag(country){
+    function esc(text){
+      return String(text ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;");
+    }
+
+    function fmtNumber(v){
+      const n = Number(v ?? 0);
+      if(Number.isNaN(n)) return "0";
+      if(Number.isInteger(n)) return String(n);
+      return n.toFixed(2);
+    }
+
+    function fmtPercent(v){
+      return `${fmtNumber(v)}%`;
+    }
+
+    function badgeClassByTier(tier){
+      const t = String(tier || "").toUpperCase();
+      if(t === "ELITE") return "pill yellow";
+      if(t === "TOP") return "pill green";
+      if(t === "ALTA") return "pill blue";
+      return "pill gray";
+    }
+
+    function badgeClassByState(state){
+      const s = String(state || "").toUpperCase();
+      if(["LIVE","1H","2H","HT","EN VIVO","EN_JUEGO"].includes(s)) return "pill green";
+      if(["CONTROLADO"].includes(s)) return "pill yellow";
+      if(["EXPLOSIVO","CAOS","CALIENTE"].includes(s)) return "pill red";
+      return "pill gray";
+    }
+
+    function countryFlag(country){
       const map = {
-        "Argentina":"🇦🇷","Brazil":"🇧🇷","Mexico":"🇲🇽","England":"🏴","Spain":"🇪🇸","Italy":"🇮🇹",
-        "Germany":"🇩🇪","France":"🇫🇷","Portugal":"🇵🇹","Turkey":"🇹🇷","World":"🌐","Iraq":"🇮🇶"
+        "England":"🇬🇧",
+        "Spain":"🇪🇸",
+        "Argentina":"🇦🇷",
+        "World":"🌍",
+        "Italy":"🇮🇹",
+        "France":"🇫🇷",
+        "Germany":"🇩🇪",
+        "Brazil":"🇧🇷",
+        "Mexico":"🇲🇽"
       };
       return map[country] || "🌍";
     }
 
-    function stateClass(status){
-      const s = String(status || "").toUpperCase();
-      if (["EN_JUEGO","LIVE","ACTIVO"].includes(s)) return "pill state-live";
-      if (["FINALIZADO","FINISHED","FT"].includes(s)) return "pill state-finished";
-      return "pill state-upcoming";
+    function buildLeagueFilters(){
+      const select = document.getElementById("leagueFilter");
+      const current = select.value;
+      const leagues = [...new Set(appState.hotMatches.map(x => x.league).filter(Boolean))].sort();
+
+      select.innerHTML = `<option value="">Todas las ligas</option>`;
+      leagues.forEach(l => {
+        select.innerHTML += `<option value="${esc(l)}">${esc(l)}</option>`;
+      });
+
+      select.value = current;
     }
 
-    function marketLabelDinamico(s){
-      if(s.selection && String(s.selection).trim() !== "") return s.selection;
-      if(s.market === "OVER_NEXT_15_DYNAMIC") return "Over próximos 15 min";
-      if(s.market === "OVER_MATCH_DYNAMIC") return "Over partido";
-      if(s.market === "RESULT_HOLDS_NEXT_15") return "Se mantiene resultado próximos 15 min";
-      return s.market || "SEÑAL";
+    function passesFilters(item){
+      const league = document.getElementById("leagueFilter").value.trim().toLowerCase();
+      const team = document.getElementById("teamFilter").value.trim().toLowerCase();
+      const state = document.getElementById("stateFilter").value.trim().toUpperCase();
+
+      const itemLeague = String(item.league || "").toLowerCase();
+      const itemTeams = `${item.home || item.local || ""} ${item.away || item.visitante || ""}`.toLowerCase();
+      const itemState = String(item.estado_partido || item.status || "").toUpperCase();
+
+      if(league && itemLeague !== league) return false;
+      if(team && !itemTeams.includes(team)) return false;
+      if(state && itemState !== state) return false;
+
+      return true;
     }
 
-    let cacheSignals = [];
-    let cacheHotMatches = [];
-    let cacheLeagues = [];
+    function renderMainSignal(){
+      const box = document.getElementById("mainSignalContent");
+      const signal = appState.signals?.[0];
 
-    async function fetchJSON(url){
-      const res = await fetch(url, { cache: "no-store" });
-      if(!res.ok) throw new Error(`Error ${res.status}`);
-      return await res.json();
-    }
-
-    async function verEstado(){
-      try{
-        const data = await fetchJSON("/status");
-        document.getElementById("backendStatus").textContent = data.status || "ok";
-        document.getElementById("backendMessage").textContent = data.service || "Backend operativo";
-        setStatus("Sistema conectado", "ok");
-      }catch(err){
-        document.getElementById("backendStatus").textContent = "error";
-        document.getElementById("backendMessage").textContent = err.message;
-        setStatus("Error conexión", "off");
+      if(!signal){
+        box.innerHTML = `<div class="empty">No hay señal principal disponible todavía.</div>`;
+        return;
       }
+
+      const estado = signal.estado_partido?.estado || "NORMAL";
+
+      box.innerHTML = `
+        <div class="hero-tags">
+          <span class="${badgeClassByTier(signal.signal_rank)}">${esc(signal.signal_rank || "NORMAL")}</span>
+          <span class="pill blue">${esc(signal.market || "SIN MERCADO")}</span>
+          <span class="${badgeClassByState(estado)}">${esc(estado)}</span>
+          <span class="pill gray">${esc(signal.recomendacion_final || "OBSERVAR")}</span>
+        </div>
+
+        <div class="hero-main">
+          <div>
+            <div class="hero-match">${esc(signal.selection || "Señal activa")}</div>
+            <div class="hero-meta">
+              ${esc(signal.home)} vs ${esc(signal.away)}<br>
+              ${countryFlag(signal.country)} ${esc(signal.league)} · ${esc(signal.country)} · Min ${esc(signal.minute)} · Marcador ${esc(signal.score)}
+            </div>
+
+            <div class="hero-tags">
+              <span class="pill blue">Cuota ${fmtNumber(signal.odd)}</span>
+              <span class="pill blue">Confianza ${fmtNumber(signal.confidence)}</span>
+              <span class="pill blue">Value ${fmtPercent(signal.value)}</span>
+              <span class="pill gray">${esc(signal.tier || "NORMAL")}</span>
+            </div>
+          </div>
+
+          <div class="hero-score">+${fmtPercent(signal.value)}</div>
+        </div>
+
+        <div class="hero-grid">
+          <div class="mini-card">
+            <div class="mini-label">Signal score</div>
+            <div class="mini-value">${fmtNumber(signal.signal_score)}</div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-label">Tactical score</div>
+            <div class="mini-value">${fmtNumber(signal.tactical_score)}</div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-label">Goal score</div>
+            <div class="mini-value">${fmtNumber(signal.goal_inminente_score)}</div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-label">AI decision</div>
+            <div class="mini-value">${fmtNumber(signal.ai_decision_score)}</div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-label">Risk score</div>
+            <div class="mini-value small">${fmtNumber(signal.risk_score)}</div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-label">Ganador probable</div>
+            <div class="mini-value small">${esc(signal.ganador_probable || "N/A")}</div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-label">Resultado probable</div>
+            <div class="mini-value small">${esc(signal.resultado_probable || "N/A")}</div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-label">Over / Under</div>
+            <div class="mini-value small">${esc(signal.over_under_probable || "N/A")}</div>
+          </div>
+        </div>
+
+        <div class="hero-desc">
+          <strong>Motivo táctico:</strong> ${esc(signal.reason || "Sin detalle")}<br>
+          <strong>Motivo value:</strong> ${esc(signal.razon_value || "Sin análisis")}<br>
+          <strong>Lectura IA:</strong> ${esc(signal.ai_reason || "Sin lectura IA")}
+        </div>
+      `;
     }
 
-    async function cargarAutoScan(){
-      try{
-        const data = await fetchJSON("/auto-scan/status");
-        document.getElementById("autoScanValue").textContent = data.auto_scan_activo ? "ACTIVO" : "OFF";
-        document.getElementById("autoScanMessage").textContent = `Cada ${data.intervalo_segundos || 60}s`;
-        document.getElementById("lastScanValue").textContent = formatTimestamp(data.ultimo_scan);
-        document.getElementById("lastScanMessage").textContent = `Cache ${data.partidos_cache || 0} partidos · ${data.senales_cache || 0} señales`;
-      }catch(err){
-        document.getElementById("autoScanValue").textContent = "N/D";
-        document.getElementById("autoScanMessage").textContent = "Sin datos";
+    function renderHotMatches(){
+      const list = document.getElementById("hotMatchesList");
+      const filtered = (appState.hotMatches || []).filter(passesFilters);
+
+      if(!filtered.length){
+        list.innerHTML = `<div class="empty">No hay partidos calientes todavía.</div>`;
+        return;
       }
+
+      list.innerHTML = filtered.map(match => `
+        <div class="match-card">
+          <div>
+            <div class="match-league">${countryFlag(match.country)} ${esc(match.league)} · ${esc(match.country)}</div>
+            <div class="match-name">${esc(match.local)} vs ${esc(match.visitante)}</div>
+            <div class="match-meta">Min ${esc(match.minuto)} · Marcador ${esc(match.marcador_local)}-${esc(match.marcador_visitante)} · Momentum ${esc(match.momentum)}</div>
+
+            <div class="match-badges">
+              <span class="${badgeClassByState(match.estado_partido)}">${esc(match.estado_partido)}</span>
+              <span class="pill blue">xG ${fmtNumber(match.xG)}</span>
+              <span class="pill blue">Shots ${fmtNumber(match.shots)}</span>
+              <span class="pill blue">On target ${fmtNumber(match.shots_on_target)}</span>
+              <span class="pill blue">Danger ${fmtNumber(match.dangerous_attacks)}</span>
+            </div>
+
+            <div class="match-stats">
+              <div class="match-stat">
+                <div class="label">Signal</div>
+                <div class="value">${fmtNumber(findSignalScore(match.id))}</div>
+              </div>
+              <div class="match-stat">
+                <div class="label">AI</div>
+                <div class="value">${fmtNumber(findAIScore(match.id))}</div>
+              </div>
+              <div class="match-stat">
+                <div class="label">Value</div>
+                <div class="value">${fmtPercent(findValue(match.id))}</div>
+              </div>
+            </div>
+
+            <div class="match-info">
+              <strong>Mercado:</strong> ${esc(findMarket(match.id))}<br>
+              <strong>IA:</strong> ${esc(findAIReason(match.id))}<br>
+              <strong>Motivo:</strong> ${esc(findReason(match.id))}
+            </div>
+          </div>
+
+          <div class="match-right">
+            <div class="score-badge">${esc(match.marcador_local)}-${esc(match.marcador_visitante)}</div>
+            <a class="league-btn" href="/match/${encodeURIComponent(match.id)}">Ver partido</a>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderLiveMatches(){
+      const list = document.getElementById("liveMatchesList");
+      const filtered = (appState.hotMatches || []).filter(passesFilters);
+
+      if(!filtered.length){
+        list.innerHTML = `<div class="empty">No hay partidos que coincidan con el filtro.</div>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(match => `
+        <div class="match-card">
+          <div>
+            <div class="match-league">${countryFlag(match.country)} ${esc(match.league)} · ${esc(match.country)}</div>
+            <div class="match-name">${esc(match.local)} vs ${esc(match.visitante)}</div>
+            <div class="match-meta">Estado ${esc(match.estado_partido)} · Minuto/Hora: ${esc(match.minuto)}</div>
+
+            <div class="match-badges">
+              <span class="${badgeClassByState(match.estado_partido)}">${esc(match.estado_partido)}</span>
+            </div>
+          </div>
+
+          <div class="match-right">
+            <div class="score-badge">${esc(match.marcador_local)}-${esc(match.marcador_visitante)}</div>
+            <a class="league-btn" href="/match/${encodeURIComponent(match.id)}">Ver detalle</a>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderQuickSignals(){
+      const list = document.getElementById("quickSignalsList");
+      const signals = appState.signals || [];
+
+      if(!signals.length){
+        list.innerHTML = `<div class="empty">No hay señales rápidas.</div>`;
+        return;
+      }
+
+      list.innerHTML = signals.slice(0, 6).map(s => `
+        <div class="quick-item">
+          <div class="quick-top">
+            <span class="${badgeClassByTier(s.signal_rank)}">${esc(s.signal_rank || "NORMAL")}</span>
+            <span class="${badgeClassByState(s.estado_partido?.estado || "NORMAL")}">${esc(s.tier || "NORMAL")}</span>
+          </div>
+
+          <div class="quick-name">${esc(s.home)} vs ${esc(s.away)}</div>
+          <div class="quick-meta">
+            ${esc(s.league)} · ${esc(s.country)}<br>
+            ${esc(s.selection)}<br>
+            IA ${esc(s.recomendacion_final || "OBSERVAR")}<br>
+            Signal ${fmtNumber(s.signal_score)} · AI ${fmtNumber(s.ai_decision_score)}
+          </div>
+
+          <a class="league-btn" href="/match/${encodeURIComponent(s.match_id)}">Ver partido</a>
+        </div>
+      `).join("");
+    }
+
+    function renderPerformance(){
+      const box = document.getElementById("performanceGrid");
+      const s = appState.learningStats;
+
+      if(!s){
+        box.innerHTML = `<div class="empty">Sin estadísticas disponibles.</div>`;
+        return;
+      }
+
+      box.innerHTML = `
+        <div class="performance-box"><div class="label">Aciertos</div><div class="value">${fmtNumber(s.ganadas)}</div></div>
+        <div class="performance-box"><div class="label">Fallos</div><div class="value">${fmtNumber(s.perdidas)}</div></div>
+        <div class="performance-box"><div class="label">Win rate</div><div class="value">${fmtPercent(s.win_rate)}</div></div>
+        <div class="performance-box"><div class="label">ROI</div><div class="value">${fmtPercent(s.roi_percent)}</div></div>
+        <div class="performance-box"><div class="label">Signals elite</div><div class="value">${fmtNumber(s.signals_elite)}</div></div>
+        <div class="performance-box"><div class="label">Signals top</div><div class="value">${fmtNumber(s.signals_top)}</div></div>
+        <div class="performance-box"><div class="label">Value prom.</div><div class="value">${fmtPercent(s.value_promedio)}</div></div>
+        <div class="performance-box"><div class="label">Riesgo prom.</div><div class="value">${fmtNumber(s.riesgo_medio)}</div></div>
+      `;
+    }
+
+    function renderHistory(){
+      const list = document.getElementById("historyList");
+      const h = appState.history || [];
+
+      if(!h.length){
+        list.innerHTML = `<div class="empty">Historial no disponible todavía.</div>`;
+        return;
+      }
+
+      list.innerHTML = h.slice(-6).reverse().map(item => `
+        <div class="history-item">
+          <div class="quick-name">${esc(item.home || item.local || "Partido")}</div>
+          <div class="quick-meta">
+            ${esc(item.away || item.visitante || "")}<br>
+            Estado resultado: ${esc(item.estado_resultado || "Pendiente")}<br>
+            Value: ${fmtPercent(item.value || 0)}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderLeagueSidebar(){
+      const box = document.getElementById("leagueList");
+      const leagues = appState.leagues || [];
+
+      if(!leagues.length){
+        box.innerHTML = `<div class="empty">No hay ligas disponibles.</div>`;
+        return;
+      }
+
+      box.innerHTML = leagues.slice(0, 8).map(l => `
+        <div class="league-item">
+          <div class="league-name">${esc(l.league)}</div>
+          <div class="league-meta">${countryFlag(l.country)} ${esc(l.country)} · En vivo: ${fmtNumber(l.matches_live || l.count || 0)}</div>
+          <a class="league-btn" href="/matches/${encodeURIComponent(l.league)}">Abrir liga</a>
+        </div>
+      `).join("");
+    }
+
+    function renderTopStats(){
+      document.getElementById("statusValue").textContent = appState.status?.status || "ok";
+      document.getElementById("statusSub").textContent = appState.status?.service || "Sistema activo";
+
+      document.getElementById("signalsCount").textContent = appState.signals?.length || 0;
+      document.getElementById("signalsActive").textContent = appState.signals?.length || 0;
+
+      if(appState.scan?.ultimo_scan){
+        const d = new Date(appState.scan.ultimo_scan * 1000);
+        document.getElementById("lastScan").textContent = d.toLocaleTimeString();
+      } else {
+        document.getElementById("lastScan").textContent = "--:--:--";
+      }
+
+      document.getElementById("lastScanSub").textContent = `Cache: ${appState.scan?.total_partidos || 0} partidos · ${appState.signals?.length || 0} señales`;
+      document.getElementById("autoScanValue").textContent = "ACTIVO";
+      document.getElementById("autoScanSub").textContent = "Cada 60s";
+    }
+
+    function findSignal(matchId){
+      return (appState.signals || []).find(x => String(x.match_id) === String(matchId)) || null;
+    }
+
+    function findSignalScore(matchId){
+      return findSignal(matchId)?.signal_score || 0;
+    }
+
+    function findAIScore(matchId){
+      return findSignal(matchId)?.ai_decision_score || 0;
+    }
+
+    function findValue(matchId){
+      return findSignal(matchId)?.value || 0;
+    }
+
+    function findMarket(matchId){
+      return findSignal(matchId)?.selection || "Sin mercado";
+    }
+
+    function findReason(matchId){
+      return findSignal(matchId)?.reason || "Sin motivo";
+    }
+
+    function findAIReason(matchId){
+      return findSignal(matchId)?.ai_reason || "Sin lectura IA";
+    }
+
+    function renderAll(){
+      renderTopStats();
+      buildLeagueFilters();
+      renderMainSignal();
+      renderHotMatches();
+      renderLiveMatches();
+      renderQuickSignals();
+      renderPerformance();
+      renderHistory();
+      renderLeagueSidebar();
+    }
+
+    async function cargarStatus(){
+      appState.status = await fetchJSON("/status");
     }
 
     async function cargarScan(){
-      try{
-        const data = await fetchJSON("/scan");
-        document.getElementById("totalMatches").textContent = data.partidos_analizados ?? data.total_partidos ?? 0;
-      }catch(err){
-        document.getElementById("totalMatches").textContent = "0";
-      }
+      appState.scan = await fetchJSON("/scan");
     }
 
     async function cargarSignals(){
-      const hero = document.getElementById("heroSignal");
-      const mini = document.getElementById("miniSignals");
-
-      try{
-        const data = await fetchJSON("/signals");
-        cacheSignals = Array.isArray(data.signals) ? data.signals : [];
-        document.getElementById("totalSignals").textContent = data.total_senales ?? cacheSignals.length;
-
-        if(!cacheSignals.length){
-          hero.innerHTML = `<div class="card"><div class="section-title">🎯 SEÑAL PRINCIPAL</div><div class="empty">No hay señales activas.</div></div>`;
-          mini.innerHTML = `<div class="empty">No hay señales rápidas.</div>`;
-          return;
-        }
-
-        const s = cacheSignals[0];
-
-        hero.innerHTML = `
-          <div class="hero">
-            <div class="hero-inner">
-              <div class="section-title">🎯 SEÑAL PRINCIPAL DEL SISTEMA</div>
-
-              <div class="hero-top">
-                <div style="flex:1">
-                  <div class="pill">${s.signal_rank || "NORMAL"}</div>
-                  <div class="hero-market">${marketLabelDinamico(s)}</div>
-                  <div class="hero-sub">
-                    <strong>${s.home} vs ${s.away}</strong><br>
-                    ${countryToFlag(s.country)} ${s.league} · ${s.country} · Min ${s.minute} · Marcador ${s.score}
-                  </div>
-
-                  <div class="meta-row">
-                    <span class="pill">Cuota ${s.odd}</span>
-                    <span class="pill">Confianza ${s.confidence}%</span>
-                    <span class="pill">Value ${s.value}%</span>
-                    <span class="pill">${s.ai_recommendation || "OBSERVAR"}</span>
-                  </div>
-                </div>
-
-                <div class="hero-value">+${s.value}%</div>
-              </div>
-
-              <div class="hero-grid">
-                <div class="mini-box">
-                  <div class="mini-box-title">Signal score</div>
-                  <div class="mini-box-value">${s.signal_score || 0}</div>
-                </div>
-                <div class="mini-box">
-                  <div class="mini-box-title">AI decision</div>
-                  <div class="mini-box-value">${s.ai_decision_score || 0}</div>
-                </div>
-                <div class="mini-box">
-                  <div class="mini-box-title">Risk</div>
-                  <div class="mini-box-value">${s.risk_score || 0}</div>
-                </div>
-              </div>
-
-              <div class="hero-text">
-                <strong>Motivo táctico:</strong> ${s.reason || "Sin detalle"}<br>
-                <strong>Motivo value:</strong> ${s.razon_value || "Sin análisis"}<br>
-                <strong>Lectura IA:</strong> ${s.ai_reason || "Sin lectura IA"}
-              </div>
-
-              <div class="item-actions" style="margin-top:14px">
-                <a class="btn" href="/match/${s.match_id}">Abrir detalle del partido</a>
-              </div>
-            </div>
-          </div>
-        `;
-
-        mini.innerHTML = cacheSignals.slice(0, 5).map(x => `
-          <div class="item">
-            <div class="item-top">
-              <div>
-                <div class="item-title">${x.home} vs ${x.away}</div>
-                <div class="item-sub">${countryToFlag(x.country)} ${x.league} · Min ${x.minute} · ${marketLabelDinamico(x)}</div>
-              </div>
-              <div class="pill">+${x.value}%</div>
-            </div>
-
-            <div class="item-actions">
-              <a class="btn" href="/match/${x.match_id}">Ver partido</a>
-            </div>
-          </div>
-        `).join("");
-
-      }catch(err){
-        hero.innerHTML = `<div class="card"><div class="section-title">🎯 SEÑAL PRINCIPAL</div><div class="empty">Error cargando señales.</div></div>`;
-        mini.innerHTML = `<div class="empty">Error cargando señales rápidas.</div>`;
-      }
+      const data = await fetchJSON("/signals");
+      appState.signals = data.signals || [];
     }
 
     async function cargarHotMatches(){
-      const box = document.getElementById("hotMatches");
-      try{
-        const data = await fetchJSON("/hot-matches");
-        cacheHotMatches = Array.isArray(data.hot_matches) ? data.hot_matches : [];
-
-        if(!cacheHotMatches.length){
-          box.innerHTML = `<div class="empty">No hay partidos calientes.</div>`;
-          return;
-        }
-
-        box.innerHTML = cacheHotMatches.map(p => `
-          <div class="item">
-            <div class="item-top">
-              <div>
-                <div class="item-title">${p.local} vs ${p.visitante}</div>
-                <div class="item-sub">${countryToFlag(p.pais)} ${p.liga} · ${p.pais}</div>
-              </div>
-              <div class="${stateClass(p.estado_partido)}">${p.estado_partido}</div>
-            </div>
-
-            <div class="item-sub">
-              Marcador: <strong>${p.marcador_local}-${p.marcador_visitante}</strong> ·
-              Min ${p.minuto} · xG ${p.xG} · Momentum ${p.momentum}
-            </div>
-
-            <div class="item-actions">
-              <a class="btn" href="/match/${p.id}">Ver detalle</a>
-            </div>
-          </div>
-        `).join("");
-
-      }catch(err){
-        box.innerHTML = `<div class="empty">Error cargando partidos calientes.</div>`;
-      }
+      const data = await fetchJSON("/hot-matches");
+      appState.hotMatches = data.hot_matches || [];
     }
 
-    async function cargarLeaguePreview(){
-      const box = document.getElementById("leaguePreview");
-      try{
-        const data = await fetchJSON("/api/leagues?date=today&state=live");
-        cacheLeagues = Array.isArray(data) ? data : [];
-
-        if(!cacheLeagues.length){
-          box.innerHTML = `<div class="empty">No hay ligas activas.</div>`;
-          return;
-        }
-
-        box.innerHTML = cacheLeagues.slice(0, 6).map(l => `
-          <div class="league-mini">
-            <div class="league-mini-title">${l.league}</div>
-            <div class="league-mini-sub">${countryToFlag(l.country)} ${l.country} · En vivo: ${l.matches_live ?? 0}</div>
-            <div class="item-actions" style="margin-top:10px">
-              <a class="btn" href="/matches/${encodeURIComponent(l.league)}">Abrir liga</a>
-            </div>
-          </div>
-        `).join("");
-      }catch(err){
-        box.innerHTML = `<div class="empty">Error cargando ligas.</div>`;
-      }
+    async function cargarLearningStats(){
+      appState.learningStats = await fetchJSON("/learning-stats");
     }
 
     async function cargarHistory(){
-      const box = document.getElementById("historyBox");
+      appState.history = await fetchJSON("/history");
+    }
+
+    async function cargarLigas(){
       try{
-        const data = await fetchJSON("/history");
-        const history = Array.isArray(data) ? data : [];
-
-        if(!history.length){
-          box.innerHTML = `<div class="empty">Sin historial todavía.</div>`;
-          return;
-        }
-
-        box.innerHTML = history.slice(0, 5).map(h => `
-          <div class="item">
-            <div class="item-title">${h.home} vs ${h.away}</div>
-            <div class="item-sub">
-              ${countryToFlag(h.country)} ${h.league} · ${h.market}<br>
-              Min ${h.minute} · Cuota ${h.odd} · Value ${h.value}%<br>
-              Estado: ${h.estado_resultado}
-            </div>
-          </div>
-        `).join("");
+        appState.leagues = await fetchJSON("/api/leagues");
       }catch(err){
-        box.innerHTML = `<div class="empty">Error cargando historial.</div>`;
+        appState.leagues = [];
+      }
+      renderLeagueSidebar();
+    }
+
+    async function recargarEstadisticas(){
+      try{
+        await cargarLearningStats();
+        await cargarHistory();
+        renderPerformance();
+        renderHistory();
+      }catch(err){
+        console.error(err);
       }
     }
 
-    async function cargarStats(){
-      const box = document.getElementById("statsBox");
+    async function recargarApuestas(){
       try{
-        const s = await fetchJSON("/learning-stats");
-        box.innerHTML = `
-          <div class="mini-box">
-            <div class="mini-box-title">Aciertos</div>
-            <div class="mini-box-value">${s.ganadas ?? 0}</div>
-          </div>
-          <div class="mini-box">
-            <div class="mini-box-title">Fallos</div>
-            <div class="mini-box-value">${s.perdidas ?? 0}</div>
-          </div>
-          <div class="mini-box">
-            <div class="mini-box-title">Win Rate</div>
-            <div class="mini-box-value">${s.win_rate ?? 0}%</div>
-          </div>
-          <div class="mini-box">
-            <div class="mini-box-title">ROI</div>
-            <div class="mini-box-value">${s.roi_percent ?? 0}%</div>
-          </div>
-          <div class="mini-box">
-            <div class="mini-box-title">Signals Elite</div>
-            <div class="mini-box-value">${s.signals_elite ?? 0}</div>
-          </div>
-          <div class="mini-box">
-            <div class="mini-box-title">Signals Top</div>
-            <div class="mini-box-value">${s.signals_top ?? 0}</div>
-          </div>
-        `;
+        await cargarSignals();
+        await cargarHotMatches();
+        renderAll();
       }catch(err){
-        box.innerHTML = `<div class="empty">Error cargando estadísticas.</div>`;
+        console.error(err);
       }
     }
 
-    async function cargarTodo(){
-      await verEstado();
-      await cargarAutoScan();
-      await cargarScan();
-      await cargarSignals();
-      await cargarHotMatches();
-      await cargarLeaguePreview();
-      await cargarHistory();
-      await cargarStats();
+    async function scanNow(){
+      try{
+        await cargarScan();
+        await cargarSignals();
+        await cargarHotMatches();
+        await cargarLigas();
+        renderAll();
+      }catch(err){
+        console.error(err);
+      }
     }
 
-    cargarTodo();
-    setInterval(cargarTodo, 30000);
+    async function actualizarTodo(){
+      try{
+        await Promise.all([
+          cargarStatus(),
+          cargarScan(),
+          cargarSignals(),
+          cargarHotMatches(),
+          cargarLearningStats(),
+          cargarHistory(),
+          cargarLigas()
+        ]);
+        renderAll();
+      }catch(err){
+        console.error(err);
+        document.getElementById("mainSignalContent").innerHTML = `<div class="empty">Error cargando panel: ${esc(err.message)}</div>`;
+      }
+    }
+
+    actualizarTodo();
+    setInterval(actualizarTodo, 60000);
   </script>
 </body>
   </html>
