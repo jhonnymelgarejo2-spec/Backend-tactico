@@ -930,7 +930,7 @@ if __name__ == "__main__":
     refrescar_datos()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
-Este seria el archivo ya modificado responde solo si o no  if not raw:
+ if not raw:
                 print("FETCHER VACIO -> usando fallback")
                 raw = obtener_partidos_fallback()
 
