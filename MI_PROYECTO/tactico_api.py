@@ -1,10 +1,11 @@
 import os
 import time
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
+
 
 # =========================================================
 # IMPORTS DEL SISTEMA
@@ -36,6 +37,7 @@ STATIC_DIR = os.path.join(BASE_DIR, "static")
 app = Flask(__name__, template_folder=TEMPLATES_DIR, static_folder=STATIC_DIR)
 CORS(app)
 
+
 # =========================================================
 # CONFIG
 # =========================================================
@@ -59,8 +61,16 @@ def now_ts() -> float:
     return time.time()
 
 
+def utc_iso_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
 def normalizar_texto(valor: Any) -> str:
     return str(valor or "").strip().lower()
+
+
+def safe_upper(valor: Any) -> str:
+    return str(valor or "").strip().upper()
 
 
 def to_int(valor: Any, default: int = 0) -> int:
@@ -81,43 +91,65 @@ def to_float(valor: Any, default: float = 0.0) -> float:
         return default
 
 
-def safe_upper(valor: Any) -> str:
-    return str(valor or "").strip().upper()
-
-
-def utc_iso_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
-
-
 # =========================================================
 # FILTRO MAESTRO DE PARTIDO VIVO
 # =========================================================
 ESTADOS_FINALIZADOS = {
-    "ft", "finished", "finalizado", "ended", "end", "after penalties",
-    "pen", "pens", "aet", "final", "fulltime", "match finished"
+    "ft",
+    "finished",
+    "finalizado",
+    "ended",
+    "end",
+    "after penalties",
+    "pen",
+    "pens",
+    "aet",
+    "final",
+    "fulltime",
+    "match finished",
 }
 
 ESTADOS_NO_VALIDOS = {
-    "cancelled", "canceled", "postponed", "suspended", "abandoned",
-    "deleted", "walkover", "interrupted"
+    "cancelled",
+    "canceled",
+    "postponed",
+    "suspended",
+    "abandoned",
+    "deleted",
+    "walkover",
+    "interrupted",
 }
 
 ESTADOS_VIVOS = {
-    "live", "inplay", "in_play", "en_juego", "activo", "1h", "2h",
-    "ht", "halftime", "descanso", "extra time", "et"
+    "live",
+    "inplay",
+    "in_play",
+    "en_juego",
+    "activo",
+    "1h",
+    "2h",
+    "ht",
+    "halftime",
+    "descanso",
+    "extra time",
+    "et",
 }
 
 
 def extraer_estado_partido(p: Dict[str, Any]) -> str:
+    fixture = p.get("fixture") or {}
+    fixture_status = fixture.get("status") or {}
+
     candidatos = [
         p.get("estado_partido"),
         p.get("status"),
         p.get("estado"),
         p.get("match_status"),
-        (p.get("fixture") or {}).get("status"),
-        ((p.get("fixture") or {}).get("status") or {}).get("short"),
-        ((p.get("fixture") or {}).get("status") or {}).get("long"),
+        fixture.get("status"),
+        fixture_status.get("short"),
+        fixture_status.get("long"),
     ]
+
     for c in candidatos:
         if c:
             return normalizar_texto(c)
@@ -125,13 +157,17 @@ def extraer_estado_partido(p: Dict[str, Any]) -> str:
 
 
 def extraer_minuto_partido(p: Dict[str, Any]) -> int:
+    fixture = p.get("fixture") or {}
+    fixture_status = fixture.get("status") or {}
+
     candidatos = [
         p.get("minuto"),
         p.get("minute"),
         p.get("elapsed"),
-        (p.get("fixture") or {}).get("elapsed"),
-        ((p.get("fixture") or {}).get("status") or {}).get("elapsed"),
+        fixture.get("elapsed"),
+        fixture_status.get("elapsed"),
     ]
+
     for c in candidatos:
         v = to_int(c, -1)
         if v >= 0:
@@ -141,6 +177,7 @@ def extraer_minuto_partido(p: Dict[str, Any]) -> int:
 
 def partido_esta_finalizado(p: Dict[str, Any]) -> bool:
     estado = extraer_estado_partido(p)
+    minuto = extraer_minuto_partido(p)
 
     if estado in ESTADOS_FINALIZADOS:
         return True
@@ -148,7 +185,6 @@ def partido_esta_finalizado(p: Dict[str, Any]) -> bool:
     if "ft" in estado or "finished" in estado or "finalizado" in estado:
         return True
 
-    minuto = extraer_minuto_partido(p)
     if minuto >= 120:
         return True
 
@@ -157,11 +193,14 @@ def partido_esta_finalizado(p: Dict[str, Any]) -> bool:
 
 def partido_esta_suspendido_o_invalido(p: Dict[str, Any]) -> bool:
     estado = extraer_estado_partido(p)
+
     if estado in ESTADOS_NO_VALIDOS:
         return True
+
     for token in ESTADOS_NO_VALIDOS:
         if token in estado:
             return True
+
     return False
 
 
@@ -174,11 +213,17 @@ def partido_esta_vivo(p: Dict[str, Any]) -> bool:
 
     print(
         "DEBUG VIVO ->",
-        p.get("local"), "vs", p.get("visitante"),
-        "| estado:", estado,
-        "| minuto:", minuto,
-        "| live:", p.get("live"),
-        "| is_live:", p.get("is_live")
+        p.get("local"),
+        "vs",
+        p.get("visitante"),
+        "| estado:",
+        estado,
+        "| minuto:",
+        minuto,
+        "| live:",
+        p.get("live"),
+        "| is_live:",
+        p.get("is_live"),
     )
 
     if partido_esta_suspendido_o_invalido(p):
@@ -199,7 +244,7 @@ def partido_esta_vivo(p: Dict[str, Any]) -> bool:
     return False
 
 
-def partido_es_apostable(p: Dict[str, Any]) -> tuple[bool, str]:
+def partido_es_apostable(p: Dict[str, Any]) -> Tuple[bool, str]:
     if not partido_esta_vivo(p):
         return False, "Partido no vivo"
 
@@ -211,7 +256,7 @@ def partido_es_apostable(p: Dict[str, Any]) -> tuple[bool, str]:
 
 
 # =========================================================
-# NORMALIZACION DE PARTIDOS
+# NORMALIZACION
 # =========================================================
 def normalizar_partido(raw: Dict[str, Any]) -> Dict[str, Any]:
     print("PARTIDO RAW NORMALIZAR:", raw)
@@ -220,6 +265,7 @@ def normalizar_partido(raw: Dict[str, Any]) -> Dict[str, Any]:
     teams = raw.get("teams") or {}
     goals = raw.get("goals") or {}
     league = raw.get("league") or {}
+    fixture_status = fixture.get("status") or {}
 
     local = raw.get("local") or (teams.get("home") or {}).get("name") or raw.get("home") or "Local"
     visitante = raw.get("visitante") or (teams.get("away") or {}).get("name") or raw.get("away") or "Visitante"
@@ -232,20 +278,31 @@ def normalizar_partido(raw: Dict[str, Any]) -> Dict[str, Any]:
     if marcador_visitante is None:
         marcador_visitante = goals.get("away", 0)
 
-    estado_raw = raw.get("estado_partido") or raw.get("status") or (fixture.get("status") or {}).get("short") or ""
+    estado_raw = (
+        raw.get("estado_partido")
+        or raw.get("status")
+        or fixture_status.get("short")
+        or fixture_status.get("long")
+        or ""
+    )
+
     minuto_raw = raw.get("minuto")
     if minuto_raw is None:
         minuto_raw = raw.get("minute")
     if minuto_raw is None:
+        minuto_raw = raw.get("elapsed")
+    if minuto_raw is None:
         minuto_raw = fixture.get("elapsed")
+    if minuto_raw is None:
+        minuto_raw = fixture_status.get("elapsed")
 
     return {
-        "id": raw.get("id") or fixture.get("id") or raw.get("match_id") or f"match_{int(now_ts()*1000)}",
+        "id": raw.get("id") or fixture.get("id") or raw.get("match_id") or f"match_{int(now_ts() * 1000)}",
         "local": local,
         "visitante": visitante,
         "liga": raw.get("liga") or league.get("name") or raw.get("league") or "Liga desconocida",
         "pais": raw.get("pais") or league.get("country") or raw.get("country") or "World",
-        "estado_partido": estado_raw or "",
+        "estado_partido": estado_raw,
         "minuto": to_int(minuto_raw, 0),
         "marcador_local": to_int(marcador_local, 0),
         "marcador_visitante": to_int(marcador_visitante, 0),
@@ -267,7 +324,7 @@ def limpiar_cache_partidos(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any
     normalizados = [normalizar_partido(p) for p in partidos if isinstance(p, dict)]
     solo_vivos = [p for p in normalizados if partido_esta_vivo(p)]
 
-    unicos = {}
+    unicos: Dict[str, Dict[str, Any]] = {}
     for p in solo_vivos:
         unicos[str(p.get("id"))] = p
 
@@ -409,7 +466,9 @@ def generar_senal_fallback(datos: Dict[str, Any]) -> Dict[str, Any]:
         "prob_real": 0.66,
         "valor": 3.46,
         "confianza": 88,
-        "razon": "Presión ofensiva + lectura táctica favorable" if market == "OVER_NEXT_15_DYNAMIC" else "Ritmo estable y resultado con probabilidad de mantenerse",
+        "razon": "Presión ofensiva + lectura táctica favorable"
+        if market == "OVER_NEXT_15_DYNAMIC"
+        else "Ritmo estable y resultado con probabilidad de mantenerse",
         "tier": "TOP",
         "estado_partido": {"estado": "CONTROLADO"},
         "gol_inminente": {"gol_inminente": xg >= 1.8},
@@ -426,12 +485,12 @@ def generar_senal_fallback(datos: Dict[str, Any]) -> Dict[str, Any]:
         "confianza_prediccion": 80,
         "recomendacion_final": "APOSTAR",
         "riesgo_operativo": "MEDIO",
-        "senales_posibles": []
+        "senales_posibles": [],
     }
 
 
 def generar_senales(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    senales = []
+    senales: List[Dict[str, Any]] = []
 
     for p in partidos:
         ok, _motivo = partido_es_apostable(p)
@@ -522,7 +581,7 @@ def generar_senales(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             to_float(s.get("confidence"), 0),
             to_float(s.get("value"), 0),
         ),
-        reverse=True
+        reverse=True,
     )
 
     return senales
@@ -551,6 +610,7 @@ def obtener_partidos_fallback() -> List[Dict[str, Any]]:
             "goal_pressure": {"pressure_score": 7.8},
             "goal_predictor": {"predictor_score": 8.1},
             "chaos": {"chaos_score": 3.2},
+            "live": True,
         },
         {
             "id": "102",
@@ -570,6 +630,7 @@ def obtener_partidos_fallback() -> List[Dict[str, Any]]:
             "goal_pressure": {"pressure_score": 8.2},
             "goal_predictor": {"predictor_score": 7.6},
             "chaos": {"chaos_score": 2.8},
+            "live": True,
         },
         {
             "id": "103",
@@ -589,6 +650,7 @@ def obtener_partidos_fallback() -> List[Dict[str, Any]]:
             "goal_pressure": {"pressure_score": 3.8},
             "goal_predictor": {"predictor_score": 4.1},
             "chaos": {"chaos_score": 1.4},
+            "live": True,
         },
         {
             "id": "104",
@@ -605,16 +667,18 @@ def obtener_partidos_fallback() -> List[Dict[str, Any]]:
             "shots_on_target": 5,
             "dangerous_attacks": 40,
             "momentum": "ALTO",
+            "live": False,
         },
     ]
 
 
-def refrescar_datos():
+def refrescar_datos() -> None:
     global cache_partidos, cache_senales, ultimo_scan_ts
 
     if obtener_partidos_en_vivo:
         try:
             raw = obtener_partidos_en_vivo()
+
             print("RAW PARTIDOS:", raw[:3] if isinstance(raw, list) else raw)
             print("TOTAL RAW:", len(raw) if isinstance(raw, list) else "NO ES LISTA")
 
@@ -638,7 +702,7 @@ def refrescar_datos():
     ultimo_scan_ts = now_ts()
 
 
-def asegurar_cache():
+def asegurar_cache() -> None:
     if not cache_partidos:
         refrescar_datos()
 
@@ -651,6 +715,7 @@ def get_learning_stats() -> Dict[str, Any]:
     ganadas = sum(1 for x in cache_historial if x.get("estado_resultado") == "ganada")
     perdidas = sum(1 for x in cache_historial if x.get("estado_resultado") == "perdida")
     resueltas = ganadas + perdidas
+
     win_rate = round((ganadas / resueltas) * 100, 2) if resueltas else 0
     roi_percent = round(((ganadas - perdidas) / resueltas) * 100, 2) if resueltas else 0
 
@@ -669,35 +734,41 @@ def get_learning_stats() -> Dict[str, Any]:
 
 
 # =========================================================
-# ROUTES API
+# API
 # =========================================================
 @app.route("/status")
 def status():
-    return jsonify({
-        "status": "ok",
-        "service": "JHONNY_ELITE_BACKEND",
-        "time": utc_iso_now()
-    })
+    return jsonify(
+        {
+            "status": "ok",
+            "service": "JHONNY_ELITE_BACKEND",
+            "time": utc_iso_now(),
+        }
+    )
 
 
 @app.route("/scan")
 def scan():
     refrescar_datos()
-    return jsonify({
-        "ok": True,
-        "partidos_analizados": len(cache_partidos),
-        "total_partidos": len(cache_partidos),
-        "ultimo_scan": ultimo_scan_ts
-    })
+    return jsonify(
+        {
+            "ok": True,
+            "partidos_analizados": len(cache_partidos),
+            "total_partidos": len(cache_partidos),
+            "ultimo_scan": ultimo_scan_ts,
+        }
+    )
 
 
 @app.route("/signals")
 def signals():
     asegurar_cache()
-    return jsonify({
-        "total_senales": len(cache_senales),
-        "signals": cache_senales
-    })
+    return jsonify(
+        {
+            "total_senales": len(cache_senales),
+            "signals": cache_senales,
+        }
+    )
 
 
 @app.route("/hot-matches")
@@ -716,13 +787,15 @@ def hot_matches():
             to_int(p.get("dangerous_attacks"), 0),
             to_int(p.get("minuto"), 0),
         ),
-        reverse=True
+        reverse=True,
     )
 
-    return jsonify({
-        "total": len(partidos_hot),
-        "hot_matches": partidos_hot[:20]
-    })
+    return jsonify(
+        {
+            "total": len(partidos_hot),
+            "hot_matches": partidos_hot[:20],
+        }
+    )
 
 
 @app.route("/history")
@@ -738,13 +811,15 @@ def learning_stats():
 @app.route("/auto-scan/status")
 def auto_scan_status():
     asegurar_cache()
-    return jsonify({
-        "auto_scan_activo": auto_scan_activo,
-        "intervalo_segundos": AUTO_SCAN_INTERVAL,
-        "ultimo_scan": ultimo_scan_ts,
-        "partidos_cache": len(cache_partidos),
-        "senales_cache": len(cache_senales),
-    })
+    return jsonify(
+        {
+            "auto_scan_activo": auto_scan_activo,
+            "intervalo_segundos": AUTO_SCAN_INTERVAL,
+            "ultimo_scan": ultimo_scan_ts,
+            "partidos_cache": len(cache_partidos),
+            "senales_cache": len(cache_senales),
+        }
+    )
 
 
 @app.route("/api/leagues")
@@ -763,9 +838,9 @@ def api_leagues():
 
     _ = date_filter
 
-    agrupado = {}
+    agrupado: Dict[Tuple[str, str], Dict[str, Any]] = {}
     for p in partidos:
-        key = (p.get("liga"), p.get("pais"))
+        key = (str(p.get("liga")), str(p.get("pais")))
         if key not in agrupado:
             agrupado[key] = {
                 "league": p.get("liga"),
@@ -784,7 +859,7 @@ def api_leagues():
 
 
 @app.route("/match-details/<match_id>")
-def match_details(match_id):
+def match_details(match_id: str):
     asegurar_cache()
 
     partido = next((p for p in cache_partidos if str(p.get("id")) == str(match_id)), None)
@@ -796,39 +871,41 @@ def match_details(match_id):
     posesion_local = 60 if partido.get("local") == "Barcelona" else 52
     posesion_visitante = 40 if posesion_local == 60 else 48
 
-    return jsonify({
-        "match_id": partido.get("id"),
-        "home": partido.get("local"),
-        "away": partido.get("visitante"),
-        "league": partido.get("liga"),
-        "country": partido.get("pais"),
-        "minute": partido.get("minuto"),
-        "status": partido.get("estado_partido"),
-        "score": f"{partido.get('marcador_local', 0)}-{partido.get('marcador_visitante', 0)}",
-        "marcador_local": partido.get("marcador_local", 0),
-        "marcador_visitante": partido.get("marcador_visitante", 0),
-        "xg": partido.get("xG", 0),
-        "shots": partido.get("shots", 0),
-        "shots_on_target": partido.get("shots_on_target", 0),
-        "dangerous_attacks": partido.get("dangerous_attacks", 0),
-        "momentum": partido.get("momentum", "MEDIO"),
-        "goal_pressure": partido.get("goal_pressure", {}),
-        "goal_predictor": partido.get("goal_predictor", {}),
-        "chaos": partido.get("chaos", {}),
-        "posesion_local": posesion_local,
-        "posesion_visitante": posesion_visitante,
-        "faltas_local": 13,
-        "faltas_visitante": 14,
-        "amarillas_local": 2,
-        "amarillas_visitante": 2,
-        "rojas_local": 1,
-        "rojas_visitante": 1,
-        "signal": senal or None
-    })
+    return jsonify(
+        {
+            "match_id": partido.get("id"),
+            "home": partido.get("local"),
+            "away": partido.get("visitante"),
+            "league": partido.get("liga"),
+            "country": partido.get("pais"),
+            "minute": partido.get("minuto"),
+            "status": partido.get("estado_partido"),
+            "score": f"{partido.get('marcador_local', 0)}-{partido.get('marcador_visitante', 0)}",
+            "marcador_local": partido.get("marcador_local", 0),
+            "marcador_visitante": partido.get("marcador_visitante", 0),
+            "xg": partido.get("xG", 0),
+            "shots": partido.get("shots", 0),
+            "shots_on_target": partido.get("shots_on_target", 0),
+            "dangerous_attacks": partido.get("dangerous_attacks", 0),
+            "momentum": partido.get("momentum", "MEDIO"),
+            "goal_pressure": partido.get("goal_pressure", {}),
+            "goal_predictor": partido.get("goal_predictor", {}),
+            "chaos": partido.get("chaos", {}),
+            "posesion_local": posesion_local,
+            "posesion_visitante": posesion_visitante,
+            "faltas_local": 13,
+            "faltas_visitante": 14,
+            "amarillas_local": 2,
+            "amarillas_visitante": 2,
+            "rojas_local": 1,
+            "rojas_visitante": 1,
+            "signal": senal or None,
+        }
+    )
 
 
 # =========================================================
-# ROUTES HTML
+# HTML
 # =========================================================
 @app.route("/")
 def index():
@@ -843,35 +920,38 @@ def dashboard():
 
 
 @app.route("/leagues")
+@app.route("/league-explorer")
 def leagues():
     asegurar_cache()
 
     partidos_vivos = [p for p in cache_partidos if partido_esta_vivo(p)]
-    agrupado = {}
+    agrupado: Dict[Tuple[str, str], Dict[str, Any]] = {}
 
     for p in partidos_vivos:
-        liga = p.get("liga")
-        pais = p.get("pais")
+        liga = str(p.get("liga"))
+        pais = str(p.get("pais"))
         key = (liga, pais)
+
         if key not in agrupado:
             agrupado[key] = {
                 "league": liga,
                 "country": pais,
-                "count": 0
+                "count": 0,
             }
+
         agrupado[key]["count"] += 1
 
     leagues_data = sorted(
         list(agrupado.values()),
         key=lambda x: (x["count"], x["league"]),
-        reverse=True
+        reverse=True,
     )
 
     return render_template("leagues.html", leagues=leagues_data)
 
 
 @app.route("/matches/<league_name>")
-def matches_by_league(league_name):
+def matches_by_league(league_name: str):
     asegurar_cache()
 
     league_name_lower = normalizar_texto(league_name)
@@ -892,21 +972,21 @@ def matches_by_league(league_name):
             key=lambda p: (
                 to_float(p.get("xG"), 0),
                 to_int(p.get("shots_on_target"), 0),
-                to_int(p.get("dangerous_attacks"), 0)
+                to_int(p.get("dangerous_attacks"), 0),
             ),
-            reverse=True
+            reverse=True,
         )
 
     return render_template(
         "matches.html",
         league_name=league_name,
         matches=partidos,
-        sort_by=sort_by
+        sort_by=sort_by,
     )
 
 
 @app.route("/match/<match_id>")
-def match_page(match_id):
+def match_page(match_id: str):
     asegurar_cache()
 
     partido = next((p for p in cache_partidos if str(p.get("id")) == str(match_id)), None)
@@ -916,11 +996,7 @@ def match_page(match_id):
     senal = next((s for s in cache_senales if str(s.get("match_id")) == str(match_id)), None)
     detail = match_details(match_id).get_json()
 
-    return render_template(
-        "match_detail.html",
-        match=detail,
-        signal=senal
-    )
+    return render_template("match_detail.html", match=detail, signal=senal)
 
 
 # =========================================================
@@ -930,24 +1006,3 @@ if __name__ == "__main__":
     refrescar_datos()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
- if not raw:
-                print("FETCHER VACIO -> usando fallback")
-                raw = obtener_partidos_fallback()
-
-        except Exception as e:
-            print("ERROR FETCHER:", e)
-            raw = obtener_partidos_fallback()
-    else:
-        print("SIN FETCHER REAL -> usando fallback")
-        raw = obtener_partidos_fallback()
-
-    cache_partidos = limpiar_cache_partidos(raw)
-    print("TOTAL PARTIDOS LIMPIOS:", len(cache_partidos))
-
-    cache_senales = generar_senales(cache_partidos)
-    print("TOTAL SENALES:", len(cache_senales))
-
-    ultimo_scan_ts = now_ts()
-2026-03-13 22:32:00.339 | INFO     | live_fetcher:_main_loop:182 - [SCAN] Iniciando escaneo continuo...
-2026-03-13 22:32:02.789 | INFO     | live_fetcher:_scan_once:147 - [SCAN] Se detectaron 0 partidos
-2026-03-13 22:32:02.790 | WARNING  | live_fetcher:_scan_once:176 - [SCAN] No se pudo guardar live_matches.json: [Errno 30] Read-only file system: '/var/data/live_matches.json'
