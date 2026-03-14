@@ -9,7 +9,6 @@ from flask_cors import CORS
 # =========================================================
 # IMPORTS DEL SISTEMA
 # =========================================================
-# Ajusta estos imports solo si tus archivos tienen otro nombre.
 try:
     from MI_PROYECTO.signal_engine import generar_senal
 except Exception:
@@ -18,8 +17,6 @@ except Exception:
     except Exception:
         generar_senal = None
 
-# Si tienes un fetcher real, el sistema lo usa.
-# Si no existe, el backend seguirá funcionando con fallback.
 try:
     from MI_PROYECTO.live_fetcher import obtener_partidos_en_vivo
 except Exception:
@@ -148,7 +145,6 @@ def partido_esta_finalizado(p: Dict[str, Any]) -> bool:
     if estado in ESTADOS_FINALIZADOS:
         return True
 
-    # Algunos providers mandan cadenas como "FT - PEN"
     if "ft" in estado or "finished" in estado or "finalizado" in estado:
         return True
 
@@ -170,17 +166,20 @@ def partido_esta_suspendido_o_invalido(p: Dict[str, Any]) -> bool:
 
 
 def partido_esta_vivo(p: Dict[str, Any]) -> bool:
-    """
-    Filtro maestro real del sistema.
-    Este filtro se debe usar en TODO:
-    - escaneo
-    - ligas
-    - partidos
-    - señales
-    - detalle
-    """
     if not isinstance(p, dict):
         return False
+
+    estado = extraer_estado_partido(p)
+    minuto = extraer_minuto_partido(p)
+
+    print(
+        "DEBUG VIVO ->",
+        p.get("local"), "vs", p.get("visitante"),
+        "| estado:", estado,
+        "| minuto:", minuto,
+        "| live:", p.get("live"),
+        "| is_live:", p.get("is_live")
+    )
 
     if partido_esta_suspendido_o_invalido(p):
         return False
@@ -188,20 +187,12 @@ def partido_esta_vivo(p: Dict[str, Any]) -> bool:
     if partido_esta_finalizado(p):
         return False
 
-    estado = extraer_estado_partido(p)
-    minuto = extraer_minuto_partido(p)
-
-    # Si explícitamente viene como LIVE o similar
     if estado in ESTADOS_VIVOS:
-        if 0 <= minuto <= 119:
-            return True
-
-    # Si el provider manda minuto válido aunque el estado venga raro
-    if 1 <= minuto < 120:
-        # si el estado no parece finalizado, lo tratamos como vivo
         return True
 
-    # Fallback por campo boolean live
+    if 0 < minuto < 120:
+        return True
+
     if p.get("live") is True or p.get("is_live") is True:
         return True
 
@@ -223,6 +214,8 @@ def partido_es_apostable(p: Dict[str, Any]) -> tuple[bool, str]:
 # NORMALIZACION DE PARTIDOS
 # =========================================================
 def normalizar_partido(raw: Dict[str, Any]) -> Dict[str, Any]:
+    print("PARTIDO RAW NORMALIZAR:", raw)
+
     fixture = raw.get("fixture") or {}
     teams = raw.get("teams") or {}
     goals = raw.get("goals") or {}
@@ -252,7 +245,7 @@ def normalizar_partido(raw: Dict[str, Any]) -> Dict[str, Any]:
         "visitante": visitante,
         "liga": raw.get("liga") or league.get("name") or raw.get("league") or "Liga desconocida",
         "pais": raw.get("pais") or league.get("country") or raw.get("country") or "World",
-        "estado_partido": estado_raw or "LIVE",
+        "estado_partido": estado_raw or "",
         "minuto": to_int(minuto_raw, 0),
         "marcador_local": to_int(marcador_local, 0),
         "marcador_visitante": to_int(marcador_visitante, 0),
@@ -264,7 +257,8 @@ def normalizar_partido(raw: Dict[str, Any]) -> Dict[str, Any]:
         "goal_pressure": raw.get("goal_pressure", {}) or {},
         "goal_predictor": raw.get("goal_predictor", {}) or {},
         "chaos": raw.get("chaos", {}) or {},
-        "live": raw.get("live", True),
+        "live": raw.get("live", False),
+        "is_live": raw.get("is_live", False),
         "fixture": fixture,
     }
 
@@ -273,11 +267,12 @@ def limpiar_cache_partidos(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any
     normalizados = [normalizar_partido(p) for p in partidos if isinstance(p, dict)]
     solo_vivos = [p for p in normalizados if partido_esta_vivo(p)]
 
-    # quitar duplicados por id
     unicos = {}
     for p in solo_vivos:
         unicos[str(p.get("id"))] = p
 
+    print("TOTAL NORMALIZADOS:", len(normalizados))
+    print("TOTAL VIVOS:", len(solo_vivos))
     return list(unicos.values())
 
 
@@ -370,7 +365,6 @@ def enriquecer_senal(senal: Dict[str, Any], partido: Dict[str, Any]) -> Dict[str
     else:
         senal["signal_rank"] = "NORMAL"
 
-    # extras útiles para panel
     senal["ai_decision_score"] = round(signal_score * 0.53, 2)
     senal["risk_score"] = round(max(1.0, 10 - (to_float(senal.get("confidence"), 0) / 12)), 2)
     senal["ai_reason"] = senal.get("ai_reason") or "Lectura IA sin anomalías extremas"
@@ -400,11 +394,7 @@ def filtrar_value_bets_reales(senal: Dict[str, Any]) -> bool:
 # GENERACION DE SEÑALES
 # =========================================================
 def generar_senal_fallback(datos: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Fallback si no existe signal_engine real.
-    """
     xg = to_float(datos.get("xG"), 0)
-    minuto = to_int(datos.get("minuto"), 0)
     marcador_local = to_int(datos.get("marcador_local"), 0)
     marcador_visitante = to_int(datos.get("marcador_visitante"), 0)
 
@@ -467,7 +457,8 @@ def generar_senales(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         if generar_senal:
             try:
                 senal = generar_senal(datos)
-            except Exception:
+            except Exception as e:
+                print("ERROR generar_senal -> usando fallback:", e)
                 senal = generar_senal_fallback(datos)
         else:
             senal = generar_senal_fallback(datos)
@@ -599,7 +590,6 @@ def obtener_partidos_fallback() -> List[Dict[str, Any]]:
             "goal_predictor": {"predictor_score": 4.1},
             "chaos": {"chaos_score": 1.4},
         },
-        # este NO debería sobrevivir al filtro maestro
         {
             "id": "104",
             "local": "River Plate",
@@ -625,18 +615,31 @@ def refrescar_datos():
     if obtener_partidos_en_vivo:
         try:
             raw = obtener_partidos_en_vivo()
-        except Exception:
+            print("RAW PARTIDOS:", raw[:3] if isinstance(raw, list) else raw)
+            print("TOTAL RAW:", len(raw) if isinstance(raw, list) else "NO ES LISTA")
+
+            if not raw:
+                print("FETCHER VACIO -> usando fallback")
+                raw = obtener_partidos_fallback()
+
+        except Exception as e:
+            print("ERROR FETCHER:", e)
             raw = obtener_partidos_fallback()
     else:
+        print("SIN FETCHER REAL -> usando fallback")
         raw = obtener_partidos_fallback()
 
     cache_partidos = limpiar_cache_partidos(raw)
+    print("TOTAL PARTIDOS LIMPIOS:", len(cache_partidos))
+
     cache_senales = generar_senales(cache_partidos)
+    print("TOTAL SENALES:", len(cache_senales))
+
     ultimo_scan_ts = now_ts()
 
 
 def asegurar_cache():
-    if not cache_partidos or not cache_senales:
+    if not cache_partidos:
         refrescar_datos()
 
 
@@ -701,7 +704,6 @@ def signals():
 def hot_matches():
     asegurar_cache()
 
-    # solo partidos realmente vivos y relevantes
     partidos_hot = [
         p for p in cache_partidos
         if partido_esta_vivo(p) and to_float(p.get("xG"), 0) >= 0.7
@@ -759,7 +761,6 @@ def api_leagues():
     elif state_filter == "finished":
         partidos = [p for p in cache_partidos if partido_esta_finalizado(p)]
 
-    # date_filter está listo para evolucionar
     _ = date_filter
 
     agrupado = {}
@@ -792,7 +793,6 @@ def match_details(match_id):
 
     senal = next((s for s in cache_senales if str(s.get("match_id")) == str(match_id)), None)
 
-    # métricas demo extendidas para panel detalle
     posesion_local = 60 if partido.get("local") == "Barcelona" else 52
     posesion_visitante = 40 if posesion_local == 60 else 48
 
@@ -926,8 +926,28 @@ def match_page(match_id):
 # =========================================================
 # MAIN
 # =========================================================
-# Render / gunicorn importará "app", así que esto es solo local.
 if __name__ == "__main__":
     refrescar_datos()
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+Este seria el archivo ya modificado responde solo si o no  if not raw:
+                print("FETCHER VACIO -> usando fallback")
+                raw = obtener_partidos_fallback()
+
+        except Exception as e:
+            print("ERROR FETCHER:", e)
+            raw = obtener_partidos_fallback()
+    else:
+        print("SIN FETCHER REAL -> usando fallback")
+        raw = obtener_partidos_fallback()
+
+    cache_partidos = limpiar_cache_partidos(raw)
+    print("TOTAL PARTIDOS LIMPIOS:", len(cache_partidos))
+
+    cache_senales = generar_senales(cache_partidos)
+    print("TOTAL SENALES:", len(cache_senales))
+
+    ultimo_scan_ts = now_ts()
+2026-03-13 22:32:00.339 | INFO     | live_fetcher:_main_loop:182 - [SCAN] Iniciando escaneo continuo...
+2026-03-13 22:32:02.789 | INFO     | live_fetcher:_scan_once:147 - [SCAN] Se detectaron 0 partidos
+2026-03-13 22:32:02.790 | WARNING  | live_fetcher:_scan_once:176 - [SCAN] No se pudo guardar live_matches.json: [Errno 30] Read-only file system: '/var/data/live_matches.json'
