@@ -899,7 +899,11 @@ def match_details(match_id):
 def index():
     asegurar_cache()
     return render_template("dashboard.html")
-
+    
+@app.route("/")
+def index():
+    asegurar_cache()
+    return render_template("dashboard.html")
 
 @app.route("/dashboard")
 def dashboard():
