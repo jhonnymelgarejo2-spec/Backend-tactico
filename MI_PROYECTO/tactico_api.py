@@ -400,37 +400,25 @@ def filtro_antifake_partido(partido: Dict[str, Any], senal: Dict[str, Any]) -> b
     momentum = safe_upper(partido.get("momentum", "MEDIO"))
     market = str(senal.get("market", "")).upper()
 
-    confidence = to_float(senal.get("confidence"), 0)
-    odd = to_float(senal.get("odd"), 0)
-
+    # Reglas mínimas siempre
     if minuto < 10:
         return False
-
-    if confidence < 65:
+    if to_float(senal.get("confidence"), 0) < 65:
+        return False
+    if to_float(senal.get("odd"), 0) < 1.40:
         return False
 
-    if odd < 1.40:
-        return False
-
-    tiene_stats = (
-        shots >= 0 and
-        shots_on_target >= 0 and
-        dangerous_attacks >= 0 and
-        xg >= 0
-    )
-
-    if tiene_stats:
+    # Si hay stats completas, aplicar antifake estricto
+    if shots >= 0 and shots_on_target >= 0 and dangerous_attacks >= 0 and xg >= 0:
         if shots <= 2 and shots_on_target == 0 and dangerous_attacks < 8:
             return False
-
         if ("OVER" in market or "GOAL" in market) and xg < 0.85:
             return False
-
         if momentum == "BAJO" and dangerous_attacks < 10 and shots_on_target < 2:
             return False
 
+    # Si no hay stats (valores -1), dejar pasar con reglas mínimas
     return True
-
 
 
 # =========================================================
