@@ -897,15 +897,11 @@ def match_details(match_id):
 # =========================================================
 @app.route("/")
 def index():
-    asegurar_cache()
     return render_template("dashboard.html")
 
 @app.route("/dashboard")
 def dashboard():
-    asegurar_cache()
     return render_template("dashboard.html")
-
-
 @app.route("/league-explorer")
 def league_explorer():
     asegurar_cache()
