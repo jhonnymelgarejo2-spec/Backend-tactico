@@ -605,10 +605,40 @@ def generar_senales(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         senal_final = enriquecer_senal(senal_final, p)
 
         if not filtro_antifake_partido(p, senal_final):
+            print(
+                f"RECHAZADA ANTIFAKE -> {p.get('local')} vs {p.get('visitante')} | "
+                f"minute={senal_final.get('minute')} | "
+                f"market={senal_final.get('market')} | "
+                f"xG={p.get('xG')} | shots={p.get('shots')} | "
+                f"shots_on_target={p.get('shots_on_target')} | "
+                f"dangerous_attacks={p.get('dangerous_attacks')} | "
+                f"momentum={p.get('momentum')}"
+            )
             continue
 
         if not filtrar_value_bets_reales(senal_final):
+            print(
+                f"RECHAZADA VALUE -> {p.get('local')} vs {p.get('visitante')} | "
+                f"league={senal_final.get('league')} | "
+                f"market={senal_final.get('market')} | "
+                f"value={senal_final.get('value')} | "
+                f"confidence={senal_final.get('confidence')} | "
+                f"risk_score={senal_final.get('risk_score')} | "
+                f"tactical_score={senal_final.get('tactical_score')} | "
+                f"signal_score={senal_final.get('signal_score')} | "
+                f"goal_score={senal_final.get('goal_inminente_score')} | "
+                f"minute={senal_final.get('minute')} | "
+                f"odd={senal_final.get('odd')}"
+            )
             continue
+
+        print(
+            f"SEÑAL ACEPTADA -> {p.get('local')} vs {p.get('visitante')} | "
+            f"market={senal_final.get('market')} | "
+            f"value={senal_final.get('value')} | "
+            f"confidence={senal_final.get('confidence')} | "
+            f"risk_score={senal_final.get('risk_score')}"
+        )
 
         senales.append(senal_final)
 
