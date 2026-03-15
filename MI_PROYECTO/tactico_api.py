@@ -460,7 +460,7 @@ def generar_senal_fallback(datos: Dict[str, Any]) -> Dict[str, Any]:
         "riesgo_operativo": "MEDIO",
         "senales_posibles": []
     }
-def filtrar_value_bets_reales(senal: Dict[str, Any]) -> bool:
+  def filtrar_value_bets_reales(senal: Dict[str, Any]) -> bool:
     ligas_top = {
         "premier league",
         "la liga",
@@ -486,14 +486,15 @@ def filtrar_value_bets_reales(senal: Dict[str, Any]) -> bool:
     odd = to_float(senal.get("odd"), 0)
     risk_score = to_float(senal.get("risk_score"), 0)
 
+    # Filtros más flexibles
     if league in ligas_top:
-        min_value = 20
-        min_confidence = 75
-        max_risk_score = 3
-    else:
-        min_value = 15
+        min_value = 8
         min_confidence = 65
         max_risk_score = 5
+    else:
+        min_value = 5
+        min_confidence = 60
+        max_risk_score = 7
 
     if value < min_value:
         return False
@@ -501,16 +502,16 @@ def filtrar_value_bets_reales(senal: Dict[str, Any]) -> bool:
     if confidence < min_confidence:
         return False
 
-    if odd < 1.40:
+    if odd < 1.35:
         return False
 
-    if minute >= 85:
+    if minute >= 88:
         return False
 
-    if tactical_score < 15:
+    if tactical_score < 8:
         return False
 
-    if signal_score < 120:
+    if signal_score < 60:
         return False
 
     if risk_score > max_risk_score:
@@ -519,10 +520,10 @@ def filtrar_value_bets_reales(senal: Dict[str, Any]) -> bool:
     if riesgo_operativo == "ALTO" and league in ligas_top:
         return False
 
-    if ("OVER" in market or "GOAL" in market) and goal_score < 15:
+    if ("OVER" in market or "GOAL" in market) and goal_score < 8:
         return False
 
-    if "RESULT" in market and confidence < (min_confidence + 5):
+    if "RESULT" in market and confidence < (min_confidence + 3):
         return False
 
     return True
