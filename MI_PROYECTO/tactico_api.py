@@ -393,27 +393,43 @@ def enriquecer_senal(senal: Dict[str, Any], partido: Dict[str, Any]) -> Dict[str
 # =========================================================
 def filtro_antifake_partido(partido: Dict[str, Any], senal: Dict[str, Any]) -> bool:
     minuto = to_int(partido.get("minuto"), 0)
-    shots = to_int(partido.get("shots"), 0)
-    shots_on_target = to_int(partido.get("shots_on_target"), 0)
-    dangerous_attacks = to_int(partido.get("dangerous_attacks"), 0)
-    xg = to_float(partido.get("xG"), 0)
+    shots = to_int(partido.get("shots"), -1)
+    shots_on_target = to_int(partido.get("shots_on_target"), -1)
+    dangerous_attacks = to_int(partido.get("dangerous_attacks"), -1)
+    xg = to_float(partido.get("xG"), -1)
     momentum = safe_upper(partido.get("momentum", "MEDIO"))
     market = str(senal.get("market", "")).upper()
 
-    if shots <= 2 and shots_on_target == 0 and dangerous_attacks < 8:
+    confidence = to_float(senal.get("confidence"), 0)
+    odd = to_float(senal.get("odd"), 0)
+
+    if minuto < 10:
         return False
 
-    if ("OVER" in market or "GOAL" in market) and xg < 0.85:
+    if confidence < 65:
         return False
 
-    if momentum == "BAJO" and dangerous_attacks < 10 and shots_on_target < 2:
+    if odd < 1.40:
         return False
 
-    if minuto < 8:
-        return False
+    tiene_stats = (
+        shots >= 0 and
+        shots_on_target >= 0 and
+        dangerous_attacks >= 0 and
+        xg >= 0
+    )
+
+    if tiene_stats:
+        if shots <= 2 and shots_on_target == 0 and dangerous_attacks < 8:
+            return False
+
+        if ("OVER" in market or "GOAL" in market) and xg < 0.85:
+            return False
+
+        if momentum == "BAJO" and dangerous_attacks < 10 and shots_on_target < 2:
+            return False
 
     return True
-
 
 
 
