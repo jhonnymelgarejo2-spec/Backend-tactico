@@ -1,1 +1,1 @@
-
+-r MI_PROYECTO/requisitos.txt
