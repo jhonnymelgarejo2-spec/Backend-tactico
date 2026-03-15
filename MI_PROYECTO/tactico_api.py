@@ -459,8 +459,7 @@ def generar_senal_fallback(datos: Dict[str, Any]) -> Dict[str, Any]:
         "recomendacion_final": "APOSTAR",
         "riesgo_operativo": "MEDIO",
         "senales_posibles": []
-    }
-  def filtrar_value_bets_reales(senal: Dict[str, Any]) -> bool:
+def filtrar_value_bets_reales(senal: Dict[str, Any]) -> bool:
     ligas_top = {
         "premier league",
         "la liga",
@@ -486,7 +485,6 @@ def generar_senal_fallback(datos: Dict[str, Any]) -> Dict[str, Any]:
     odd = to_float(senal.get("odd"), 0)
     risk_score = to_float(senal.get("risk_score"), 0)
 
-    # Filtros más flexibles
     if league in ligas_top:
         min_value = 8
         min_confidence = 65
@@ -527,7 +525,6 @@ def generar_senal_fallback(datos: Dict[str, Any]) -> Dict[str, Any]:
         return False
 
     return True
-
 # =========================================================
 # GENERACION DE SEÑALES
 # =========================================================
