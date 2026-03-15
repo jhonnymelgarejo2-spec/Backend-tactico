@@ -1,1 +1,7 @@
--r MI_PROYECTO/requisitos.txt
+fastapi
+uvicorn[standard]
+gunicorn
+requests
+python-dotenv
+jinja2
+aiohttp
