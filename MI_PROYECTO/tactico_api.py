@@ -27,7 +27,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
-app = Flask(__name__, template_folder=TEMPLATES_DIR, static_folder=STATIC_DIR)
+app = Flask(__name__)
 CORS(app)
 
 
@@ -902,6 +902,7 @@ def index():
 @app.route("/dashboard")
 def dashboard():
     return render_template("dashboard.html")
+    
 @app.route("/league-explorer")
 def league_explorer():
     asegurar_cache()
