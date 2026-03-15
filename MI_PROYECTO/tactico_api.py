@@ -459,6 +459,7 @@ def generar_senal_fallback(datos: Dict[str, Any]) -> Dict[str, Any]:
         "recomendacion_final": "APOSTAR",
         "riesgo_operativo": "MEDIO",
         "senales_posibles": []
+        
 def filtrar_value_bets_reales(senal: Dict[str, Any]) -> bool:
     ligas_top = {
         "premier league",
