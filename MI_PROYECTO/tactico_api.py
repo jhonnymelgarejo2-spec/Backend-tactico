@@ -415,43 +415,6 @@ def filtro_antifake_partido(partido: Dict[str, Any], senal: Dict[str, Any]) -> b
     return True
 
 
-def filtrar_value_bets_reales(senal: Dict[str, Any]) -> bool:
-    value = to_float(senal.get("value"), 0)
-    confidence = to_float(senal.get("confidence"), 0)
-    riesgo = safe_upper(senal.get("riesgo_operativo", "MEDIO"))
-    tactical_score = to_float(senal.get("tactical_score"), 0)
-    signal_score = to_float(senal.get("signal_score"), 0)
-    goal_score = to_float(senal.get("goal_inminente_score"), 0)
-    minute = to_int(senal.get("minute"), 0)
-    odd = to_float(senal.get("odd"), 0)
-
-    if value < 3:
-        return False
-
-    if confidence < 72:
-        return False
-
-    if odd < 1.55:
-        return False
-
-    if minute >= 80:
-        return False
-
-    if tactical_score < 18:
-        return False
-
-    if signal_score < 150:
-        return False
-
-    market = str(senal.get("market", "")).upper()
-    if "OVER" in market or "GOAL" in market:
-        if goal_score < 20:
-            return False
-
-    if riesgo == "ALTO" and signal_score < 220:
-        return False
-
-    return True
 
 
 # =========================================================
@@ -493,7 +456,72 @@ def generar_senal_fallback(datos: Dict[str, Any]) -> Dict[str, Any]:
         "riesgo_operativo": "MEDIO",
         "senales_posibles": []
     }
+def filtrar_value_bets_reales(senal: Dict[str, Any]) -> bool:
+    ligas_top = {
+        "premier league",
+        "la liga",
+        "serie a",
+        "bundesliga",
+        "ligue 1",
+        "uefa champions league",
+        "champions league",
+        "uefa europa league",
+        "europa league"
+    }
 
+    league = str(senal.get("league", "")).strip().lower()
+    market = str(senal.get("market", "")).strip().upper()
+
+    value = to_float(senal.get("value"), 0)
+    confidence = to_float(senal.get("confidence"), 0)
+    riesgo_operativo = safe_upper(senal.get("riesgo_operativo", "MEDIO"))
+    tactical_score = to_float(senal.get("tactical_score"), 0)
+    signal_score = to_float(senal.get("signal_score"), 0)
+    goal_score = to_float(senal.get("goal_inminente_score"), 0)
+    minute = to_int(senal.get("minute"), 0)
+    odd = to_float(senal.get("odd"), 0)
+    risk_score = to_float(senal.get("risk_score"), 0)
+
+    if league in ligas_top:
+        min_value = 20
+        min_confidence = 75
+        max_risk_score = 3
+    else:
+        min_value = 15
+        min_confidence = 65
+        max_risk_score = 5
+
+    if value < min_value:
+        return False
+
+    if confidence < min_confidence:
+        return False
+
+    if odd < 1.40:
+        return False
+
+    if minute >= 85:
+        return False
+
+    if tactical_score < 15:
+        return False
+
+    if signal_score < 120:
+        return False
+
+    if risk_score > max_risk_score:
+        return False
+
+    if riesgo_operativo == "ALTO" and league in ligas_top:
+        return False
+
+    if ("OVER" in market or "GOAL" in market) and goal_score < 15:
+        return False
+
+    if "RESULT" in market and confidence < (min_confidence + 5):
+        return False
+
+    return True
 
 # =========================================================
 # GENERACION DE SEÑALES
