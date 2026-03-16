@@ -3,70 +3,289 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JHONNY_ELITE - Ligas</title>
+  <title>JHONNY_ELITE V15_PRO · Ligas</title>
   <style>
-    *{box-sizing:border-box;margin:0;padding:0}
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+    }
+
+    :root{
+      --bg:#07111c;
+      --panel:#0c1b2d;
+      --panel-2:#10243a;
+      --line:rgba(255,255,255,0.08);
+      --text:#eef6ff;
+      --muted:#9fc5ef;
+      --blue:#2477ff;
+      --blue-2:#1858c2;
+      --green:#66f0a7;
+      --shadow:0 18px 45px rgba(0,0,0,.28);
+      --radius:20px;
+    }
+
     body{
       font-family:Arial,Helvetica,sans-serif;
       background:
-        linear-gradient(rgba(5,10,18,.86), rgba(5,10,18,.92)),
-        url("https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1600&q=80") center/cover fixed no-repeat;
-      color:#eef6ff;
+        radial-gradient(circle at top right, rgba(39,162,255,.10), transparent 18%),
+        radial-gradient(circle at left center, rgba(102,240,167,.08), transparent 18%),
+        linear-gradient(180deg, #07111c, #081523 40%, #09131c 100%);
+      color:var(--text);
       min-height:100vh;
     }
-    .wrap{max-width:1200px;margin:0 auto;padding:20px}
+
+    a{
+      text-decoration:none;
+      color:inherit;
+    }
+
+    .wrap{
+      max-width:1400px;
+      margin:0 auto;
+      padding:22px;
+    }
+
     .topbar{
-      display:flex;justify-content:space-between;align-items:center;gap:12px;
-      margin-bottom:20px;padding:18px 20px;border-radius:18px;
-      background:rgba(11,22,40,.82);border:1px solid rgba(255,255,255,.08);
-      backdrop-filter:blur(10px);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:16px;
+      margin-bottom:20px;
+      padding:20px 22px;
+      border-radius:22px;
+      background:linear-gradient(160deg, rgba(16,36,58,.96), rgba(9,20,34,.97));
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
     }
-    .brand{font-size:28px;font-weight:900}
-    .brand .g{color:#66f0a7}
-    .sub{font-size:12px;color:#9fc5ef;margin-top:6px}
+
+    .brand{
+      font-size:32px;
+      font-weight:900;
+      line-height:1;
+    }
+
+    .brand .g{
+      color:var(--green);
+    }
+
+    .sub{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:8px;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+
+    .nav{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
     .nav a{
-      text-decoration:none;color:#fff;background:#183150;border:1px solid rgba(255,255,255,.08);
-      padding:10px 14px;border-radius:12px;font-weight:700
+      color:#fff;
+      background:linear-gradient(180deg, rgba(18,44,77,.98), rgba(11,28,51,.98));
+      border:1px solid rgba(255,255,255,.08);
+      padding:11px 16px;
+      border-radius:12px;
+      font-weight:800;
+      transition:transform .15s ease, filter .15s ease;
     }
+
+    .nav a:hover,
+    .btn:hover{
+      transform:translateY(-1px);
+      filter:brightness(1.06);
+    }
+
     .filters{
-      display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;
-      padding:16px;border-radius:18px;background:rgba(11,22,40,.78);
-      border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(10px);
+      display:grid;
+      grid-template-columns:repeat(3, 1fr);
+      gap:12px;
+      margin-bottom:20px;
+      padding:18px;
+      border-radius:20px;
+      background:linear-gradient(160deg, rgba(16,36,58,.92), rgba(9,20,34,.94));
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
     }
-    .filters select,.filters input{
-      background:#11243d;color:#eef6ff;border:1px solid rgba(255,255,255,.08);
-      padding:12px 14px;border-radius:12px;min-width:180px;outline:none;
+
+    .filters select,
+    .filters input{
+      width:100%;
+      background:#11243d;
+      color:#eef6ff;
+      border:1px solid rgba(255,255,255,.08);
+      padding:13px 14px;
+      border-radius:12px;
+      outline:none;
+      font-size:14px;
     }
-    .section-title{font-size:22px;font-weight:900;margin:14px 0 16px}
+
+    .filters input::placeholder{
+      color:#9fc5ef;
+    }
+
+    .filters select option{
+      color:#000;
+    }
+
+    .section-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin:6px 0 16px;
+    }
+
+    .section-title{
+      font-size:24px;
+      font-weight:900;
+    }
+
+    .section-sub{
+      color:var(--muted);
+      font-size:13px;
+    }
+
     .league-grid{
-      display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(290px,1fr));
+      gap:16px;
     }
+
     .league-card{
-      background:rgba(16,31,53,.82);border:1px solid rgba(255,255,255,.08);
-      border-radius:18px;padding:16px;backdrop-filter:blur(10px);
+      background:linear-gradient(160deg, rgba(16,31,53,.88), rgba(10,21,36,.92));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:20px;
+      padding:18px;
       box-shadow:0 10px 30px rgba(0,0,0,.25);
+      transition:transform .15s ease, border-color .15s ease;
     }
-    .league-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
-    .league-name{font-size:20px;font-weight:900;line-height:1.2}
-    .league-country{margin-top:8px;color:#9fc5ef;font-size:13px}
+
+    .league-card:hover{
+      transform:translateY(-2px);
+      border-color:rgba(79,195,255,.28);
+    }
+
+    .league-top{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:flex-start;
+      margin-bottom:14px;
+    }
+
+    .league-name{
+      font-size:21px;
+      font-weight:900;
+      line-height:1.2;
+    }
+
+    .league-country{
+      margin-top:8px;
+      color:var(--muted);
+      font-size:13px;
+    }
+
     .pill{
-      display:inline-flex;align-items:center;justify-content:center;
-      min-width:30px;height:30px;padding:0 10px;border-radius:999px;
-      background:#21466f;border:1px solid rgba(255,255,255,.08);font-weight:900
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:38px;
+      height:38px;
+      padding:0 12px;
+      border-radius:999px;
+      background:rgba(39,162,255,.16);
+      border:1px solid rgba(255,255,255,.08);
+      color:#bfe2ff;
+      font-weight:900;
+      font-size:14px;
     }
-    .league-stats{margin-top:14px;color:#d7e9ff;font-size:13px;line-height:1.6}
-    .league-actions{margin-top:16px}
+
+    .league-stats{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+      margin-bottom:16px;
+    }
+
+    .stat-box{
+      background:rgba(255,255,255,.035);
+      border:1px solid rgba(255,255,255,.05);
+      border-radius:14px;
+      padding:12px;
+    }
+
+    .stat-label{
+      color:var(--muted);
+      font-size:11px;
+      text-transform:uppercase;
+      margin-bottom:6px;
+    }
+
+    .stat-value{
+      font-size:24px;
+      font-weight:900;
+    }
+
+    .league-actions{
+      margin-top:4px;
+    }
+
     .btn{
-      display:inline-block;text-decoration:none;color:#fff;background:linear-gradient(180deg,#2477ff,#1858c2);
-      padding:11px 16px;border-radius:12px;font-weight:900;border:none;cursor:pointer
+      display:inline-block;
+      text-decoration:none;
+      color:#fff;
+      background:linear-gradient(180deg, var(--blue), var(--blue-2));
+      padding:11px 16px;
+      border-radius:12px;
+      font-weight:900;
+      border:none;
+      cursor:pointer;
+      transition:transform .15s ease, filter .15s ease;
     }
+
     .empty{
-      padding:30px;text-align:center;border-radius:18px;background:rgba(16,31,53,.72);
-      border:1px solid rgba(255,255,255,.08);color:#aac8ea
+      padding:34px 20px;
+      text-align:center;
+      border-radius:20px;
+      background:linear-gradient(160deg, rgba(16,31,53,.82), rgba(10,21,36,.86));
+      border:1px solid rgba(255,255,255,.08);
+      color:#aac8ea;
+      box-shadow:var(--shadow);
     }
-    @media (max-width:700px){
-      .topbar{flex-direction:column;align-items:flex-start}
-      .filters select,.filters input{width:100%}
+
+    @media (max-width:860px){
+      .topbar{
+        flex-direction:column;
+        align-items:flex-start;
+      }
+
+      .filters{
+        grid-template-columns:1fr;
+      }
+    }
+
+    @media (max-width:640px){
+      .wrap{
+        padding:14px;
+      }
+
+      .brand{
+        font-size:26px;
+      }
+
+      .section-head{
+        flex-direction:column;
+        align-items:flex-start;
+      }
+
+      .league-grid{
+        grid-template-columns:1fr;
+      }
     }
   </style>
 </head>
@@ -74,9 +293,10 @@
   <div class="wrap">
     <div class="topbar">
       <div>
-        <div class="brand">JHONNY_<span class="g">ELITE</span></div>
-        <div class="sub">Nivel 1 · Vista de ligas y torneos</div>
+        <div class="brand">JHONNY_<span class="g">ELITE</span> V15_PRO</div>
+        <div class="sub">Explorador de ligas · Vista de torneos · Acceso rápido a partidos</div>
       </div>
+
       <div class="nav">
         <a href="/dashboard">Dashboard</a>
       </div>
@@ -98,7 +318,10 @@
       <input id="searchInput" type="text" placeholder="Buscar liga o país...">
     </div>
 
-    <div class="section-title">Vista de Ligas</div>
+    <div class="section-head">
+      <div class="section-title">Vista de ligas</div>
+      <div class="section-sub" id="leagueCountText">Cargando ligas...</div>
+    </div>
 
     <div id="leagueGrid" class="league-grid">
       <div class="empty">Cargando ligas...</div>
@@ -108,9 +331,32 @@
   <script>
     function countryToFlag(country){
       const map = {
-        "Argentina":"🇦🇷","Brazil":"🇧🇷","Mexico":"🇲🇽","England":"🏴","Spain":"🇪🇸","Italy":"🇮🇹",
-        "Germany":"🇩🇪","France":"🇫🇷","Portugal":"🇵🇹","Turkey":"🇹🇷","World":"🌐","Iraq":"🇮🇶",
-        "Iran":"🇮🇷","Saudi-Arabia":"🇸🇦","Qatar":"🇶🇦","UAE":"🇦🇪","Belgium":"🇧🇪","Andorra":"🇦🇩"
+        "Argentina":"🇦🇷",
+        "Brazil":"🇧🇷",
+        "Mexico":"🇲🇽",
+        "England":"🏴",
+        "Spain":"🇪🇸",
+        "Italy":"🇮🇹",
+        "Germany":"🇩🇪",
+        "France":"🇫🇷",
+        "Portugal":"🇵🇹",
+        "Turkey":"🇹🇷",
+        "World":"🌐",
+        "Iraq":"🇮🇶",
+        "Iran":"🇮🇷",
+        "Saudi-Arabia":"🇸🇦",
+        "Qatar":"🇶🇦",
+        "UAE":"🇦🇪",
+        "Belgium":"🇧🇪",
+        "Andorra":"🇦🇩",
+        "Colombia":"🇨🇴",
+        "Chile":"🇨🇱",
+        "Peru":"🇵🇪",
+        "Panama":"🇵🇦",
+        "Jamaica":"🇯🇲",
+        "Venezuela":"🇻🇪",
+        "Suriname":"🇸🇷",
+        "Guatemala":"🇬🇹"
       };
       return map[country] || "🌍";
     }
@@ -119,20 +365,29 @@
 
     async function loadLeagues(){
       const grid = document.getElementById("leagueGrid");
+      const countText = document.getElementById("leagueCountText");
+
       try{
         const date = document.getElementById("dateFilter").value;
         const state = document.getElementById("stateFilter").value;
+
+        grid.innerHTML = `<div class="empty">Cargando ligas...</div>`;
+        countText.textContent = "Cargando ligas...";
+
         const res = await fetch(`/api/leagues?date=${encodeURIComponent(date)}&state=${encodeURIComponent(state)}`);
         const data = await res.json();
+
         allLeagues = Array.isArray(data) ? data : [];
         renderLeagues();
       }catch(err){
-        grid.innerHTML = `<div class="empty">Error cargando ligas</div>`;
+        grid.innerHTML = `<div class="empty">Error cargando ligas.</div>`;
+        countText.textContent = "No se pudieron cargar las ligas";
       }
     }
 
     function renderLeagues(){
       const grid = document.getElementById("leagueGrid");
+      const countText = document.getElementById("leagueCountText");
       const q = document.getElementById("searchInput").value.toLowerCase().trim();
 
       const filtered = allLeagues.filter(l => {
@@ -140,6 +395,8 @@
         const country = String(l.country || "").toLowerCase();
         return !q || league.includes(q) || country.includes(q);
       });
+
+      countText.textContent = `${filtered.length} ligas encontradas`;
 
       if(!filtered.length){
         grid.innerHTML = `<div class="empty">No hay ligas disponibles con ese filtro.</div>`;
@@ -150,15 +407,21 @@
         <div class="league-card">
           <div class="league-top">
             <div>
-              <div class="league-name">${l.league}</div>
-              <div class="league-country">${countryToFlag(l.country)} ${l.country}</div>
+              <div class="league-name">${l.league || "Liga desconocida"}</div>
+              <div class="league-country">${countryToFlag(l.country)} ${l.country || "World"}</div>
             </div>
             <div class="pill">${l.matches_live ?? 0}</div>
           </div>
 
           <div class="league-stats">
-            Partidos en vivo: <strong>${l.matches_live ?? 0}</strong><br>
-            Total partidos: <strong>${l.matches_total ?? 0}</strong>
+            <div class="stat-box">
+              <div class="stat-label">En vivo</div>
+              <div class="stat-value">${l.matches_live ?? 0}</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Total</div>
+              <div class="stat-value">${l.matches_total ?? 0}</div>
+            </div>
           </div>
 
           <div class="league-actions">
@@ -175,4 +438,4 @@
     loadLeagues();
   </script>
 </body>
-  </html>
+        </html>
