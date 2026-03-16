@@ -391,33 +391,49 @@ def enriquecer_senal(senal: Dict[str, Any], partido: Dict[str, Any]) -> Dict[str
 # =========================================================
 # ANTI FALSAS SEÑALES
 # =========================================================
-def filtro_antifake_partido(partido: Dict[str, Any], senal: Dict[str, Any]) -> bool:
+1def filtro_antifake_partido(partido: Dict[str, Any], senal: Dict[str, Any]) -> bool:
     minuto = to_int(partido.get("minuto"), 0)
-    shots = to_int(partido.get("shots"), -1)
-    shots_on_target = to_int(partido.get("shots_on_target"), -1)
-    dangerous_attacks = to_int(partido.get("dangerous_attacks"), -1)
-    xg = to_float(partido.get("xG"), -1)
+    shots = to_int(partido.get("shots"), 0)
+    shots_on_target = to_int(partido.get("shots_on_target"), 0)
+    dangerous_attacks = to_int(partido.get("dangerous_attacks"), 0)
+    xg = to_float(partido.get("xG"), 0)
     momentum = safe_upper(partido.get("momentum", "MEDIO"))
     market = str(senal.get("market", "")).upper()
+
+    confidence = to_float(senal.get("confidence"), 0)
+    odd = to_float(senal.get("odd"), 0)
 
     # Reglas mínimas siempre
     if minuto < 10:
         return False
-    if to_float(senal.get("confidence"), 0) < 65:
-        return False
-    if to_float(senal.get("odd"), 0) < 1.40:
+
+    if confidence < 60:
         return False
 
-    # Si hay stats completas, aplicar antifake estricto
-    if shots >= 0 and shots_on_target >= 0 and dangerous_attacks >= 0 and xg >= 0:
-        if shots <= 2 and shots_on_target == 0 and dangerous_attacks < 8:
-            return False
-        if ("OVER" in market or "GOAL" in market) and xg < 0.85:
-            return False
-        if momentum == "BAJO" and dangerous_attacks < 10 and shots_on_target < 2:
-            return False
+    if odd < 1.35:
+        return False
 
-    # Si no hay stats (valores -1), dejar pasar con reglas mínimas
+    # Si todas las stats vienen en cero, asumir que faltan datos
+    sin_stats_reales = (
+        shots == 0 and
+        shots_on_target == 0 and
+        dangerous_attacks == 0 and
+        xg == 0
+    )
+
+    if sin_stats_reales:
+        return True
+
+    # Antifake estricto solo cuando sí hay stats útiles
+    if shots <= 2 and shots_on_target == 0 and dangerous_attacks < 8:
+        return False
+
+    if ("OVER" in market or "GOAL" in market) and xg < 0.85:
+        return False
+
+    if momentum == "BAJO" and dangerous_attacks < 10 and shots_on_target < 2:
+        return False
+
     return True
 
 
