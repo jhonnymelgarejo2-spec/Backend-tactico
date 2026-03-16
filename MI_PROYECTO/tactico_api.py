@@ -391,7 +391,7 @@ def enriquecer_senal(senal: Dict[str, Any], partido: Dict[str, Any]) -> Dict[str
 # =========================================================
 # ANTI FALSAS SEÑALES
 # =========================================================
-1def filtro_antifake_partido(partido: Dict[str, Any], senal: Dict[str, Any]) -> bool:
+def filtro_antifake_partido(partido: Dict[str, Any], senal: Dict[str, Any]) -> bool:
     minuto = to_int(partido.get("minuto"), 0)
     shots = to_int(partido.get("shots"), 0)
     shots_on_target = to_int(partido.get("shots_on_target"), 0)
@@ -403,7 +403,6 @@ def enriquecer_senal(senal: Dict[str, Any], partido: Dict[str, Any]) -> Dict[str
     confidence = to_float(senal.get("confidence"), 0)
     odd = to_float(senal.get("odd"), 0)
 
-    # Reglas mínimas siempre
     if minuto < 10:
         return False
 
@@ -413,7 +412,6 @@ def enriquecer_senal(senal: Dict[str, Any], partido: Dict[str, Any]) -> Dict[str
     if odd < 1.35:
         return False
 
-    # Si todas las stats vienen en cero, asumir que faltan datos
     sin_stats_reales = (
         shots == 0 and
         shots_on_target == 0 and
@@ -424,7 +422,6 @@ def enriquecer_senal(senal: Dict[str, Any], partido: Dict[str, Any]) -> Dict[str
     if sin_stats_reales:
         return True
 
-    # Antifake estricto solo cuando sí hay stats útiles
     if shots <= 2 and shots_on_target == 0 and dangerous_attacks < 8:
         return False
 
@@ -435,7 +432,6 @@ def enriquecer_senal(senal: Dict[str, Any], partido: Dict[str, Any]) -> Dict[str
         return False
 
     return True
-
 
 # =========================================================
 # GENERADOR FALLBACK
