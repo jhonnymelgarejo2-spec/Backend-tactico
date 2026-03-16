@@ -1,6 +1,7 @@
 # ai_brain.py
 
 from typing import Dict
+from chaos_detector import detect_chaos
 
 
 def _f(value, default=0.0):
@@ -109,6 +110,8 @@ def leer_contexto_partido(match: Dict) -> Dict:
 
 def evaluar_ajuste_para_senal(match: Dict, signal: Dict) -> Dict:
     lectura = leer_contexto_partido(match)
+    chaos_read = detect_chaos(match)
+
     ai_state = lectura["ai_state"]
     ai_score = _f(lectura["ai_score"], 55)
 
@@ -127,7 +130,7 @@ def evaluar_ajuste_para_senal(match: Dict, signal: Dict) -> Dict:
             ajuste += 8
             fit = "ALINEADA"
             fit_reason = "La señal ofensiva encaja con la lectura IA"
-        elif ai_state in ("PRESION_FALSA", "CIERRE_TACTICO", "PARTIDO_MUERTO", "PARTIDO_TRAMPA"):
+        elif ai_state in ("PRESION_FALSA", "CIERRE_TACTICO", "PARTIDO_MUERTO", "PARTIDO_TRAMPA", "CAOS_PELIGROSO"):
             ajuste -= 12
             fit = "DESALINEADA"
             fit_reason = "La señal ofensiva no encaja con el contexto actual"
@@ -142,7 +145,19 @@ def evaluar_ajuste_para_senal(match: Dict, signal: Dict) -> Dict:
             fit = "DESALINEADA"
             fit_reason = "El hold choca con una lectura ofensiva fuerte"
 
-    adjusted_confidence = max(35, min(95, confidence + ajuste))
+    # Ajuste por caos detectado
+    if chaos_read["chaos_level"] == "MEDIO":
+        ajuste -= chaos_read["chaos_confidence_penalty"]
+        if fit == "NEUTRO":
+            fit = "RIESGO_MEDIO"
+            fit_reason = f"Se detecta volatilidad: {chaos_read['chaos_reason']}"
+
+    elif chaos_read["chaos_level"] == "ALTO":
+        ajuste -= chaos_read["chaos_confidence_penalty"]
+        fit = "RIESGO_ALTO"
+        fit_reason = f"Partido caótico: {chaos_read['chaos_reason']}"
+
+    adjusted_confidence = max(25, min(95, confidence + ajuste))
 
     return {
         "ai_state": ai_state,
@@ -151,7 +166,12 @@ def evaluar_ajuste_para_senal(match: Dict, signal: Dict) -> Dict:
         "ai_fit": fit,
         "ai_fit_reason": fit_reason,
         "ai_confidence_adjustment": ajuste,
-        "ai_confidence_final": round(adjusted_confidence, 2)
+        "ai_confidence_final": round(adjusted_confidence, 2),
+        "chaos_level": chaos_read["chaos_level"],
+        "chaos_detector_score": chaos_read["chaos_detector_score"],
+        "chaos_reason": chaos_read["chaos_reason"],
+        "chaos_block_signal": chaos_read["chaos_block_signal"],
+        "chaos_confidence_penalty": chaos_read["chaos_confidence_penalty"],
     }
 
 
@@ -159,7 +179,7 @@ def decision_final_ia(match: Dict, signal: Dict) -> Dict:
     lectura = evaluar_ajuste_para_senal(match, signal)
 
     signal_score = _f(signal.get("signal_score"), 0)
-    value_score = _f(signal.get("value_score"), 0)
+    value_score = _f(signal.get("value_score", signal.get("value", 0)), 0)
     risk_score = _f(signal.get("risk_score"), 0)
     ai_conf = _f(lectura.get("ai_confidence_final"), 0)
 
@@ -169,13 +189,23 @@ def decision_final_ia(match: Dict, signal: Dict) -> Dict:
     decision_score += value_score * 4.0
     decision_score -= risk_score * 3.2
 
+    # Penalización extra por caos
+    if lectura["chaos_level"] == "MEDIO":
+        decision_score -= 8
+
+    if lectura["chaos_level"] == "ALTO":
+        decision_score -= 18
+
     decision_score = round(decision_score, 2)
 
-    if decision_score >= 120 and risk_score <= 5:
+    # Bloqueo fuerte si el caos es alto y además la lectura no es ofensiva útil
+    if lectura["chaos_block_signal"] and lectura["ai_state"] not in ("CONTROL_REAL", "CAOS_UTIL"):
+        final_decision = "NO_APOSTAR"
+    elif decision_score >= 120 and risk_score <= 5 and lectura["chaos_level"] == "BAJO":
         final_decision = "APOSTAR_FUERTE"
-    elif decision_score >= 95 and risk_score <= 8:
+    elif decision_score >= 95 and risk_score <= 7 and lectura["chaos_level"] in ("BAJO", "MEDIO"):
         final_decision = "APOSTAR"
-    elif decision_score >= 75:
+    elif decision_score >= 75 and lectura["chaos_level"] != "ALTO":
         final_decision = "APOSTAR_SUAVE"
     elif decision_score >= 58:
         final_decision = "OBSERVAR"
@@ -191,5 +221,10 @@ def decision_final_ia(match: Dict, signal: Dict) -> Dict:
         "ai_confidence_adjustment": lectura["ai_confidence_adjustment"],
         "ai_confidence_final": lectura["ai_confidence_final"],
         "ai_decision_score": decision_score,
-        "ai_recommendation": final_decision
-  }
+        "ai_recommendation": final_decision,
+        "chaos_level": lectura["chaos_level"],
+        "chaos_detector_score": lectura["chaos_detector_score"],
+        "chaos_reason": lectura["chaos_reason"],
+        "chaos_block_signal": lectura["chaos_block_signal"],
+        "chaos_confidence_penalty": lectura["chaos_confidence_penalty"],
+    }
