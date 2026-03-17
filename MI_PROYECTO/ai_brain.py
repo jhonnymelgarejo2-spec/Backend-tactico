@@ -2,6 +2,7 @@
 
 from typing import Dict
 from chaos_detector import detect_chaos
+from goal_imminent_engine import evaluar_gol_inminente
 
 
 def _f(value, default=0.0):
@@ -111,6 +112,7 @@ def leer_contexto_partido(match: Dict) -> Dict:
 def evaluar_ajuste_para_senal(match: Dict, signal: Dict) -> Dict:
     lectura = leer_contexto_partido(match)
     chaos_read = detect_chaos(match)
+    goal_read = evaluar_gol_inminente(match)
 
     ai_state = lectura["ai_state"]
     ai_score = _f(lectura["ai_score"], 55)
@@ -125,6 +127,9 @@ def evaluar_ajuste_para_senal(match: Dict, signal: Dict) -> Dict:
     is_over = "OVER" in market or market == "NEXT_GOAL"
     is_hold = "RESULT_HOLDS" in market or "HOLD" in market
 
+    # =========================================================
+    # AJUSTE POR TIPO DE MERCADO
+    # =========================================================
     if is_over:
         if ai_state in ("CONTROL_REAL", "CAOS_UTIL"):
             ajuste += 8
@@ -134,6 +139,17 @@ def evaluar_ajuste_para_senal(match: Dict, signal: Dict) -> Dict:
             ajuste -= 12
             fit = "DESALINEADA"
             fit_reason = "La señal ofensiva no encaja con el contexto actual"
+
+        if goal_read["goal_imminent_level"] == "CRITICO":
+            ajuste += 12
+            fit = "ALINEADA"
+            fit_reason = "Ventana crítica de gol inminente"
+        elif goal_read["goal_imminent_level"] == "ALTO":
+            ajuste += 7
+            fit = "ALINEADA"
+            fit_reason = "Ventana alta de gol inminente"
+        elif goal_read["goal_imminent_level"] == "BAJO":
+            ajuste -= 8
 
     if is_hold:
         if ai_state in ("CIERRE_TACTICO", "PARTIDO_MUERTO"):
@@ -145,7 +161,14 @@ def evaluar_ajuste_para_senal(match: Dict, signal: Dict) -> Dict:
             fit = "DESALINEADA"
             fit_reason = "El hold choca con una lectura ofensiva fuerte"
 
-    # Ajuste por caos detectado
+        if goal_read["goal_imminent_level"] in ("ALTO", "CRITICO"):
+            ajuste -= 10
+            fit = "DESALINEADA"
+            fit_reason = "El hold choca con una ventana real de gol"
+
+    # =========================================================
+    # AJUSTE POR CHAOS DETECTOR
+    # =========================================================
     if chaos_read["chaos_level"] == "MEDIO":
         ajuste -= chaos_read["chaos_confidence_penalty"]
         if fit == "NEUTRO":
@@ -172,6 +195,9 @@ def evaluar_ajuste_para_senal(match: Dict, signal: Dict) -> Dict:
         "chaos_reason": chaos_read["chaos_reason"],
         "chaos_block_signal": chaos_read["chaos_block_signal"],
         "chaos_confidence_penalty": chaos_read["chaos_confidence_penalty"],
+        "goal_imminent_score": goal_read["goal_imminent_score"],
+        "goal_imminent_level": goal_read["goal_imminent_level"],
+        "goal_imminent_reason": goal_read["goal_imminent_reason"],
     }
 
 
@@ -182,14 +208,15 @@ def decision_final_ia(match: Dict, signal: Dict) -> Dict:
     value_score = _f(signal.get("value_score", signal.get("value", 0)), 0)
     risk_score = _f(signal.get("risk_score"), 0)
     ai_conf = _f(lectura.get("ai_confidence_final"), 0)
+    goal_imminent_score = _f(lectura.get("goal_imminent_score"), 0)
 
     decision_score = 0.0
-    decision_score += signal_score * 0.35
-    decision_score += ai_conf * 0.45
+    decision_score += signal_score * 0.30
+    decision_score += ai_conf * 0.35
     decision_score += value_score * 4.0
     decision_score -= risk_score * 3.2
+    decision_score += goal_imminent_score * 0.12
 
-    # Penalización extra por caos
     if lectura["chaos_level"] == "MEDIO":
         decision_score -= 8
 
@@ -198,14 +225,13 @@ def decision_final_ia(match: Dict, signal: Dict) -> Dict:
 
     decision_score = round(decision_score, 2)
 
-    # Bloqueo fuerte si el caos es alto y además la lectura no es ofensiva útil
     if lectura["chaos_block_signal"] and lectura["ai_state"] not in ("CONTROL_REAL", "CAOS_UTIL"):
         final_decision = "NO_APOSTAR"
-    elif decision_score >= 120 and risk_score <= 5 and lectura["chaos_level"] == "BAJO":
+    elif decision_score >= 125 and risk_score <= 5 and lectura["chaos_level"] == "BAJO":
         final_decision = "APOSTAR_FUERTE"
-    elif decision_score >= 95 and risk_score <= 7 and lectura["chaos_level"] in ("BAJO", "MEDIO"):
+    elif decision_score >= 98 and risk_score <= 7 and lectura["chaos_level"] in ("BAJO", "MEDIO"):
         final_decision = "APOSTAR"
-    elif decision_score >= 75 and lectura["chaos_level"] != "ALTO":
+    elif decision_score >= 78 and lectura["chaos_level"] != "ALTO":
         final_decision = "APOSTAR_SUAVE"
     elif decision_score >= 58:
         final_decision = "OBSERVAR"
@@ -227,4 +253,7 @@ def decision_final_ia(match: Dict, signal: Dict) -> Dict:
         "chaos_reason": lectura["chaos_reason"],
         "chaos_block_signal": lectura["chaos_block_signal"],
         "chaos_confidence_penalty": lectura["chaos_confidence_penalty"],
+        "goal_imminent_score": lectura["goal_imminent_score"],
+        "goal_imminent_level": lectura["goal_imminent_level"],
+        "goal_imminent_reason": lectura["goal_imminent_reason"],
     }
