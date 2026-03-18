@@ -1,23 +1,4 @@
-import json
-import os
-from datetime import datetime, timezone
-from typing import Dict, List, Optional
-
-try:
-    from core.result_resolver import resolver_resultado_senal
-except Exception:
-    resolver_resultado_senal = None
-
-
-HISTORY_DIR = "data"
-HISTORY_FILE = os.path.join(HISTORY_DIR, "match_history.json")
-
-
-# =========================================================
-# HELPERS
-# =========================================================
-def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+from typing import Dict
 
 
 def _safe_float(value, default=0.0) -> float:
@@ -36,477 +17,221 @@ def _safe_int(value, default=0) -> int:
 
 def _safe_str(value, default="") -> str:
     try:
-        return str(value if value is not None else default)
+        return str(value if value is not None else default).strip().upper()
     except Exception:
         return default
 
 
-def _ensure_storage():
-    os.makedirs(HISTORY_DIR, exist_ok=True)
-    if not os.path.exists(HISTORY_FILE):
-        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-            json.dump([], f, ensure_ascii=False, indent=2)
-
-
-def _load_history() -> List[Dict]:
-    _ensure_storage()
+def _parse_score(score_text: str) -> tuple[int, int]:
     try:
-        with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            return data if isinstance(data, list) else []
+        if not score_text or "-" not in str(score_text):
+            return 0, 0
+        a, b = str(score_text).split("-", 1)
+        return _safe_int(a, 0), _safe_int(b, 0)
     except Exception:
-        return []
+        return 0, 0
 
 
-def _save_history(history: List[Dict]):
-    _ensure_storage()
-    with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-        json.dump(history, f, ensure_ascii=False, indent=2)
-
-
-def _build_signal_uid(signal: Dict) -> str:
-    match_id = _safe_str(signal.get("match_id"))
+def _market_contains(signal: Dict, text: str) -> bool:
     market = _safe_str(signal.get("market"))
-    minute = _safe_str(signal.get("minute"))
+    return text in market
+
+
+def _selection_contains(signal: Dict, text: str) -> bool:
     selection = _safe_str(signal.get("selection"))
-    return f"{match_id}__{market}__{minute}__{selection}"
+    return text in selection
 
 
-# =========================================================
-# REGISTRO DE SEÑALES
-# =========================================================
-def registrar_senal(signal: Dict) -> bool:
+def _get_final_score(match: Dict) -> tuple[int, int]:
+    home_goals = _safe_int(match.get("marcador_local"), 0)
+    away_goals = _safe_int(match.get("marcador_visitante"), 0)
+
+    if "goals" in match and isinstance(match.get("goals"), dict):
+        goals = match.get("goals") or {}
+        home_goals = _safe_int(goals.get("home"), home_goals)
+        away_goals = _safe_int(goals.get("away"), away_goals)
+
+    return home_goals, away_goals
+
+
+def _get_signal_score(signal: Dict) -> tuple[int, int]:
+    score_at_signal = signal.get("score_at_signal") or signal.get("score") or "0-0"
+    return _parse_score(score_at_signal)
+
+
+def resolver_resultado_senal(match: Dict, signal: Dict) -> str:
     """
-    Registra una señal aprobada por el pipeline.
-    Evita duplicados por match_id + market + minute + selection.
+    Devuelve:
+    - WIN
+    - LOSS
+    - VOID
     """
-    if not isinstance(signal, dict):
-        return False
-
-    history = _load_history()
-    signal_uid = _build_signal_uid(signal)
-
-    for item in history:
-        if item.get("signal_uid") == signal_uid:
-            return False
-
-    record = {
-        "signal_uid": signal_uid,
-        "created_at": _utc_now_iso(),
-        "resolved_at": None,
-        "status": "OPEN",  # OPEN / RESOLVED
-        "result": None,    # WIN / LOSS / VOID
-
-        "match_id": _safe_str(signal.get("match_id")),
-        "home": _safe_str(signal.get("home")),
-        "away": _safe_str(signal.get("away")),
-        "league": _safe_str(signal.get("league")),
-        "country": _safe_str(signal.get("country")),
-        "minute": _safe_int(signal.get("minute"), 0),
-        "score_at_signal": _safe_str(signal.get("score")),
-
-        "market": _safe_str(signal.get("market")),
-        "selection": _safe_str(signal.get("selection")),
-        "line": signal.get("line"),
-        "odd": _safe_float(signal.get("odd"), 0.0),
-        "prob": _safe_float(signal.get("prob"), 0.0),
-        "value": _safe_float(signal.get("value"), 0.0),
-        "value_score": _safe_float(signal.get("value_score"), 0.0),
-        "confidence": _safe_float(signal.get("confidence"), 0.0),
-
-        "signal_score": _safe_float(signal.get("signal_score"), 0.0),
-        "tactical_score": _safe_float(signal.get("tactical_score"), 0.0),
-        "goal_inminente_score": _safe_float(signal.get("goal_inminente_score"), 0.0),
-        "risk_score": _safe_float(signal.get("risk_score"), 0.0),
-
-        "publish_ready": bool(signal.get("publish_ready", False)),
-        "publish_rank": _safe_int(signal.get("publish_rank"), 0),
-        "signal_rank": _safe_str(signal.get("signal_rank")),
-        "tier": _safe_str(signal.get("tier")),
-
-        "ai_recommendation": _safe_str(signal.get("ai_recommendation")),
-        "ai_decision_score": _safe_float(signal.get("ai_decision_score"), 0.0),
-        "ai_confidence_final": _safe_float(signal.get("ai_confidence_final"), 0.0),
-        "ai_state": _safe_str(signal.get("ai_state")),
-        "ai_reason": _safe_str(signal.get("ai_reason")),
-        "ai_fit": _safe_str(signal.get("ai_fit")),
-        "ai_fit_reason": _safe_str(signal.get("ai_fit_reason")),
-
-        "context_state": _safe_str(signal.get("context_state")),
-        "context_score": _safe_float(signal.get("context_score"), 0.0),
-        "context_risk": _safe_str(signal.get("context_risk")),
-        "context_reason": _safe_str(signal.get("context_reason")),
-
-        "resultado_probable": _safe_str(signal.get("resultado_probable")),
-        "ganador_probable": _safe_str(signal.get("ganador_probable")),
-        "doble_oportunidad_probable": _safe_str(signal.get("doble_oportunidad_probable")),
-        "total_goles_estimado": _safe_float(signal.get("total_goles_estimado"), 0.0),
-        "linea_goles_probable": _safe_str(signal.get("linea_goles_probable")),
-        "over_under_probable": _safe_str(signal.get("over_under_probable")),
-
-        "reason": _safe_str(signal.get("reason")),
-        "razon_value": _safe_str(signal.get("razon_value")),
-        "riesgo_operativo": _safe_str(signal.get("riesgo_operativo")),
-
-        "final_home_goals": None,
-        "final_away_goals": None,
-        "final_score": None,
-    }
-
-    history.append(record)
-    _save_history(history)
-    return True
-
-
-# =========================================================
-# RESOLUCIÓN MANUAL
-# =========================================================
-def actualizar_resultado(signal_uid: str, result: str) -> bool:
-    history = _load_history()
-    updated = False
-    result = _safe_str(result).upper()
-
-    if result not in ("WIN", "LOSS", "VOID"):
-        return False
-
-    for item in history:
-        if item.get("signal_uid") == signal_uid:
-            item["result"] = result
-            item["status"] = "RESOLVED"
-            item["resolved_at"] = _utc_now_iso()
-            updated = True
-            break
-
-    if updated:
-        _save_history(history)
-
-    return updated
-
-
-# =========================================================
-# RESOLVER PARTIDO FINALIZADO
-# =========================================================
-def resolver_partido_finalizado(match: Dict) -> int:
-    """
-    Resuelve todas las señales OPEN del partido finalizado.
-    Devuelve cuántas señales resolvió.
-    """
-    if not isinstance(match, dict):
-        return 0
-
-    if resolver_resultado_senal is None:
-        return 0
-
-    match_id = _safe_str(match.get("id"))
-    if not match_id:
-        return 0
-
-    history = _load_history()
-    resolved_count = 0
-
-    final_home = _safe_int(match.get("marcador_local"), 0)
-    final_away = _safe_int(match.get("marcador_visitante"), 0)
-    final_score = f"{final_home}-{final_away}"
-
-    for item in history:
-        if _safe_str(item.get("match_id")) != match_id:
-            continue
-
-        if item.get("status") == "RESOLVED":
-            continue
-
-        try:
-            result = resolver_resultado_senal(match, item)
-        except Exception as e:
-            print(f"[LEARNING] ERROR resolver_resultado_senal -> {e}")
-            continue
-
-        if result not in ("WIN", "LOSS", "VOID"):
-            continue
-
-        item["result"] = result
-        item["status"] = "RESOLVED"
-        item["resolved_at"] = _utc_now_iso()
-        item["final_home_goals"] = final_home
-        item["final_away_goals"] = final_away
-        item["final_score"] = final_score
-        resolved_count += 1
-
-    if resolved_count > 0:
-        _save_history(history)
-
-    return resolved_count
-
-
-def resolver_partidos_finalizados(matches: List[Dict]) -> int:
-    total = 0
-    for match in matches:
-        try:
-            total += resolver_partido_finalizado(match)
-        except Exception as e:
-            print(f"[LEARNING] ERROR resolver_partido_finalizado -> {e}")
-    return total
-
-
-# =========================================================
-# CONSULTAS BÁSICAS
-# =========================================================
-def obtener_historial() -> List[Dict]:
-    return _load_history()
-
-
-def obtener_senales_abiertas() -> List[Dict]:
-    history = _load_history()
-    return [x for x in history if x.get("status") == "OPEN"]
-
-
-def obtener_senales_resueltas() -> List[Dict]:
-    history = _load_history()
-    return [x for x in history if x.get("status") == "RESOLVED"]
-
-
-# =========================================================
-# MÉTRICAS GENERALES
-# =========================================================
-def obtener_estadisticas() -> Dict:
-    history = _load_history()
-
-    total = len(history)
-    open_count = sum(1 for x in history if x.get("status") == "OPEN")
-    resolved = [x for x in history if x.get("status") == "RESOLVED"]
-
-    wins = sum(1 for x in resolved if x.get("result") == "WIN")
-    losses = sum(1 for x in resolved if x.get("result") == "LOSS")
-    voids = sum(1 for x in resolved if x.get("result") == "VOID")
-
-    effective_resolved = wins + losses
-    winrate = round((wins / effective_resolved) * 100, 2) if effective_resolved > 0 else 0.0
-
-    avg_value = round(
-        sum(_safe_float(x.get("value"), 0) for x in history) / total, 2
-    ) if total > 0 else 0.0
-
-    avg_risk = round(
-        sum(_safe_float(x.get("risk_score"), 0) for x in history) / total, 2
-    ) if total > 0 else 0.0
-
-    avg_conf = round(
-        sum(_safe_float(x.get("confidence"), 0) for x in history) / total, 2
-    ) if total > 0 else 0.0
-
-    return {
-        "total": total,
-        "open": open_count,
-        "resolved": len(resolved),
-        "wins": wins,
-        "losses": losses,
-        "voids": voids,
-        "winrate": winrate,
-        "avg_value": avg_value,
-        "avg_risk": avg_risk,
-        "avg_confidence": avg_conf,
-    }
-
-
-# =========================================================
-# MÉTRICAS POR MERCADO
-# =========================================================
-def estadisticas_por_mercado() -> Dict[str, Dict]:
-    history = _load_history()
-    grouped: Dict[str, Dict] = {}
-
-    for item in history:
-        market = _safe_str(item.get("market"), "UNKNOWN")
-        if market not in grouped:
-            grouped[market] = {
-                "total": 0,
-                "resolved": 0,
-                "wins": 0,
-                "losses": 0,
-                "voids": 0,
-                "winrate": 0.0,
-                "avg_value": 0.0,
-                "avg_confidence": 0.0,
-            }
-
-        grouped[market]["total"] += 1
-        grouped[market]["avg_value"] += _safe_float(item.get("value"), 0)
-        grouped[market]["avg_confidence"] += _safe_float(item.get("confidence"), 0)
-
-        if item.get("status") == "RESOLVED":
-            grouped[market]["resolved"] += 1
-            if item.get("result") == "WIN":
-                grouped[market]["wins"] += 1
-            elif item.get("result") == "LOSS":
-                grouped[market]["losses"] += 1
-            elif item.get("result") == "VOID":
-                grouped[market]["voids"] += 1
-
-    for market, stats in grouped.items():
-        total = stats["total"]
-        effective = stats["wins"] + stats["losses"]
-        stats["avg_value"] = round(stats["avg_value"] / total, 2) if total > 0 else 0.0
-        stats["avg_confidence"] = round(stats["avg_confidence"] / total, 2) if total > 0 else 0.0
-        stats["winrate"] = round((stats["wins"] / effective) * 100, 2) if effective > 0 else 0.0
-
-    return grouped
-
-
-# =========================================================
-# MÉTRICAS POR LIGA
-# =========================================================
-def estadisticas_por_liga() -> Dict[str, Dict]:
-    history = _load_history()
-    grouped: Dict[str, Dict] = {}
-
-    for item in history:
-        league = _safe_str(item.get("league"), "UNKNOWN")
-        if league not in grouped:
-            grouped[league] = {
-                "total": 0,
-                "resolved": 0,
-                "wins": 0,
-                "losses": 0,
-                "voids": 0,
-                "winrate": 0.0,
-                "avg_value": 0.0,
-                "avg_confidence": 0.0,
-            }
-
-        grouped[league]["total"] += 1
-        grouped[league]["avg_value"] += _safe_float(item.get("value"), 0)
-        grouped[league]["avg_confidence"] += _safe_float(item.get("confidence"), 0)
-
-        if item.get("status") == "RESOLVED":
-            grouped[league]["resolved"] += 1
-            if item.get("result") == "WIN":
-                grouped[league]["wins"] += 1
-            elif item.get("result") == "LOSS":
-                grouped[league]["losses"] += 1
-            elif item.get("result") == "VOID":
-                grouped[league]["voids"] += 1
-
-    for league, stats in grouped.items():
-        total = stats["total"]
-        effective = stats["wins"] + stats["losses"]
-        stats["avg_value"] = round(stats["avg_value"] / total, 2) if total > 0 else 0.0
-        stats["avg_confidence"] = round(stats["avg_confidence"] / total, 2) if total > 0 else 0.0
-        stats["winrate"] = round((stats["wins"] / effective) * 100, 2) if effective > 0 else 0.0
-
-    return grouped
-
-
-# =========================================================
-# MEJORES Y PEORES SEGMENTOS
-# =========================================================
-def obtener_mejor_mercado() -> Optional[Dict]:
-    stats = estadisticas_por_mercado()
-    candidates = []
-
-    for market, data in stats.items():
-        if data["wins"] + data["losses"] < 3:
-            continue
-        candidates.append({
-            "market": market,
-            "winrate": data["winrate"],
-            "resolved": data["resolved"],
-            "wins": data["wins"],
-            "losses": data["losses"],
-        })
-
-    if not candidates:
-        return None
-
-    candidates.sort(key=lambda x: (x["winrate"], x["wins"]), reverse=True)
-    return candidates[0]
-
-
-def obtener_peor_mercado() -> Optional[Dict]:
-    stats = estadisticas_por_mercado()
-    candidates = []
-
-    for market, data in stats.items():
-        if data["wins"] + data["losses"] < 3:
-            continue
-        candidates.append({
-            "market": market,
-            "winrate": data["winrate"],
-            "resolved": data["resolved"],
-            "wins": data["wins"],
-            "losses": data["losses"],
-        })
-
-    if not candidates:
-        return None
-
-    candidates.sort(key=lambda x: (x["winrate"], -x["losses"]))
-    return candidates[0]
-
-
-def obtener_mejor_liga() -> Optional[Dict]:
-    stats = estadisticas_por_liga()
-    candidates = []
-
-    for league, data in stats.items():
-        if data["wins"] + data["losses"] < 3:
-            continue
-        candidates.append({
-            "league": league,
-            "winrate": data["winrate"],
-            "resolved": data["resolved"],
-            "wins": data["wins"],
-            "losses": data["losses"],
-        })
-
-    if not candidates:
-        return None
-
-    candidates.sort(key=lambda x: (x["winrate"], x["wins"]), reverse=True)
-    return candidates[0]
-
-
-# =========================================================
-# INSIGHTS SIMPLES
-# =========================================================
-def detectar_patrones() -> Dict:
-    history = _load_history()
-    resolved = [x for x in history if x.get("status") == "RESOLVED"]
-
-    high_conf_losses = 0
-    low_conf_losses = 0
-    high_value_losses = 0
-    hold_wins = 0
-    hold_total = 0
-
-    for item in resolved:
-        conf = _safe_float(item.get("confidence"), 0)
-        value = _safe_float(item.get("value"), 0)
-        market = _safe_str(item.get("market"))
-
-        if item.get("result") == "LOSS":
-            if conf >= 80:
-                high_conf_losses += 1
-            else:
-                low_conf_losses += 1
-
-            if value >= 10:
-                high_value_losses += 1
-
-        if "RESULT_HOLDS" in market or "HOLD" in market:
-            hold_total += 1
-            if item.get("result") == "WIN":
-                hold_wins += 1
-
-    hold_winrate = round((hold_wins / hold_total) * 100, 2) if hold_total > 0 else 0.0
-
-    return {
-        "high_conf_losses": high_conf_losses,
-        "low_conf_losses": low_conf_losses,
-        "high_value_losses": high_value_losses,
-        "hold_winrate": hold_winrate,
-        "insight": (
-            "El sistema está fallando señales de alta confianza"
-            if high_conf_losses > low_conf_losses
-            else "El sistema mantiene una pérdida más controlada en señales altas"
-        ),
-              }
+    if not isinstance(match, dict) or not isinstance(signal, dict):
+        return "VOID"
+
+    final_home, final_away = _get_final_score(match)
+    signal_home, signal_away = _get_signal_score(signal)
+
+    final_total = final_home + final_away
+    signal_total = signal_home + signal_away
+
+    market = _safe_str(signal.get("market"))
+    selection = _safe_str(signal.get("selection"))
+    line = signal.get("line")
+
+    # =========================================================
+    # 1. NEXT GOAL
+    # =========================================================
+    if market == "NEXT_GOAL":
+        if final_total > signal_total:
+            return "WIN"
+        return "LOSS"
+
+    # =========================================================
+    # 2. RESULT_HOLDS_NEXT_15 / HOLD
+    # Si el marcador final queda igual al marcador de la señal
+    # =========================================================
+    if "RESULT_HOLDS" in market or "HOLD" in market:
+        if final_home == signal_home and final_away == signal_away:
+            return "WIN"
+        return "LOSS"
+
+    # =========================================================
+    # 3. OVER mercados
+    # =========================================================
+    if "OVER" in market:
+        target_line = _safe_float(line, None)
+
+        if target_line is None:
+            # fallback simple si no viene línea
+            if final_total > signal_total:
+                return "WIN"
+            return "LOSS"
+
+        if final_total > target_line:
+            return "WIN"
+        return "LOSS"
+
+    # =========================================================
+    # 4. UNDER mercados
+    # =========================================================
+    if "UNDER" in market:
+        target_line = _safe_float(line, None)
+
+        if target_line is None:
+            return "VOID"
+
+        if final_total < target_line:
+            return "WIN"
+        return "LOSS"
+
+    # =========================================================
+    # 5. OVER/UNDER por selección textual
+    # =========================================================
+    if "OVER" in selection:
+        target_line = _safe_float(line, None)
+        if target_line is None:
+            return "VOID"
+        if final_total > target_line:
+            return "WIN"
+        return "LOSS"
+
+    if "UNDER" in selection:
+        target_line = _safe_float(line, None)
+        if target_line is None:
+            return "VOID"
+        if final_total < target_line:
+            return "WIN"
+        return "LOSS"
+
+    # =========================================================
+    # 6. 1X2 / ganador probable
+    # =========================================================
+    if market in ("MATCH_WINNER", "1X2", "FULLTIME_RESULT"):
+        if final_home > final_away and ("LOCAL" in selection or selection == "1"):
+            return "WIN"
+        if final_home == final_away and ("EMPATE" in selection or selection == "X"):
+            return "WIN"
+        if final_away > final_home and ("VISITANTE" in selection or selection == "2"):
+            return "WIN"
+        return "LOSS"
+
+    # =========================================================
+    # 7. DOUBLE CHANCE
+    # =========================================================
+    if market in ("DOUBLE_CHANCE", "DOBLE_OPORTUNIDAD"):
+        if final_home > final_away:
+            real = "1"
+        elif final_home == final_away:
+            real = "X"
+        else:
+            real = "2"
+
+        if selection in ("1X", "LOCAL_O_EMPATE", "LOCAL/EMPATE") and real in ("1", "X"):
+            return "WIN"
+        if selection in ("X2", "EMPATE_O_VISITANTE", "EMPATE/VISITANTE") and real in ("X", "2"):
+            return "WIN"
+        if selection in ("12", "LOCAL_O_VISITANTE", "LOCAL/VISITANTE") and real in ("1", "2"):
+            return "WIN"
+        return "LOSS"
+
+    # =========================================================
+    # 8. BOTH TEAMS TO SCORE
+    # =========================================================
+    if market in ("BTTS", "BOTH_TEAMS_TO_SCORE"):
+        both_scored = final_home > 0 and final_away > 0
+
+        if selection in ("YES", "SI", "SÍ", "BTTS SI", "BTTS YES"):
+            return "WIN" if both_scored else "LOSS"
+
+        if selection in ("NO", "BTTS NO"):
+            return "WIN" if not both_scored else "LOSS"
+
+        return "VOID"
+
+    # =========================================================
+    # 9. EXACT SCORE
+    # =========================================================
+    if market in ("EXACT_SCORE", "MARCADOR_EXACTO"):
+        expected = str(signal.get("selection") or "").strip()
+        final_score = f"{final_home}-{final_away}"
+        if expected == final_score:
+            return "WIN"
+        return "LOSS"
+
+    # =========================================================
+    # 10. TEAM TO SCORE NEXT / TEAM TO SCORE
+    # =========================================================
+    if market in ("TEAM_TO_SCORE_NEXT", "TEAM_TO_SCORE"):
+        home_delta = final_home - signal_home
+        away_delta = final_away - signal_away
+
+        if "LOCAL" in selection or selection in ("HOME", "1"):
+            if home_delta > 0 and away_delta <= 0:
+                return "WIN"
+            if home_delta <= 0:
+                return "LOSS"
+
+        if "VISITANTE" in selection or selection in ("AWAY", "2"):
+            if away_delta > 0 and home_delta <= 0:
+                return "WIN"
+            if away_delta <= 0:
+                return "LOSS"
+
+        return "LOSS"
+
+    # =========================================================
+    # 11. FALLBACK SIMPLE
+    # Si no reconoce el mercado, intenta por la selección
+    # =========================================================
+    if "SE MANTIENE EL RESULTADO" in selection:
+        if final_home == signal_home and final_away == signal_away:
+            return "WIN"
+        return "LOSS"
+
+    if "HABRÁ GOL" in selection or "PROXIMO GOL" in selection or "PRÓXIMO GOL" in selection:
+        if final_total > signal_total:
+            return "WIN"
+        return "LOSS"
+
+    return "VOID"
