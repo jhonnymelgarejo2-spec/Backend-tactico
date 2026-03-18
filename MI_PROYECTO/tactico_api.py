@@ -679,17 +679,38 @@ def generar_senales(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
         senales.append(senal_final)
 
-    senales.sort(
-        key=lambda s: (
-            to_float(s.get("ai_decision_score"), 0),
-            to_float(s.get("signal_score"), 0),
-            to_float(s.get("confidence"), 0),
-            to_float(s.get("value"), 0),
-        ),
-        reverse=True
-    )
+    # =========================================
+# FILTRAR SOLO PUBLICABLES
+# =========================================
+senales_publicables = [
+    s for s in senales
+    if s.get("publish_ready", False)
+]
 
-    return senales[:MAX_SIGNALS_TO_PUBLISH]
+# =========================================
+# ORDENAR POR CALIDAD REAL
+# =========================================
+senales_publicables.sort(
+    key=lambda s: (
+        int(s.get("publish_rank", 0)),                # prioridad fuerte > normal > suave
+        to_float(s.get("ai_decision_score", 0)),      # decisión IA
+        to_float(s.get("signal_score", 0)),           # fuerza total
+        to_float(s.get("confidence", 0)),             # confianza
+        to_float(s.get("value", 0)),                  # value real
+    ),
+    reverse=True
+)
+
+# =========================================
+# DEBUG (IMPORTANTE PARA VER QUE YA FUNCIONA)
+# =========================================
+print(f"SEÑALES GENERADAS: {len(senales)}")
+print(f"SEÑALES PUBLICABLES: {len(senales_publicables)}")
+
+# =========================================
+# LIMITAR A TOP 10
+# =========================================
+return senales_publicables[:MAX_SIGNALS_TO_PUBLISH]
 
 
 # =========================================================
