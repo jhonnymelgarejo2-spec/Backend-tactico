@@ -45,21 +45,38 @@ def _safe_float(v, default=0.0):
 def registrar_senal(senal: Dict):
     history = _load_history()
 
+    match_id = senal.get("match_id")
+    market = senal.get("market")
+    minute = senal.get("minute")
+
+    # evitar duplicados exactos
+    for item in history:
+        if (
+            item.get("match_id") == match_id and
+            item.get("market") == market and
+            item.get("minute") == minute
+        ):
+            return
+
     registro = {
         "timestamp": datetime.utcnow().isoformat(),
-        "match_id": senal.get("match_id"),
+        "match_id": match_id,
         "home": senal.get("home"),
         "away": senal.get("away"),
         "league": senal.get("league"),
-        "market": senal.get("market"),
+        "market": market,
         "selection": senal.get("selection"),
         "odd": senal.get("odd"),
         "confidence": senal.get("confidence"),
         "value": senal.get("value"),
         "value_score": senal.get("value_score"),
         "risk": senal.get("riesgo_operativo"),
-        "minute": senal.get("minute"),
-        "result": None,  # Se completa después
+        "minute": minute,
+        "signal_rank": senal.get("signal_rank"),
+        "ai_recommendation": senal.get("ai_recommendation"),
+        "context_state": senal.get("context_state"),
+        "context_score": senal.get("context_score"),
+        "result": None,
     }
 
     history.append(registro)
