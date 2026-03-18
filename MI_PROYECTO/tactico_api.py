@@ -6,33 +6,38 @@ from typing import Any, Dict, List, Optional
 from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
 
+try:
+    from core.decision_pipeline import procesar_partido
+except Exception:
+    procesar_partido = None
+
 # =========================================================
 # IMPORTS DEL SISTEMA
 # =========================================================
 try:
-    from signal_engine import generar_senal
-except Exception:
-    generar_senal = None
+    desde signal_engine importar generar_senal
+excepto Excepción:
+    generar_senal = Ninguno
 
-try:
-    from live_fetcher import obtener_partidos_en_vivo
-except Exception:
-    obtener_partidos_en_vivo = None
+intentar :
+    desde live_fetcher importar obtener_partidos_en_vivo
+excepto Excepción:
+    obtener_partidos_en_vivo = Ninguno
 
-try:
+intentar :
     from ai_brain import decision_final_ia
-except Exception:
-    decision_final_ia = None
+excepto Excepción:
+    decisión_final_ia = Ninguno
 
-try:
-    from signal_to_market_translator import traducir_senal_a_mercado
-except Exception:
-    traducir_senal_a_mercado = None
+intentar :
+    de signal_to_market_translator importar traducir_senal_a_mercado
+excepto Excepción:
+    traducir_senal_a_mercado = Ninguno
 
-try:
-    from core.learning_engine import resolver_partidos_finalizados
-except Exception:
-    resolver_partidos_finalizados = None
+intentar :
+    desde core.learning_engine importar resolver_partidos_finalizados
+excepto Excepción:
+    resolver_partidos_finalizados = Ninguno
 
 # =========================================================
 # APP FLASK
@@ -585,6 +590,129 @@ def filtrar_por_decision_ia(senal: Dict[str, Any]) -> bool:
 # GENERACION DE SEÑALES
 # =========================================================
 def generar_senales(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    senales = []
+
+    for p in partidos:
+        ok, _motivo = partido_es_apostable(p)
+        if not ok:
+            continue
+
+        # =========================================
+        # NUEVO FLUJO: PIPELINE CENTRAL
+        # =========================================
+        if procesar_partido:
+            try:
+                senal_final = procesar_partido(p)
+            except Exception as e:
+                print(f"PIPELINE ERROR -> {e}")
+                senal_final = None
+
+            if senal_final:
+                print(
+                    f"SEÑAL PIPELINE ACEPTADA -> {p.get('local')} vs {p.get('visitante')} | "
+                    f"market={senal_final.get('market')} | "
+                    f"value={senal_final.get('value')} | "
+                    f"confidence={senal_final.get('confidence')} | "
+                    f"ai_recommendation={senal_final.get('ai_recommendation')} | "
+                    f"context_state={senal_final.get('context_state')}"
+                )
+                senales.append(senal_final)
+
+            continue
+
+        # =========================================
+        # FALLBACK: FLUJO VIEJO SI NO EXISTE PIPELINE
+        # =========================================
+        datos = {
+            "id": p.get("id", ""),
+            "momentum": p.get("momentum", "MEDIO"),
+            "xG": p.get("xG", 0),
+            "prob_real": p.get("prob_real", 0.75),
+            "prob_implicita": p.get("prob_implicita", 0.54),
+            "cuota": p.get("cuota", 1.85),
+            "minuto": p.get("minuto", 0),
+            "marcador_local": p.get("marcador_local", 0),
+            "marcador_visitante": p.get("marcador_visitante", 0),
+            "goal_pressure": p.get("goal_pressure", {}),
+            "goal_predictor": p.get("goal_predictor", {}),
+            "chaos": p.get("chaos", {}),
+            "estado_partido": p.get("estado_partido", "activo"),
+        }
+
+        if generar_senal:
+            try:
+                senal = generar_senal(datos)
+            except Exception:
+                senal = generar_senal_fallback(datos)
+        else:
+            senal = generar_senal_fallback(datos)
+
+        if not senal:
+            continue
+
+        if senal.get("mercado") == "SIN_SEÑAL":
+            continue
+
+        if to_float(senal.get("valor"), 0) <= 0:
+            continue
+
+        senal_final = {
+            "match_id": p.get("id", ""),
+            "home": p.get("local", ""),
+            "away": p.get("visitante", ""),
+            "league": p.get("liga", ""),
+            "country": p.get("pais", ""),
+            "minute": p.get("minuto", 0),
+            "score": f'{p.get("marcador_local", 0)}-{p.get("marcador_visitante", 0)}',
+            "market": senal.get("mercado", ""),
+            "selection": senal.get("apuesta", ""),
+            "line": senal.get("linea"),
+            "odd": senal.get("cuota", 1.85),
+            "prob": senal.get("prob_real", 0.0),
+            "value": senal.get("valor", 0.0),
+            "value_score": senal.get("valor", 0.0),
+            "confidence": senal.get("confianza", 0),
+            "reason": senal.get("razon", ""),
+            "tier": senal.get("tier", "NORMAL"),
+            "estado_partido": senal.get("estado_partido", {}),
+            "gol_inminente": senal.get("gol_inminente", {}),
+            "signal_status": senal.get("signal_status", "OPEN"),
+            "goal_prob_5": senal.get("goal_prob_5", 0),
+            "goal_prob_10": senal.get("goal_prob_10", 0),
+            "goal_prob_15": senal.get("goal_prob_15", 0),
+            "resultado_probable": senal.get("resultado_probable", ""),
+            "ganador_probable": senal.get("ganador_probable", ""),
+            "doble_oportunidad_probable": senal.get("doble_oportunidad_probable", ""),
+            "total_goles_estimado": senal.get("total_goles_estimado", 0),
+            "linea_goles_probable": senal.get("linea_goles_probable", ""),
+            "over_under_probable": senal.get("over_under_probable", ""),
+            "confianza_prediccion": senal.get("confianza_prediccion", 0),
+            "recomendacion_final": senal.get("recomendacion_final", "OBSERVAR"),
+            "riesgo_operativo": senal.get("riesgo_operativo", "MEDIO"),
+            "all_signals": senal.get("senales_posibles", []),
+        }
+
+        senal_final = enriquecer_senal(senal_final, p)
+
+        if not filtro_antifake_partido(p, senal_final):
+            continue
+
+        if not filtrar_value_bets_reales(senal_final):
+            continue
+
+        senales.append(senal_final)
+
+    senales.sort(
+        key=lambda s: (
+            to_float(s.get("ai_decision_score", 0), 0) if isinstance(s.get("ai_decision_score", 0), (int, float, str)) else 0,
+            to_float(s.get("signal_score", 0), 0) if isinstance(s.get("signal_score", 0), (int, float, str)) else 0,
+            to_float(s.get("confidence", 0), 0) if isinstance(s.get("confidence", 0), (int, float, str)) else 0,
+            to_float(s.get("value", 0), 0) if isinstance(s.get("value", 0), (int, float, str)) else 0,
+        ),
+        reverse=True
+    )
+
+    return senales[:MAX_SIGNALS_TO_PUBLISH]
     senales = []
 
     for p in partidos:
