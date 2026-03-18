@@ -30,11 +30,21 @@ except Exception:
     traducir_senal_a_mercado = None
 
 try:
-    from core.learning_engine import resolver_partidos_finalizados, obtener_estadisticas
+    from core.learning_engine import (
+        resolver_partidos_finalizados,
+        obtener_estadisticas,
+        obtener_mejor_mercado,
+        obtener_peor_mercado,
+        obtener_mejor_liga,
+        detectar_patrones,
+    )
 except Exception:
     resolver_partidos_finalizados = None
     obtener_estadisticas = None
-
+    obtener_mejor_mercado = None
+    obtener_peor_mercado = None
+    obtener_mejor_liga = None
+    detectar_patrones = None
 
 # =========================================================
 # IMPORT LAZY DEL PIPELINE
@@ -867,20 +877,32 @@ def get_learning_stats() -> Dict[str, Any]:
     if obtener_estadisticas:
         try:
             stats = obtener_estadisticas()
+            mejor_mercado = obtener_mejor_mercado() if obtener_mejor_mercado else None
+            peor_mercado = obtener_peor_mercado() if obtener_peor_mercado else None
+            mejor_liga = obtener_mejor_liga() if obtener_mejor_liga else None
+            patrones = detectar_patrones() if detectar_patrones else {}
+
             return {
                 "total_senales": stats.get("total", 0),
-                "resueltas": stats.get("total", 0),
+                "abiertas": stats.get("open", 0),
+                "resueltas": stats.get("resolved", 0),
                 "ganadas": stats.get("wins", 0),
                 "perdidas": stats.get("losses", 0),
+                "voids": stats.get("voids", 0),
                 "win_rate": stats.get("winrate", 0),
                 "roi_percent": 0,
                 "signals_elite": 0,
                 "signals_top": 0,
-                "value_promedio": 0,
-                "riesgo_medio": 0,
+                "value_promedio": stats.get("avg_value", 0),
+                "riesgo_medio": stats.get("avg_risk", 0),
+                "confianza_promedio": stats.get("avg_confidence", 0),
+                "mejor_mercado": mejor_mercado,
+                "peor_mercado": peor_mercado,
+                "mejor_liga": mejor_liga,
+                "patrones": patrones,
             }
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"LEARNING STATS ERROR -> {e}")
 
     total = len(cache_historial)
     ganadas = sum(1 for x in cache_historial if x.get("estado_resultado") == "ganada")
@@ -891,16 +913,23 @@ def get_learning_stats() -> Dict[str, Any]:
 
     return {
         "total_senales": total,
+        "abiertas": 0,
         "resueltas": resueltas,
         "ganadas": ganadas,
         "perdidas": perdidas,
+        "voids": 0,
         "win_rate": win_rate,
         "roi_percent": roi_percent,
         "signals_elite": sum(1 for x in cache_historial if x.get("signal_rank") == "ELITE"),
         "signals_top": sum(1 for x in cache_historial if x.get("signal_rank") == "TOP"),
         "value_promedio": round(sum(to_float(x.get("value"), 0) for x in cache_historial) / total, 2) if total else 0,
         "riesgo_medio": round(sum(to_float(x.get("risk_score"), 0) for x in cache_historial) / total, 2) if total else 0,
-    }
+        "confianza_promedio": round(sum(to_float(x.get("confidence"), 0) for x in cache_historial) / total, 2) if total else 0,
+        "mejor_mercado": None,
+        "peor_mercado": None,
+        "mejor_liga": None,
+        "patrones": {},
+            }
 
 
 # =========================================================
