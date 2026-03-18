@@ -10,11 +10,6 @@ from flask_cors import CORS
 # IMPORTS DEL SISTEMA
 # =========================================================
 try:
-    from core.decision_pipeline import procesar_partido
-except Exception:
-    procesar_partido = None
-
-try:
     from signal_engine import generar_senal
 except Exception:
     generar_senal = None
@@ -35,9 +30,22 @@ except Exception:
     traducir_senal_a_mercado = None
 
 try:
-    from core.learning_engine import resolver_partidos_finalizados
+    from core.learning_engine import resolver_partidos_finalizados, obtener_estadisticas
 except Exception:
     resolver_partidos_finalizados = None
+    obtener_estadisticas = None
+
+
+# =========================================================
+# IMPORT LAZY DEL PIPELINE
+# Evita importación circular con decision_pipeline
+# =========================================================
+def get_procesar_partido():
+    try:
+        from core.decision_pipeline import procesar_partido
+        return procesar_partido
+    except Exception:
+        return None
 
 
 # =========================================================
@@ -568,6 +576,7 @@ def filtrar_value_bets_reales(senal: Dict[str, Any]) -> bool:
 # =========================================================
 def generar_senales(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     senales = []
+    procesar_partido = get_procesar_partido()
 
     for p in partidos:
         ok, _motivo = partido_es_apostable(p)
@@ -680,37 +689,37 @@ def generar_senales(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         senales.append(senal_final)
 
     # =========================================
-# FILTRAR SOLO PUBLICABLES
-# =========================================
-senales_publicables = [
-    s for s in senales
-    if s.get("publish_ready", False)
-]
+    # FILTRAR SOLO PUBLICABLES
+    # =========================================
+    senales_publicables = [
+        s for s in senales
+        if s.get("publish_ready", False)
+    ]
 
-# =========================================
-# ORDENAR POR CALIDAD REAL
-# =========================================
-senales_publicables.sort(
-    key=lambda s: (
-        int(s.get("publish_rank", 0)),                # prioridad fuerte > normal > suave
-        to_float(s.get("ai_decision_score", 0)),      # decisión IA
-        to_float(s.get("signal_score", 0)),           # fuerza total
-        to_float(s.get("confidence", 0)),             # confianza
-        to_float(s.get("value", 0)),                  # value real
-    ),
-    reverse=True
-)
+    # =========================================
+    # ORDENAR POR CALIDAD REAL
+    # =========================================
+    senales_publicables.sort(
+        key=lambda s: (
+            int(s.get("publish_rank", 0)),
+            to_float(s.get("ai_decision_score", 0)),
+            to_float(s.get("signal_score", 0)),
+            to_float(s.get("confidence", 0)),
+            to_float(s.get("value", 0)),
+        ),
+        reverse=True
+    )
 
-# =========================================
-# DEBUG (IMPORTANTE PARA VER QUE YA FUNCIONA)
-# =========================================
-print(f"SEÑALES GENERADAS: {len(senales)}")
-print(f"SEÑALES PUBLICABLES: {len(senales_publicables)}")
+    # =========================================
+    # DEBUG
+    # =========================================
+    print(f"SEÑALES GENERADAS: {len(senales)}")
+    print(f"SEÑALES PUBLICABLES: {len(senales_publicables)}")
 
-# =========================================
-# LIMITAR A TOP 10
-# =========================================
-return senales_publicables[:MAX_SIGNALS_TO_PUBLISH]
+    # =========================================
+    # TOP 10
+    # =========================================
+    return senales_publicables[:MAX_SIGNALS_TO_PUBLISH]
 
 
 # =========================================================
@@ -855,6 +864,24 @@ def asegurar_cache():
 # HISTORIAL / STATS
 # =========================================================
 def get_learning_stats() -> Dict[str, Any]:
+    if obtener_estadisticas:
+        try:
+            stats = obtener_estadisticas()
+            return {
+                "total_senales": stats.get("total", 0),
+                "resueltas": stats.get("total", 0),
+                "ganadas": stats.get("wins", 0),
+                "perdidas": stats.get("losses", 0),
+                "win_rate": stats.get("winrate", 0),
+                "roi_percent": 0,
+                "signals_elite": 0,
+                "signals_top": 0,
+                "value_promedio": 0,
+                "riesgo_medio": 0,
+            }
+        except Exception:
+            pass
+
     total = len(cache_historial)
     ganadas = sum(1 for x in cache_historial if x.get("estado_resultado") == "ganada")
     perdidas = sum(1 for x in cache_historial if x.get("estado_resultado") == "perdida")
