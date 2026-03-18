@@ -6,38 +6,39 @@ from typing import Any, Dict, List, Optional
 from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
 
+# =========================================================
+# IMPORTS DEL SISTEMA
+# =========================================================
 try:
     from core.decision_pipeline import procesar_partido
 except Exception:
     procesar_partido = None
 
-# =========================================================
-# IMPORTS DEL SISTEMA
-# =========================================================
 try:
-    desde signal_engine importar generar_senal
-excepto Excepción:
-    generar_senal = Ninguno
+    from signal_engine import generar_senal
+except Exception:
+    generar_senal = None
 
-intentar :
-    desde live_fetcher importar obtener_partidos_en_vivo
-excepto Excepción:
-    obtener_partidos_en_vivo = Ninguno
+try:
+    from live_fetcher import obtener_partidos_en_vivo
+except Exception:
+    obtener_partidos_en_vivo = None
 
-intentar :
+try:
     from ai_brain import decision_final_ia
-excepto Excepción:
-    decisión_final_ia = Ninguno
+except Exception:
+    decision_final_ia = None
 
-intentar :
-    de signal_to_market_translator importar traducir_senal_a_mercado
-excepto Excepción:
-    traducir_senal_a_mercado = Ninguno
+try:
+    from signal_to_market_translator import traducir_senal_a_mercado
+except Exception:
+    traducir_senal_a_mercado = None
 
-intentar :
-    desde core.learning_engine importar resolver_partidos_finalizados
-excepto Excepción:
-    resolver_partidos_finalizados = Ninguno
+try:
+    from core.learning_engine import resolver_partidos_finalizados
+except Exception:
+    resolver_partidos_finalizados = None
+
 
 # =========================================================
 # APP FLASK
@@ -563,30 +564,6 @@ def filtrar_value_bets_reales(senal: Dict[str, Any]) -> bool:
 
 
 # =========================================================
-# FILTRO IA
-# =========================================================
-def filtrar_por_decision_ia(senal: Dict[str, Any]) -> bool:
-    ai_recommendation = str(senal.get("ai_recommendation", "")).upper()
-    chaos_level = str(senal.get("chaos_level", "")).upper()
-    ai_confidence_final = to_float(senal.get("ai_confidence_final"), 0)
-    ai_decision_score = to_float(senal.get("ai_decision_score"), 0)
-
-    if ai_recommendation in ("NO_APOSTAR", ""):
-        return False
-
-    if chaos_level == "ALTO":
-        return False
-
-    if ai_confidence_final < 58:
-        return False
-
-    if ai_decision_score < 58:
-        return False
-
-    return True
-
-
-# =========================================================
 # GENERACION DE SEÑALES
 # =========================================================
 def generar_senales(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -704,209 +681,8 @@ def generar_senales(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
     senales.sort(
         key=lambda s: (
-            to_float(s.get("ai_decision_score", 0), 0) if isinstance(s.get("ai_decision_score", 0), (int, float, str)) else 0,
-            to_float(s.get("signal_score", 0), 0) if isinstance(s.get("signal_score", 0), (int, float, str)) else 0,
-            to_float(s.get("confidence", 0), 0) if isinstance(s.get("confidence", 0), (int, float, str)) else 0,
-            to_float(s.get("value", 0), 0) if isinstance(s.get("value", 0), (int, float, str)) else 0,
-        ),
-        reverse=True
-    )
-
-    return senales[:MAX_SIGNALS_TO_PUBLISH]
-    senales = []
-
-    for p in partidos:
-        ok, _motivo = partido_es_apostable(p)
-        if not ok:
-            continue
-
-        datos = {
-            "id": p.get("id", ""),
-            "momentum": p.get("momentum", "MEDIO"),
-            "xG": p.get("xG", 0),
-            "prob_real": p.get("prob_real", 0.75),
-            "prob_implicita": p.get("prob_implicita", 0.54),
-            "cuota": p.get("cuota", 1.85),
-            "minuto": p.get("minuto", 0),
-            "marcador_local": p.get("marcador_local", 0),
-            "marcador_visitante": p.get("marcador_visitante", 0),
-            "goal_pressure": p.get("goal_pressure", {}),
-            "goal_predictor": p.get("goal_predictor", {}),
-            "chaos": p.get("chaos", {}),
-            "estado_partido": p.get("estado_partido", "activo"),
-        }
-
-        if generar_senal:
-            try:
-                senal = generar_senal(datos)
-            except Exception:
-                senal = generar_senal_fallback(datos)
-        else:
-            senal = generar_senal_fallback(datos)
-
-        if not senal:
-            continue
-
-        if senal.get("mercado") == "SIN_SEÑAL":
-            continue
-
-        if to_float(senal.get("valor"), 0) <= 0:
-            continue
-
-        senal_final = {
-            "match_id": p.get("id", ""),
-            "home": p.get("local", ""),
-            "away": p.get("visitante", ""),
-            "league": p.get("liga", ""),
-            "country": p.get("pais", ""),
-            "minute": p.get("minuto", 0),
-            "score": f'{p.get("marcador_local", 0)}-{p.get("marcador_visitante", 0)}',
-            "market": senal.get("mercado", ""),
-            "selection": senal.get("apuesta", ""),
-            "line": senal.get("linea"),
-            "odd": senal.get("cuota", 1.85),
-            "prob": senal.get("prob_real", 0.0),
-            "value": senal.get("valor", 0.0),
-            "value_score": senal.get("valor", 0.0),
-            "confidence": senal.get("confianza", 0),
-            "reason": senal.get("razon", ""),
-            "tier": senal.get("tier", "NORMAL"),
-            "estado_partido": senal.get("estado_partido", {}),
-            "gol_inminente": senal.get("gol_inminente", {}),
-            "signal_status": senal.get("signal_status", "OPEN"),
-            "goal_prob_5": senal.get("goal_prob_5", 0),
-            "goal_prob_10": senal.get("goal_prob_10", 0),
-            "goal_prob_15": senal.get("goal_prob_15", 0),
-            "resultado_probable": senal.get("resultado_probable", ""),
-            "ganador_probable": senal.get("ganador_probable", ""),
-            "doble_oportunidad_probable": senal.get("doble_oportunidad_probable", ""),
-            "total_goles_estimado": senal.get("total_goles_estimado", 0),
-            "linea_goles_probable": senal.get("linea_goles_probable", ""),
-            "over_under_probable": senal.get("over_under_probable", ""),
-            "confianza_prediccion": senal.get("confianza_prediccion", 0),
-            "recomendacion_final": senal.get("recomendacion_final", "OBSERVAR"),
-            "riesgo_operativo": senal.get("riesgo_operativo", "MEDIO"),
-            "all_signals": senal.get("senales_posibles", []),
-        }
-
-        senal_final = enriquecer_senal(senal_final, p)
-
-        if not filtro_antifake_partido(p, senal_final):
-            print(
-                f"RECHAZADA ANTIFAKE -> {p.get('local')} vs {p.get('visitante')} | "
-                f"minute={senal_final.get('minute')} | "
-                f"market={senal_final.get('market')} | "
-                f"xG={p.get('xG')} | shots={p.get('shots')} | "
-                f"shots_on_target={p.get('shots_on_target')} | "
-                f"dangerous_attacks={p.get('dangerous_attacks')} | "
-                f"momentum={p.get('momentum')}"
-            )
-            continue
-
-        if not filtrar_value_bets_reales(senal_final):
-            print(
-                f"RECHAZADA VALUE -> {p.get('local')} vs {p.get('visitante')} | "
-                f"league={senal_final.get('league')} | "
-                f"market={senal_final.get('market')} | "
-                f"value={senal_final.get('value')} | "
-                f"confidence={senal_final.get('confidence')} | "
-                f"risk_score={senal_final.get('risk_score')} | "
-                f"tactical_score={senal_final.get('tactical_score')} | "
-                f"signal_score={senal_final.get('signal_score')} | "
-                f"goal_score={senal_final.get('goal_inminente_score')} | "
-                f"minute={senal_final.get('minute')} | "
-                f"odd={senal_final.get('odd')}"
-            )
-            continue
-
-        if decision_final_ia:
-            try:
-                ai_eval = decision_final_ia(p, senal_final)
-                senal_final.update(ai_eval)
-            except Exception as e:
-                print(f"AI_BRAIN ERROR -> {e}")
-                senal_final["ai_recommendation"] = "OBSERVAR"
-                senal_final["ai_decision_score"] = senal_final.get("signal_score", 0)
-                senal_final["ai_confidence_final"] = senal_final.get("confidence", 0)
-                senal_final["chaos_level"] = "BAJO"
-                senal_final["chaos_detector_score"] = 0
-                senal_final["chaos_reason"] = "Sin evaluación"
-                senal_final["chaos_block_signal"] = False
-                senal_final["goal_imminent_score"] = 0
-                senal_final["goal_imminent_level"] = "BAJO"
-                senal_final["goal_imminent_reason"] = "Sin evaluación"
-        else:
-            senal_final["ai_recommendation"] = "OBSERVAR"
-            senal_final["ai_decision_score"] = senal_final.get("signal_score", 0)
-            senal_final["ai_confidence_final"] = senal_final.get("confidence", 0)
-            senal_final["chaos_level"] = "BAJO"
-            senal_final["chaos_detector_score"] = 0
-            senal_final["chaos_reason"] = "AI brain no disponible"
-            senal_final["chaos_block_signal"] = False
-            senal_final["goal_imminent_score"] = 0
-            senal_final["goal_imminent_level"] = "BAJO"
-            senal_final["goal_imminent_reason"] = "AI brain no disponible"
-
-        if not filtrar_por_decision_ia(senal_final):
-            print(
-                f"RECHAZADA IA -> {p.get('local')} vs {p.get('visitante')} | "
-                f"ai_recommendation={senal_final.get('ai_recommendation')} | "
-                f"ai_decision_score={senal_final.get('ai_decision_score')} | "
-                f"ai_confidence_final={senal_final.get('ai_confidence_final')} | "
-                f"chaos_level={senal_final.get('chaos_level')} | "
-                f"chaos_reason={senal_final.get('chaos_reason')}"
-            )
-            continue
-
-        if traducir_senal_a_mercado:
-            try:
-                market_translation = traducir_senal_a_mercado(p, senal_final)
-
-                senal_final["translated_market"] = market_translation.get("translated_market", "NO_BET")
-                senal_final["translated_selection"] = market_translation.get("translated_selection", "No entrar")
-                senal_final["translator_reason"] = market_translation.get("translator_reason", "Sin traducción")
-                senal_final["translator_confidence"] = market_translation.get("translator_confidence", 0)
-
-                if senal_final["translated_market"] == "NO_BET":
-                    print(
-                        f"RECHAZADA TRANSLATOR -> {p.get('local')} vs {p.get('visitante')} | "
-                        f"translated_market={senal_final.get('translated_market')} | "
-                        f"translator_reason={senal_final.get('translator_reason')}"
-                    )
-                    continue
-
-                senal_final["market"] = senal_final["translated_market"]
-                senal_final["selection"] = senal_final["translated_selection"]
-
-            except Exception as e:
-                print(f"TRANSLATOR ERROR -> {e}")
-                continue
-
-        print(
-            f"SEÑAL ACEPTADA -> {p.get('local')} vs {p.get('visitante')} | "
-            f"market={senal_final.get('market')} | "
-            f"selection={senal_final.get('selection')} | "
-            f"value={senal_final.get('value')} | "
-            f"confidence={senal_final.get('confidence')} | "
-            f"risk_score={senal_final.get('risk_score')} | "
-            f"ai_recommendation={senal_final.get('ai_recommendation')} | "
-            f"chaos_level={senal_final.get('chaos_level')} | "
-            f"goal_imminent_level={senal_final.get('goal_imminent_level')}"
-        )
-
-        senales.append(senal_final)
-
-    senales.sort(
-        key=lambda s: (
-            1 if str(s.get("ai_recommendation", "")).upper() == "APOSTAR_FUERTE" else
-            0 if str(s.get("ai_recommendation", "")).upper() == "APOSTAR" else
-            -1 if str(s.get("ai_recommendation", "")).upper() == "APOSTAR_SUAVE" else
-            -2,
-            -to_float(s.get("chaos_detector_score"), 0),
             to_float(s.get("ai_decision_score"), 0),
             to_float(s.get("signal_score"), 0),
-            to_float(s.get("tactical_score"), 0),
-            to_float(s.get("goal_inminente_score"), 0),
             to_float(s.get("confidence"), 0),
             to_float(s.get("value"), 0),
         ),
