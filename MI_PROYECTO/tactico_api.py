@@ -29,6 +29,10 @@ try:
 except Exception:
     traducir_senal_a_mercado = None
 
+try:
+    from core.learning_engine import resolver_partidos_finalizados
+except Exception:
+    resolver_partidos_finalizados = None
 
 # =========================================================
 # APP FLASK
@@ -884,7 +888,31 @@ def refrescar_datos():
         print("FETCHER VACIO -> usando respaldo")
         raw = obtener_partidos_fallback()
 
+    # =========================================
+    # 1. RESOLVER PARTIDOS FINALIZADOS
+    # =========================================
+    if resolver_partidos_finalizados:
+        try:
+            finalizados = [
+                normalizar_partido(p)
+                for p in raw
+                if isinstance(p, dict) and partido_esta_finalizado(normalizar_partido(p))
+            ]
+
+            if finalizados:
+                total_resueltas = resolver_partidos_finalizados(finalizados)
+                print(f"SENALES RESUELTAS AUTOMATICAMENTE: {total_resueltas}")
+        except Exception as e:
+            print(f"LEARNING RESOLVER ERROR -> {e}")
+
+    # =========================================
+    # 2. ACTUALIZAR CACHE DE PARTIDOS VIVOS
+    # =========================================
     cache_partidos = limpiar_cache_partidos(raw)
+
+    # =========================================
+    # 3. GENERAR NUEVAS SEÑALES
+    # =========================================
     cache_senales = generar_senales(cache_partidos)
     ultimo_scan_ts = now_ts()
 
