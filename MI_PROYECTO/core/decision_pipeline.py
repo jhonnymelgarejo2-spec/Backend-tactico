@@ -30,6 +30,11 @@ except Exception:
     evaluar_contexto_partido = None
 
 try:
+    from core.chaos_guardian import evaluar_chaos_partido
+except:
+    evaluar_chaos_partido = None
+
+try:
     from core.learning_engine import registrar_senal
 except Exception:
     registrar_senal = None
@@ -206,6 +211,21 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
         except Exception as e:
             print(f"[PIPELINE] ERROR CONTEXT -> {e}")
 
+# =========================================
+# 3.6 CHAOS GUARDIAN (ANTI IMPREDECIBLES)
+# =========================================
+if evaluar_chaos_partido:
+    try:
+        chaos_data = evaluar_chaos_partido(partido, senal_final)
+        senal_final.update(chaos_data)
+
+        if senal_final.get("chaos_block_signal"):
+            print("[PIPELINE] RECHAZADO CHAOS -> partido impredecible")
+            return None
+
+    except Exception as e:
+        print(f"[PIPELINE] ERROR CHAOS -> {e}")
+    
     # =========================================
     # 4. FILTRO ANTIFAKE
     # =========================================
