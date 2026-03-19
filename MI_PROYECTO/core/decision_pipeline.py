@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+mfrom typing import Dict, Optional
 
 # =========================================================
 # IMPORTS DEL SISTEMA
