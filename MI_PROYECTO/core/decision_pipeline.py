@@ -34,6 +34,11 @@ try:
 except Exception:
     registrar_senal = None
 
+try:
+    from core.adaptive_engine import aplicar_ajuste_senal
+except Exception:
+    aplicar_ajuste_senal = None
+
 
 # =========================================================
 # HELPERS
@@ -251,6 +256,15 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
     senal_final.setdefault("goal_imminent_reason", "Sin evaluación")
 
     # =========================================
+    # 6.5 AJUSTE ADAPTATIVO
+    # =========================================
+    if aplicar_ajuste_senal:
+        try:
+            senal_final = aplicar_ajuste_senal(senal_final)
+        except Exception as e:
+            print(f"[PIPELINE] ERROR ADAPTIVE -> {e}")
+
+    # =========================================
     # 7. DECISION FINAL PUBLICABLE
     # =========================================
     ai_decision = _safe_upper(senal_final.get("ai_recommendation", "OBSERVAR"))
@@ -295,7 +309,8 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
         f"context_state={senal_final.get('context_state', '')} | "
         f"context_score={senal_final.get('context_score', 0)} | "
         f"context_risk={senal_final.get('context_risk', '')} | "
-        f"ai_recommendation={senal_final.get('ai_recommendation')}"
+        f"ai_recommendation={senal_final.get('ai_recommendation')} | "
+        f"adaptive_adjustment={senal_final.get('adaptive_adjustment', 'NEUTRAL')}"
     )
 
     if registrar_senal:
