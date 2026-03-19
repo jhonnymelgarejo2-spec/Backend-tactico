@@ -31,18 +31,23 @@ except Exception:
 
 try:
     from core.chaos_guardian import evaluar_chaos_partido
-except:
-    evaluar_chaos_partido = None
-
-try:
-    from core.learning_engine import registrar_senal
 except Exception:
-    registrar_senal = None
+    evaluar_chaos_partido = None
 
 try:
     from core.adaptive_engine import aplicar_ajuste_senal
 except Exception:
     aplicar_ajuste_senal = None
+
+try:
+    from core.market_memory import aplicar_memoria_mercado
+except Exception:
+    aplicar_memoria_mercado = None
+
+try:
+    from core.learning_engine import registrar_senal
+except Exception:
+    registrar_senal = None
 
 
 # =========================================================
@@ -60,60 +65,29 @@ def _safe_float(value, default=0.0) -> float:
 
 
 # =========================================================
-# FALLBACK SIGNAL
+# FALLBACK
 # =========================================================
 def generar_senal_fallback(datos: Dict) -> Dict:
     return {
         "mercado": "SIN_SEÑAL",
-        "apuesta": "Sin señal",
-        "linea": None,
-        "cuota": 1.0,
-        "prob_real": 0.5,
-        "valor": 0.0,
-        "confianza": 50,
-        "razon": "Fallback",
-        "tier": "DESCARTAR",
-        "signal_status": "WAIT",
-        "estado_partido": {"estado": "FRIO"},
-        "goal_prob_5": 0,
-        "goal_prob_10": 0,
-        "goal_prob_15": 0,
-        "confianza_prediccion": 0,
-        "ganador_probable": "",
-        "doble_oportunidad_probable": "",
-        "resultado_probable": "",
-        "total_goles_estimado": 0,
-        "linea_goles_probable": "",
-        "over_under_probable": "",
-        "recomendacion_final": "OBSERVAR",
-        "riesgo_operativo": "ALTO",
-        "value_score": 0.0,
-        "value_categoria": "SIN_VALUE",
-        "recomendacion_value": "NO_APOSTAR",
-        "razon_value": "Fallback sin value",
+        "valor": 0,
+        "confianza": 0,
     }
 
 
 # =========================================================
-# PIPELINE PRINCIPAL
+# PIPELINE
 # =========================================================
 def procesar_partido(partido: Dict) -> Optional[Dict]:
+
     # =========================================
-    # 1. GENERAR SEÑAL BASE
+    # 1. GENERAR SEÑAL
     # =========================================
     datos = {
         "id": partido.get("id"),
-        "momentum": partido.get("momentum"),
         "xG": partido.get("xG"),
         "minuto": partido.get("minuto"),
-        "marcador_local": partido.get("marcador_local"),
-        "marcador_visitante": partido.get("marcador_visitante"),
-        "goal_pressure": partido.get("goal_pressure"),
-        "goal_predictor": partido.get("goal_predictor"),
-        "chaos": partido.get("chaos"),
-        "prob_real": partido.get("prob_real", 0.75),
-        "prob_implicita": partido.get("prob_implicita", 0.55),
-        "cuota": partido.get("cuota", 1.85),
+        "momentum": partido.get("momentum"),
     }
 
     if generar_senal:
@@ -129,7 +103,7 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
         return None
 
     # =========================================
-    # 2. NORMALIZAR FORMATO
+    # 2. NORMALIZAR
     # =========================================
     senal_final = {
         "match_id": partido.get("id"),
@@ -138,34 +112,12 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
         "league": partido.get("liga"),
         "country": partido.get("pais"),
         "minute": partido.get("minuto"),
-        "score": f"{partido.get('marcador_local', 0)}-{partido.get('marcador_visitante', 0)}",
         "market": senal.get("mercado"),
-        "selection": senal.get("apuesta"),
-        "line": senal.get("linea"),
-        "odd": senal.get("cuota"),
-        "prob": senal.get("prob_real"),
-        "value": senal.get("valor"),
-        "confidence": senal.get("confianza"),
-        "reason": senal.get("razon"),
-        "tier": senal.get("tier"),
-        "estado_partido": senal.get("estado_partido", {}),
+        "value": senal.get("valor", 0),
+        "confidence": senal.get("confianza", 0),
         "goal_prob_5": senal.get("goal_prob_5", 0),
         "goal_prob_10": senal.get("goal_prob_10", 0),
         "goal_prob_15": senal.get("goal_prob_15", 0),
-        "confianza_prediccion": senal.get("confianza_prediccion", 0),
-        "signal_status": senal.get("signal_status", "WAIT"),
-        "ganador_probable": senal.get("ganador_probable", ""),
-        "doble_oportunidad_probable": senal.get("doble_oportunidad_probable", ""),
-        "resultado_probable": senal.get("resultado_probable", ""),
-        "total_goles_estimado": senal.get("total_goles_estimado", 0),
-        "linea_goles_probable": senal.get("linea_goles_probable", ""),
-        "over_under_probable": senal.get("over_under_probable", ""),
-        "recomendacion_final": senal.get("recomendacion_final", "OBSERVAR"),
-        "riesgo_operativo": senal.get("riesgo_operativo", "MEDIO"),
-        "value_score": senal.get("value_score", senal.get("valor", 0)),
-        "value_categoria": senal.get("value_categoria", "SIN_VALUE"),
-        "recomendacion_value": senal.get("recomendacion_value", "OBSERVAR"),
-        "razon_value": senal.get("razon_value", ""),
     }
 
     # =========================================
@@ -174,169 +126,114 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
     if enriquecer_senal:
         try:
             senal_final = enriquecer_senal(senal_final, partido)
-        except Exception as e:
-            print(f"[PIPELINE] ERROR enriquecer_senal -> {e}")
+        except Exception:
             return None
 
     # =========================================
-    # 3.5 CONTEXTO DEL PARTIDO
+    # 3.5 CONTEXTO
     # =========================================
     if evaluar_contexto_partido:
         try:
-            context_data = evaluar_contexto_partido(partido)
-            senal_final.update(context_data)
-
-            market = _safe_upper(senal_final.get("market", ""))
-            context_score = _safe_float(senal_final.get("context_score", 0))
+            context = evaluar_contexto_partido(partido)
+            senal_final.update(context)
 
             if senal_final.get("context_state") == "CAOS_INESTABLE":
-                print("[PIPELINE] RECHAZADO CONTEXT -> caos inestable")
+                print("[PIPELINE] RECHAZADO CONTEXT")
                 return None
 
-            if "OVER" in market and not senal_final.get("context_supports_over", False):
-                if context_score < 45:
-                    print("[PIPELINE] RECHAZADO CONTEXT -> over no alineado con contexto")
-                    return None
+        except Exception:
+            pass
 
-            if ("HOLD" in market or "RESULT_HOLDS" in market) and not senal_final.get("context_supports_hold", False):
-                if context_score < 45:
-                    print("[PIPELINE] RECHAZADO CONTEXT -> hold no alineado con contexto")
-                    return None
-
-            if ("NEXT_GOAL" in market or market == "GOAL") and not senal_final.get("context_supports_next_goal", False):
-                if context_score < 45:
-                    print("[PIPELINE] RECHAZADO CONTEXT -> next goal no alineado con contexto")
-                    return None
-
-        except Exception as e:
-            print(f"[PIPELINE] ERROR CONTEXT -> {e}")
-
-# =========================================
-# 3.6 CHAOS GUARDIAN (ANTI IMPREDECIBLES)
-# =========================================
-if evaluar_chaos_partido:
-    try:
-        chaos_data = evaluar_chaos_partido(partido, senal_final)
-        senal_final.update(chaos_data)
-
-        if senal_final.get("chaos_block_signal"):
-            print("[PIPELINE] RECHAZADO CHAOS -> partido impredecible")
-            return None
-
-    except Exception as e:
-        print(f"[PIPELINE] ERROR CHAOS -> {e}")
-    
     # =========================================
-    # 4. FILTRO ANTIFAKE
+    # 3.6 CHAOS GUARDIAN
+    # =========================================
+    if evaluar_chaos_partido:
+        try:
+            chaos = evaluar_chaos_partido(partido, senal_final)
+            senal_final.update(chaos)
+
+            if senal_final.get("chaos_block_signal"):
+                print("[PIPELINE] RECHAZADO CHAOS")
+                return None
+
+        except Exception:
+            pass
+
+    # =========================================
+    # 4. ANTIFAKE
     # =========================================
     if filtro_antifake_partido:
         try:
             if not filtro_antifake_partido(partido, senal_final):
-                print("[PIPELINE] RECHAZADO ANTIFAKE")
                 return None
-        except Exception as e:
-            print(f"[PIPELINE] ERROR ANTIFAKE -> {e}")
+        except Exception:
             return None
 
     # =========================================
-    # 5. FILTRO VALUE
+    # 5. VALUE
     # =========================================
     if filtrar_value_bets_reales:
         try:
             if not filtrar_value_bets_reales(senal_final):
-                print("[PIPELINE] RECHAZADO VALUE")
                 return None
-        except Exception as e:
-            print(f"[PIPELINE] ERROR VALUE -> {e}")
+        except Exception:
             return None
 
     # =========================================
-    # 6. IA DECISION
+    # 6. IA
     # =========================================
     if decision_final_ia:
         try:
             ai_data = decision_final_ia(partido, senal_final)
             if isinstance(ai_data, dict):
                 senal_final.update(ai_data)
-        except Exception as e:
-            print(f"[PIPELINE] ERROR IA -> {e}")
+        except Exception:
+            pass
 
-    # Defaults por si la IA no devolvió algo
     senal_final.setdefault("ai_recommendation", "OBSERVAR")
-    senal_final.setdefault("ai_decision_score", senal_final.get("signal_score", 0))
-    senal_final.setdefault("ai_confidence_final", senal_final.get("confidence", 0))
-    senal_final.setdefault("ai_reason", "Sin lectura IA")
-    senal_final.setdefault("ai_fit", "NEUTRO")
-    senal_final.setdefault("ai_fit_reason", "Sin ajuste especial")
-    senal_final.setdefault("chaos_level", "BAJO")
-    senal_final.setdefault("chaos_detector_score", 0)
-    senal_final.setdefault("chaos_reason", "Sin evaluación")
-    senal_final.setdefault("goal_imminent_score", senal_final.get("goal_inminente_score", 0))
-    senal_final.setdefault("goal_imminent_level", "BAJO")
-    senal_final.setdefault("goal_imminent_reason", "Sin evaluación")
+    senal_final.setdefault("ai_decision_score", 50)
 
     # =========================================
-    # 6.5 AJUSTE ADAPTATIVO
+    # 6.5 ADAPTIVE
     # =========================================
     if aplicar_ajuste_senal:
         try:
             senal_final = aplicar_ajuste_senal(senal_final)
-        except Exception as e:
-            print(f"[PIPELINE] ERROR ADAPTIVE -> {e}")
+        except Exception:
+            pass
 
     # =========================================
-    # 7. DECISION FINAL PUBLICABLE
+    # 6.6 MARKET MEMORY
     # =========================================
-    ai_decision = _safe_upper(senal_final.get("ai_recommendation", "OBSERVAR"))
-    ai_score = _safe_float(senal_final.get("ai_decision_score", 0))
-    confidence = _safe_float(senal_final.get("confidence", 0))
-    value = _safe_float(senal_final.get("value", 0))
+    if aplicar_memoria_mercado:
+        try:
+            senal_final = aplicar_memoria_mercado(senal_final)
+        except Exception:
+            pass
 
-    if ai_decision == "NO_APOSTAR":
-        print("[PIPELINE] RECHAZADO IA FINAL")
+    # =========================================
+    # 7. DECISION FINAL
+    # =========================================
+    decision = _safe_upper(senal_final.get("ai_recommendation"))
+
+    if decision == "NO_APOSTAR":
         return None
 
-    # Si viene en OBSERVAR pero ya pasó todos los filtros duros,
-    # lo convertimos a una señal publicable suave
-    if ai_decision == "OBSERVAR":
-        if ai_score >= 58 and confidence >= 60 and value >= 3:
-            senal_final["ai_recommendation"] = "APOSTAR_SUAVE"
-            senal_final["publish_ready"] = True
-            senal_final["publish_rank"] = 1
-        else:
-            print("[PIPELINE] RECHAZADO IA FINAL")
-            return None
-    elif ai_decision == "APOSTAR_SUAVE":
-        senal_final["publish_ready"] = True
-        senal_final["publish_rank"] = 1
-    elif ai_decision == "APOSTAR":
-        senal_final["publish_ready"] = True
-        senal_final["publish_rank"] = 2
-    elif ai_decision == "APOSTAR_FUERTE":
-        senal_final["publish_ready"] = True
-        senal_final["publish_rank"] = 3
-    else:
-        senal_final["publish_ready"] = True
-        senal_final["publish_rank"] = 1
+    senal_final["publish_ready"] = True
+    senal_final["publish_rank"] = 1
 
-    # =========================================
-    # 8. REGISTRAR + OUTPUT FINAL
-    # =========================================
     print(
-        f"[PIPELINE] SEÑAL APROBADA -> "
-        f"{partido.get('local')} vs {partido.get('visitante')} | "
-        f"market={senal_final.get('market')} | "
-        f"context_state={senal_final.get('context_state', '')} | "
-        f"context_score={senal_final.get('context_score', 0)} | "
-        f"context_risk={senal_final.get('context_risk', '')} | "
-        f"ai_recommendation={senal_final.get('ai_recommendation')} | "
-        f"adaptive_adjustment={senal_final.get('adaptive_adjustment', 'NEUTRAL')}"
+        f"[PIPELINE] OK -> {senal_final.get('home')} vs {senal_final.get('away')} | "
+        f"{senal_final.get('market')} | "
+        f"confidence={senal_final.get('confidence')} | "
+        f"chaos={senal_final.get('chaos_level')} | "
+        f"memory={senal_final.get('market_memory_label')}"
     )
 
     if registrar_senal:
         try:
             registrar_senal(senal_final)
-        except Exception as e:
-            print(f"[PIPELINE] ERROR REGISTRAR SENAL -> {e}")
+        except Exception:
+            pass
 
     return senal_final
