@@ -209,19 +209,10 @@ def partido_esta_vivo(p: Dict[str, Any]) -> bool:
     if not isinstance(p, dict):
         return False
 
-    if partido_esta_suspendido_o_invalido(p):
-        return False
-
-    if partido_esta_finalizado(p):
-        return False
-
-    estado = extraer_estado_partido(p)
     minuto = extraer_minuto_partido(p)
 
-    if estado in ESTADOS_VIVOS and 0 <= minuto <= 119:
-        return True
-
-    if 1 <= minuto < 120:
+    # 🔥 lógica simple y efectiva
+    if 1 <= minuto <= 95:
         return True
 
     if p.get("live") is True or p.get("is_live") is True:
