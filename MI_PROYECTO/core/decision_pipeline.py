@@ -1,4 +1,4 @@
-mfrom typing import Dict, Optional
+from typing import Dict, Optional
 
 # =========================================================
 # IMPORTS DEL SISTEMA
@@ -130,7 +130,7 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
             return None
 
     # =========================================
-    # 3.5 CONTEXTO
+    # 3.5 CONTEXTO (AJUSTADO 🔥)
     # =========================================
     if evaluar_contexto_partido:
         try:
@@ -141,18 +141,23 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
                 print("[PIPELINE] RECHAZADO CONTEXT")
                 return None
 
+            # 🔥 AJUSTE CLAVE (ANTES 45)
+            if _safe_float(senal_final.get("context_score", 0)) < 35:
+                print("[PIPELINE] CONTEXT DEBIL PERO PERMITIDO")
+
         except Exception:
             pass
 
     # =========================================
-    # 3.6 CHAOS GUARDIAN
+    # 3.6 CHAOS GUARDIAN (AJUSTADO 🔥)
     # =========================================
     if evaluar_chaos_partido:
         try:
             chaos = evaluar_chaos_partido(partido, senal_final)
             senal_final.update(chaos)
 
-            if senal_final.get("chaos_block_signal"):
+            # 🔥 SOLO BLOQUEA SI BAJA CONFIANZA
+            if senal_final.get("chaos_block_signal") and _safe_float(senal_final.get("confidence", 0)) < 75:
                 print("[PIPELINE] RECHAZADO CHAOS")
                 return None
 
@@ -170,12 +175,14 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
             return None
 
     # =========================================
-    # 5. VALUE
+    # 5. VALUE (AJUSTADO 🔥)
     # =========================================
     if filtrar_value_bets_reales:
         try:
             if not filtrar_value_bets_reales(senal_final):
-                return None
+                # 🔥 SOLO BLOQUEA SI CONFIANZA BAJA
+                if _safe_float(senal_final.get("confidence", 0)) < 70:
+                    return None
         except Exception:
             return None
 
