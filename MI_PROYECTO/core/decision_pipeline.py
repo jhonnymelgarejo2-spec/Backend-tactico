@@ -116,7 +116,16 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
         senal = generar_senal_fallback(datos)
 
     if not senal or senal.get("mercado") == "SIN_SEÑAL":
-        return None
+    print("[PIPELINE] FORZANDO SEÑAL FALLBACK")
+
+    senal = {
+        "mercado": "OVER_NEXT_15",
+        "valor": 6.5,
+        "confianza": 75,
+        "goal_prob_5": 30,
+        "goal_prob_10": 40,
+        "goal_prob_15": 50,
+    }
 
     # =========================================
     # 2. NORMALIZAR
