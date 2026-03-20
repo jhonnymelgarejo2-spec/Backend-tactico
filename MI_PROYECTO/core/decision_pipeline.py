@@ -49,6 +49,22 @@ try:
 except Exception:
     registrar_senal = None
 
+# 🔥 AUTO BALANCE
+try:
+    from core.auto_balance_engine import (
+        aplicar_auto_balance,
+        validar_confianza_dinamica,
+        validar_contexto_dinamico,
+        validar_chaos_dinamico,
+        permitir_value_flex,
+    )
+except Exception:
+    aplicar_auto_balance = None
+    validar_confianza_dinamica = None
+    validar_contexto_dinamico = None
+    validar_chaos_dinamico = None
+    permitir_value_flex = None
+
 
 # =========================================================
 # HELPERS
@@ -130,36 +146,42 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
             return None
 
     # =========================================
-    # 3.5 CONTEXTO (AJUSTADO 🔥)
+    # 🔥 3.1 AUTO BALANCE
+    # =========================================
+    if aplicar_auto_balance:
+        try:
+            senal_final = aplicar_auto_balance(senal_final)
+        except Exception:
+            pass
+
+    # =========================================
+    # 3.5 CONTEXTO DINÁMICO
     # =========================================
     if evaluar_contexto_partido:
         try:
             context = evaluar_contexto_partido(partido)
             senal_final.update(context)
 
-            if senal_final.get("context_state") == "CAOS_INESTABLE":
-                print("[PIPELINE] RECHAZADO CONTEXT")
-                return None
-
-            # 🔥 AJUSTE CLAVE (ANTES 45)
-            if _safe_float(senal_final.get("context_score", 0)) < 35:
-                print("[PIPELINE] CONTEXT DEBIL PERO PERMITIDO")
+            if validar_contexto_dinamico:
+                if not validar_contexto_dinamico(senal_final):
+                    print("[PIPELINE] RECHAZADO CONTEXT DINAMICO")
+                    return None
 
         except Exception:
             pass
 
     # =========================================
-    # 3.6 CHAOS GUARDIAN (AJUSTADO 🔥)
+    # 3.6 CHAOS DINÁMICO
     # =========================================
     if evaluar_chaos_partido:
         try:
             chaos = evaluar_chaos_partido(partido, senal_final)
             senal_final.update(chaos)
 
-            # 🔥 SOLO BLOQUEA SI BAJA CONFIANZA
-            if senal_final.get("chaos_block_signal") and _safe_float(senal_final.get("confidence", 0)) < 75:
-                print("[PIPELINE] RECHAZADO CHAOS")
-                return None
+            if validar_chaos_dinamico:
+                if not validar_chaos_dinamico(senal_final):
+                    print("[PIPELINE] RECHAZADO CHAOS DINAMICO")
+                    return None
 
         except Exception:
             pass
@@ -175,15 +197,25 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
             return None
 
     # =========================================
-    # 5. VALUE (AJUSTADO 🔥)
+    # 5. VALUE DINÁMICO
     # =========================================
     if filtrar_value_bets_reales:
         try:
             if not filtrar_value_bets_reales(senal_final):
-                # 🔥 SOLO BLOQUEA SI CONFIANZA BAJA
-                if _safe_float(senal_final.get("confidence", 0)) < 70:
+                if permitir_value_flex:
+                    if not permitir_value_flex(senal_final):
+                        return None
+                else:
                     return None
         except Exception:
+            return None
+
+    # =========================================
+    # 🔥 VALIDACIÓN FINAL DE CONFIANZA
+    # =========================================
+    if validar_confianza_dinamica:
+        if not validar_confianza_dinamica(senal_final):
+            print("[PIPELINE] RECHAZADO POR CONFIANZA DINAMICA")
             return None
 
     # =========================================
@@ -233,8 +265,7 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
         f"[PIPELINE] OK -> {senal_final.get('home')} vs {senal_final.get('away')} | "
         f"{senal_final.get('market')} | "
         f"confidence={senal_final.get('confidence')} | "
-        f"chaos={senal_final.get('chaos_level')} | "
-        f"memory={senal_final.get('market_memory_label')}"
+        f"mode={senal_final.get('auto_balance_mode')}"
     )
 
     if registrar_senal:
