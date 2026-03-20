@@ -66,6 +66,10 @@ except Exception:
     validar_chaos_dinamico = None
     permitir_value_flex = None
 
+try:
+    from core.bankroll_manager import aplicar_bankroll
+except Exception:
+    aplicar_bankroll = None
 
 # =========================================================
 # HELPERS
@@ -341,14 +345,27 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
         except Exception as e:
             print(f"[PIPELINE] ERROR MARKET MEMORY -> {e}")
 
+  # =========================================
+  # 6.7 BANKROLL MANAGER
+  # =========================================
+  if aplicar_bankroll:
+      try:
+          senal_final = aplicar_bankroll(senal_final)
+      except Exception as e:
+          print(f"[PIPELINE] ERROR BANKROLL -> {e}")
+    
     # =========================================
     # 7. DECISIÓN FINAL
     # =========================================
     decision = _safe_upper(senal_final.get("ai_recommendation"))
 
     if decision == "NO_APOSTAR":
-        print("[PIPELINE] RECHAZADO IA FINAL")
-        return None
+    print("[PIPELINE] RECHAZADO IA FINAL")
+    return None
+
+if not senal_final.get("permitido_operar", True):
+    print(f"[PIPELINE] RECHAZADO BANKROLL -> {senal_final.get('motivo_operacion')}")
+    return None
 
     # si viene observación, pero ya sobrevivió a todo y tiene valores decentes, se publica
     if decision == "OBSERVAR":
