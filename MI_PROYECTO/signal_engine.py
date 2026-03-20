@@ -199,12 +199,23 @@ def detectar_gol_inminente(datos):
 
 
 def clasificar_tier(confianza, valor, value_categoria="SIN_VALUE"):
-    if confianza >= 90 and valor >= 10 and value_categoria in ("VALUE_ALTO", "VALUE_ELITE"):
+
+    # 🔥 TOP (nuevo nivel agresivo)
+    if confianza >= 75 and valor >= 8:
+        return "TOP"
+
+    # 🟡 PREMIUM
+    if confianza >= 88 and valor >= 10:
         return "PREMIUM"
-    if confianza >= 82 and valor >= 6 and value_categoria in ("VALUE_MEDIO", "VALUE_ALTO", "VALUE_ELITE"):
+
+    # 🟢 FUERTE
+    if confianza >= 80 and valor >= 5:
         return "FUERTE"
+
+    # 🔵 NORMAL
     if confianza >= 70 and valor >= 2:
         return "NORMAL"
+
     return "DESCARTAR"
 
 
