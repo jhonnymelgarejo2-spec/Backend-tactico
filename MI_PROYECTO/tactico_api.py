@@ -55,6 +55,7 @@ except Exception:
     obtener_mejor_liga = None
     detectar_patrones = None
 
+
 # =========================================================
 # IMPORT LAZY DEL PIPELINE
 # Evita importación circular con decision_pipeline
@@ -74,7 +75,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder=TEMPLATES_DIR, static_folder=STATIC_DIR)
 CORS(app)
 
 
@@ -218,9 +219,14 @@ def partido_esta_vivo(p: Dict[str, Any]) -> bool:
     if not isinstance(p, dict):
         return False
 
+    if partido_esta_suspendido_o_invalido(p):
+        return False
+
+    if partido_esta_finalizado(p):
+        return False
+
     minuto = extraer_minuto_partido(p)
 
-    # 🔥 lógica simple y efectiva
     if 1 <= minuto <= 95:
         return True
 
@@ -249,6 +255,7 @@ def normalizar_partido(raw: Dict[str, Any]) -> Dict[str, Any]:
     teams = raw.get("teams") or {}
     goals = raw.get("goals") or {}
     league = raw.get("league") or {}
+    statistics = raw.get("statistics") or {}
 
     local = raw.get("local") or (teams.get("home") or {}).get("name") or raw.get("home") or "Local"
     visitante = raw.get("visitante") or (teams.get("away") or {}).get("name") or raw.get("away") or "Visitante"
@@ -277,21 +284,34 @@ def normalizar_partido(raw: Dict[str, Any]) -> Dict[str, Any]:
     shots = raw.get("shots")
     if shots is None:
         shots = raw.get("disparos")
+    if shots is None:
+        shots = statistics.get("shots")
 
     shots_on_target = raw.get("shots_on_target")
     if shots_on_target is None:
         shots_on_target = raw.get("disparos_en_objetivo")
+    if shots_on_target is None:
+        shots_on_target = statistics.get("shots_on_target")
 
     dangerous_attacks = raw.get("dangerous_attacks")
     if dangerous_attacks is None:
         dangerous_attacks = raw.get("ataques_peligrosos")
+    if dangerous_attacks is None:
+        dangerous_attacks = statistics.get("dangerous_attacks")
 
     goal_pressure = raw.get("goal_pressure") or raw.get("goal_presion") or {}
     goal_predictor = raw.get("goal_predictor") or {}
     chaos = raw.get("chaos") or {}
 
+    home_recent_matches = raw.get("home_recent_matches") or []
+    away_recent_matches = raw.get("away_recent_matches") or []
+    h2h_matches = raw.get("h2h_matches") or []
+    league_stats = raw.get("league_stats") or {}
+    home_players = raw.get("home_players") or []
+    away_players = raw.get("away_players") or []
+
     return {
-        "id": raw.get("id") or fixture.get("id") or raw.get("match_id") or f"match_{int(now_ts()*1000)}",
+        "id": raw.get("id") or fixture.get("id") or raw.get("match_id") or f"match_{int(now_ts() * 1000)}",
         "local": local,
         "visitante": visitante,
         "liga": raw.get("liga") or league.get("name") or raw.get("league") or "Liga desconocida",
@@ -310,6 +330,23 @@ def normalizar_partido(raw: Dict[str, Any]) -> Dict[str, Any]:
         "chaos": chaos if isinstance(chaos, dict) else {},
         "live": bool(raw.get("live", True)),
         "fixture": fixture if isinstance(fixture, dict) else {},
+        "cuota": to_float(raw.get("cuota"), 1.85),
+        "prob_real": to_float(raw.get("prob_real"), 0.75),
+        "prob_implicita": to_float(raw.get("prob_implicita"), 0.54),
+        "home_recent_matches": home_recent_matches if isinstance(home_recent_matches, list) else [],
+        "away_recent_matches": away_recent_matches if isinstance(away_recent_matches, list) else [],
+        "h2h_matches": h2h_matches if isinstance(h2h_matches, list) else [],
+        "league_stats": league_stats if isinstance(league_stats, dict) else {},
+        "home_players": home_players if isinstance(home_players, list) else [],
+        "away_players": away_players if isinstance(away_players, list) else [],
+        "faltas_local": to_int(raw.get("faltas_local"), 0),
+        "faltas_visitante": to_int(raw.get("faltas_visitante"), 0),
+        "amarillas_local": to_int(raw.get("amarillas_local"), 0),
+        "amarillas_visitante": to_int(raw.get("amarillas_visitante"), 0),
+        "rojas_local": to_int(raw.get("rojas_local"), 0),
+        "rojas_visitante": to_int(raw.get("rojas_visitante"), 0),
+        "posesion_local": to_int(raw.get("posesion_local"), 0),
+        "posesion_visitante": to_int(raw.get("posesion_visitante"), 0),
     }
 
 
@@ -756,6 +793,12 @@ def obtener_partidos_fallback() -> List[Dict[str, Any]]:
             "goal_predictor": {"predictor_score": 8.1},
             "chaos": {"chaos_score": 3.2},
             "live": True,
+            "faltas_local": 11,
+            "faltas_visitante": 10,
+            "amarillas_local": 2,
+            "amarillas_visitante": 2,
+            "rojas_local": 0,
+            "rojas_visitante": 0,
         },
         {
             "id": "102",
@@ -776,6 +819,12 @@ def obtener_partidos_fallback() -> List[Dict[str, Any]]:
             "goal_predictor": {"predictor_score": 7.6},
             "chaos": {"chaos_score": 2.8},
             "live": True,
+            "faltas_local": 13,
+            "faltas_visitante": 9,
+            "amarillas_local": 2,
+            "amarillas_visitante": 1,
+            "rojas_local": 0,
+            "rojas_visitante": 0,
         },
         {
             "id": "103",
@@ -796,6 +845,12 @@ def obtener_partidos_fallback() -> List[Dict[str, Any]]:
             "goal_predictor": {"predictor_score": 4.1},
             "chaos": {"chaos_score": 1.4},
             "live": True,
+            "faltas_local": 14,
+            "faltas_visitante": 12,
+            "amarillas_local": 3,
+            "amarillas_visitante": 2,
+            "rojas_local": 0,
+            "rojas_visitante": 0,
         },
         {
             "id": "104",
@@ -1001,7 +1056,11 @@ def hot_matches():
 
     partidos_hot = [
         p for p in cache_partidos
-        if partido_esta_vivo(p) and to_float(p.get("xG"), 0) >= 0.7
+        if partido_esta_vivo(p) and (
+            to_float(p.get("xG"), 0) >= 0.7 or
+            to_int(p.get("shots_on_target"), 0) >= 3 or
+            to_int(p.get("dangerous_attacks"), 0) >= 20
+        )
     ]
 
     partidos_hot.sort(
@@ -1084,8 +1143,8 @@ def match_details(match_id):
 
     senal = next((s for s in cache_senales if str(s.get("match_id")) == str(match_id)), None)
 
-    posesion_local = 60 if partido.get("local") == "Barcelona" else 52
-    posesion_visitante = 40 if posesion_local == 60 else 48
+    posesion_local = partido.get("posesion_local") or (60 if partido.get("local") == "Barcelona" else 52)
+    posesion_visitante = partido.get("posesion_visitante") or (40 if posesion_local == 60 else 48)
 
     return jsonify({
         "match_id": partido.get("id"),
@@ -1108,12 +1167,12 @@ def match_details(match_id):
         "chaos": partido.get("chaos", {}),
         "posesion_local": posesion_local,
         "posesion_visitante": posesion_visitante,
-        "faltas_local": 13,
-        "faltas_visitante": 14,
-        "amarillas_local": 2,
-        "amarillas_visitante": 2,
-        "rojas_local": 1,
-        "rojas_visitante": 1,
+        "faltas_local": partido.get("faltas_local", 13),
+        "faltas_visitante": partido.get("faltas_visitante", 14),
+        "amarillas_local": partido.get("amarillas_local", 2),
+        "amarillas_visitante": partido.get("amarillas_visitante", 2),
+        "rojas_local": partido.get("rojas_local", 0),
+        "rojas_visitante": partido.get("rojas_visitante", 0),
         "signal": senal or None
     })
 
