@@ -30,6 +30,15 @@ except Exception:
     traducir_senal_a_mercado = None
 
 try:
+    from core.performance_tracker import (
+        obtener_resumen_rendimiento,
+        obtener_insights_rendimiento,
+    )
+except Exception:
+    obtener_resumen_rendimiento = None
+    obtener_insights_rendimiento = None
+
+try:
     from core.learning_engine import (
         resolver_partidos_finalizados,
         obtener_estadisticas,
