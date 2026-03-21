@@ -1033,10 +1033,16 @@
         </div>
 
         <div class="hero-desc">
-          <strong>Motivo táctico:</strong> ${esc(signal.reason || "Sin detalle")}<br>
-          <strong>Motivo value:</strong> ${esc(signal.razon_value || "Sin análisis")}<br>
-          <strong>Lectura IA:</strong> ${esc(signal.ai_reason || "Sin lectura IA")}
-        </div>
+  <strong>Motivo táctico:</strong> ${esc(signal.reason || "Sin detalle")}<br>
+  <strong>Motivo value:</strong> ${esc(signal.razon_value || "Sin análisis")}<br>
+  <strong>Lectura IA:</strong> ${esc(signal.ai_reason || "Sin lectura IA")}<br>
+  <strong>Stake sugerido:</strong> ${fmtNumber(signal.stake_pct || 0)}%<br>
+  <strong>Monto sugerido:</strong> ${fmtNumber(signal.stake_amount || 0)}<br>
+  <strong>Nivel stake:</strong> ${esc(signal.stake_label || "N/A")}<br>
+  <strong>Modo bankroll:</strong> ${esc(signal.bankroll_mode || "N/A")}<br>
+  <strong>Operable:</strong> ${signal.permitido_operar ? "Sí" : "No"}<br>
+  <strong>Motivo operación:</strong> ${esc(signal.motivo_operacion || "OK")}
+</div>
       `;
     }
 
@@ -1080,11 +1086,12 @@
             </div>
 
             <div class="match-info">
-              <strong>Mercado:</strong> ${esc(findMarket(match.id))}<br>
-              <strong>IA:</strong> ${esc(findAIReason(match.id))}<br>
-              <strong>Motivo:</strong> ${esc(findReason(match.id))}
-            </div>
-          </div>
+  <strong>Mercado:</strong> ${esc(findMarket(match.id))}<br>
+  <strong>IA:</strong> ${esc(findAIReason(match.id))}<br>
+  <strong>Motivo:</strong> ${esc(findReason(match.id))}<br>
+  <strong>Stake:</strong> ${fmtNumber(findStakePct(match.id))}% · ${esc(findStakeLabel(match.id))}<br>
+  <strong>Operable:</strong> ${findOperable(match.id) ? "Sí" : "No"}
+</div>
 
           <div class="match-right">
             <div class="score-badge">${esc(match.marcador_local)}-${esc(match.marcador_visitante)}</div>
@@ -1141,11 +1148,13 @@
 
           <div class="quick-name">${esc(s.home)} vs ${esc(s.away)}</div>
           <div class="quick-meta">
-            ${esc(s.league)} · ${esc(s.country)}<br>
-            ${esc(s.selection)}<br>
-            IA ${esc(s.recomendacion_final || "OBSERVAR")}<br>
-            Signal ${fmtNumber(s.signal_score)} · AI ${fmtNumber(s.ai_decision_score)}
-          </div>
+  ${esc(s.league)} · ${esc(s.country)}<br>
+  ${esc(s.selection)}<br>
+  IA ${esc(s.recomendacion_final || "OBSERVAR")}<br>
+  Signal ${fmtNumber(s.signal_score)} · AI ${fmtNumber(s.ai_decision_score)}<br>
+  Stake ${fmtNumber(s.stake_pct || 0)}% · ${esc(s.stake_label || "N/A")}<br>
+  ${s.permitido_operar ? "✅ Operable" : "⛔ No operar"}
+</div>
 
           <a class="league-btn" href="/match/${encodeURIComponent(s.match_id)}">Ver partido</a>
         </div>
@@ -1259,6 +1268,26 @@
       return findSignal(matchId)?.ai_reason || "Sin lectura IA";
     }
 
+    function findStakePct(matchId){
+  return findSignal(matchId)?.stake_pct || 0;
+}
+
+function findStakeAmount(matchId){
+  return findSignal(matchId)?.stake_amount || 0;
+}
+
+function findStakeLabel(matchId){
+  return findSignal(matchId)?.stake_label || "N/A";
+}
+
+function findOperable(matchId){
+  return findSignal(matchId)?.permitido_operar ?? false;
+}
+
+function findBankrollMode(matchId){
+  return findSignal(matchId)?.bankroll_mode || "N/A";
+}
+    
     function renderAll(){
       renderTopStats();
       buildLeagueFilters();
