@@ -121,6 +121,16 @@ try:
 except Exception:
     formatear_senal_protocolo = None
 
+try:
+    from core.auto_learning_engine import aplicar_auto_learning
+except Exception:
+    aplicar_auto_learning = None
+
+try:
+    from core.history_manager import guardar_senal
+except Exception:
+    guardar_senal = None
+
 
 # =========================================================
 # HELPERS
@@ -447,6 +457,15 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
             print(f"[PIPELINE] ERROR BANKROLL -> {e}")
 
     # =========================================
+    # 6.8 AUTO LEARNING ENGINE
+    # =========================================
+    if aplicar_auto_learning:
+        try:
+            senal_final = aplicar_auto_learning(senal_final)
+        except Exception as e:
+            print(f"[PIPELINE] ERROR AUTO LEARNING -> {e}")
+
+    # =========================================
     # 7. DECISIÓN FINAL
     # =========================================
     if _safe_upper(senal_final.get("ai_recommendation")) == "NO_APOSTAR":
@@ -468,10 +487,19 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
         except Exception as e:
             print(f"[PIPELINE] ERROR PROTOCOL FORMATTER -> {e}")
 
+    # =========================================
+    # 9. REGISTRO / HISTORIAL
+    # =========================================
     if registrar_senal:
         try:
             registrar_senal(senal_final)
         except Exception as e:
             print(f"[PIPELINE] ERROR REGISTRAR -> {e}")
+
+    if guardar_senal:
+        try:
+            guardar_senal(senal_final)
+        except Exception as e:
+            print(f"[PIPELINE] ERROR GUARDAR HISTORIAL -> {e}")
 
     return senal_final
