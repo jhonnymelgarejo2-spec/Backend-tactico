@@ -874,36 +874,61 @@ def asegurar_cache():
 # HISTORIAL / STATS
 # =========================================================
 def get_learning_stats() -> Dict[str, Any]:
-    if obtener_estadisticas:
+    # =========================================
+    # NUEVO: PERFORMANCE TRACKER REAL
+    # =========================================
+    if obtener_resumen_rendimiento and obtener_insights_rendimiento:
         try:
-            stats = obtener_estadisticas()
-            mejor_mercado = obtener_mejor_mercado() if obtener_mejor_mercado else None
-            peor_mercado = obtener_peor_mercado() if obtener_peor_mercado else None
-            mejor_liga = obtener_mejor_liga() if obtener_mejor_liga else None
-            patrones = detectar_patrones() if detectar_patrones else {}
+            resumen = obtener_resumen_rendimiento()
+            insights = obtener_insights_rendimiento()
+
+            mejor_mercado = insights.get("mejor_mercado") or {}
+            peor_mercado = insights.get("peor_mercado") or {}
+            mejor_liga = insights.get("mejor_liga") or {}
+            peor_liga = insights.get("peor_liga") or {}
 
             return {
-                "total_senales": stats.get("total", 0),
-                "abiertas": stats.get("open", 0),
-                "resueltas": stats.get("resolved", 0),
-                "ganadas": stats.get("wins", 0),
-                "perdidas": stats.get("losses", 0),
-                "voids": stats.get("voids", 0),
-                "win_rate": stats.get("winrate", 0),
-                "roi_percent": 0,
-                "signals_elite": 0,
-                "signals_top": 0,
-                "value_promedio": stats.get("avg_value", 0),
-                "riesgo_medio": stats.get("avg_risk", 0),
-                "confianza_promedio": stats.get("avg_confidence", 0),
-                "mejor_mercado": mejor_mercado,
-                "peor_mercado": peor_mercado,
-                "mejor_liga": mejor_liga,
-                "patrones": patrones,
+                "total_senales": resumen.get("total_resueltas", 0),
+                "resueltas": resumen.get("total_resueltas", 0),
+                "ganadas": resumen.get("wins", 0),
+                "perdidas": resumen.get("losses", 0),
+                "voids": resumen.get("voids", 0),
+                "win_rate": resumen.get("winrate", 0.0),
+                "roi_percent": resumen.get("roi_percent", 0.0),
+                "total_stake": resumen.get("total_stake", 0.0),
+                "total_profit": resumen.get("total_profit", 0.0),
+                "stake_promedio": resumen.get("stake_promedio", 0.0),
+                "profit_promedio": resumen.get("profit_promedio", 0.0),
+
+                "signals_elite": sum(1 for x in cache_historial if x.get("signal_rank") == "ELITE"),
+                "signals_top": sum(1 for x in cache_historial if x.get("signal_rank") in ("TOP", "ALTA")),
+
+                "value_promedio": round(
+                    sum(to_float(x.get("value"), 0) for x in cache_historial) / len(cache_historial),
+                    2
+                ) if cache_historial else 0,
+
+                "riesgo_medio": round(
+                    sum(to_float(x.get("risk_score"), 0) for x in cache_historial) / len(cache_historial),
+                    2
+                ) if cache_historial else 0,
+
+                "mejor_mercado": mejor_mercado.get("market", "N/A"),
+                "mejor_mercado_roi": mejor_mercado.get("roi_percent", 0.0),
+                "peor_mercado": peor_mercado.get("market", "N/A"),
+                "peor_mercado_roi": peor_mercado.get("roi_percent", 0.0),
+
+                "mejor_liga": mejor_liga.get("league", "N/A"),
+                "mejor_liga_roi": mejor_liga.get("roi_percent", 0.0),
+                "peor_liga": peor_liga.get("league", "N/A"),
+                "peor_liga_roi": peor_liga.get("roi_percent", 0.0),
             }
         except Exception as e:
-            print(f"LEARNING STATS ERROR -> {e}")
+            print(f"PERFORMANCE TRACKER ERROR -> {e}")
 
+    # =========================================
+    # FALLBACK VIEJO
+    # =========================================
     total = len(cache_historial)
     ganadas = sum(1 for x in cache_historial if x.get("estado_resultado") == "ganada")
     perdidas = sum(1 for x in cache_historial if x.get("estado_resultado") == "perdida")
@@ -913,23 +938,29 @@ def get_learning_stats() -> Dict[str, Any]:
 
     return {
         "total_senales": total,
-        "abiertas": 0,
         "resueltas": resueltas,
         "ganadas": ganadas,
         "perdidas": perdidas,
         "voids": 0,
         "win_rate": win_rate,
         "roi_percent": roi_percent,
+        "total_stake": 0.0,
+        "total_profit": 0.0,
+        "stake_promedio": 0.0,
+        "profit_promedio": 0.0,
         "signals_elite": sum(1 for x in cache_historial if x.get("signal_rank") == "ELITE"),
         "signals_top": sum(1 for x in cache_historial if x.get("signal_rank") == "TOP"),
         "value_promedio": round(sum(to_float(x.get("value"), 0) for x in cache_historial) / total, 2) if total else 0,
         "riesgo_medio": round(sum(to_float(x.get("risk_score"), 0) for x in cache_historial) / total, 2) if total else 0,
-        "confianza_promedio": round(sum(to_float(x.get("confidence"), 0) for x in cache_historial) / total, 2) if total else 0,
-        "mejor_mercado": None,
-        "peor_mercado": None,
-        "mejor_liga": None,
-        "patrones": {},
-            }
+        "mejor_mercado": "N/A",
+        "mejor_mercado_roi": 0.0,
+        "peor_mercado": "N/A",
+        "peor_mercado_roi": 0.0,
+        "mejor_liga": "N/A",
+        "mejor_liga_roi": 0.0,
+        "peor_liga": "N/A",
+        "peor_liga_roi": 0.0,
+    }
 
 
 # =========================================================
