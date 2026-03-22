@@ -3,10 +3,12 @@ from core.decision_pipeline import procesar_partido
 
 app = Flask(__name__)
 
+# 🔹 Ruta base
 @app.route("/")
 def home():
     return "JHONNY ELITE BACKEND ACTIVO"
 
+# 🔹 Health check (importante para Render)
 @app.route("/status")
 def status():
     return jsonify({
@@ -14,7 +16,7 @@ def status():
         "service": "jhonny_elite_backend"
     })
 
-# EJEMPLO DE ENDPOINT (puedes ampliarlo luego)
+# 🔹 Test del pipeline
 @app.route("/test-pipeline")
 def test_pipeline():
     partido_fake = {
@@ -30,6 +32,11 @@ def test_pipeline():
         "momentum": "HIGH"
     }
 
-    resultado = procesar_partido(partido_fake)
-
-    return jsonify(resultado or {"msg": "No signal"})
+    try:
+        resultado = procesar_partido(partido_fake)
+        return jsonify(resultado or {"msg": "No signal"})
+    except Exception as e:
+        return jsonify({
+            "error": str(e),
+            "type": "pipeline_error"
+        }), 500
