@@ -122,9 +122,15 @@ def generar_senales(partidos: List[Dict]) -> List[Dict]:
                 s = None
 
             if s:
+                # 🔥 asegurar campos mínimos para frontend
+                s.setdefault("stake_pct", 0)
+                s.setdefault("stake_amount", 0)
+                s.setdefault("stake_label", "N/A")
+                s.setdefault("bankroll_mode", "FLAT")
+                s.setdefault("permitido_operar", True)
+
                 senales.append(s)
 
-    # ordenar por calidad real
     senales.sort(
         key=lambda x: (
             to_float(x.get("signal_score", 0)),
@@ -183,7 +189,7 @@ def refrescar():
 
 
 # =========================================================
-# STATS REALES
+# STATS
 # =========================================================
 def get_stats():
     if not obtener_estadisticas_historial:
@@ -202,6 +208,7 @@ def get_stats():
 def status():
     return jsonify({
         "status": "ok",
+        "service": "JHONNY_ELITE_BACKEND",
         "time": iso_now()
     })
 
@@ -211,8 +218,9 @@ def scan():
     refrescar()
     return jsonify({
         "ok": True,
-        "partidos": len(cache_partidos),
-        "senales": len(cache_senales)
+        "total_partidos": len(cache_partidos),
+        "senales": len(cache_senales),
+        "ultimo_scan": ultimo_scan
     })
 
 
@@ -255,23 +263,21 @@ def learning_stats():
 
 @app.route("/api/leagues")
 def leagues():
-    ligas = {}
+    agrupado = {}
 
     for p in cache_partidos:
         key = (p["liga"], p["pais"])
-        ligas.setdefault(key, 0)
-        ligas[key] += 1
 
-    result = [
-        {
-            "league": k[0],
-            "country": k[1],
-            "matches": v
-        }
-        for k, v in ligas.items()
-    ]
+        if key not in agrupado:
+            agrupado[key] = {
+                "league": p["liga"],
+                "country": p["pais"],
+                "matches_live": 0
+            }
 
-    return jsonify(result)
+        agrupado[key]["matches_live"] += 1
+
+    return jsonify(list(agrupado.values()))
 
 
 # =========================================================
