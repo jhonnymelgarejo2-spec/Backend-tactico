@@ -16,17 +16,6 @@ except Exception:
     decision_final_ia = None
 
 try:
-    from tactico_api import (
-        enriquecer_senal,
-        filtro_antifake_partido,
-        filtrar_value_bets_reales,
-    )
-except Exception:
-    enriquecer_senal = None
-    filtro_antifake_partido = None
-    filtrar_value_bets_reales = None
-
-try:
     from core.context_engine import evaluar_contexto_partido
 except Exception:
     evaluar_contexto_partido = None
@@ -133,6 +122,23 @@ except Exception:
 
 
 # =========================================================
+# IMPORTS LAZY DESDE tactico_api
+# EVITA IMPORTACIÓN CIRCULAR
+# =========================================================
+def _get_tactico_helpers():
+    try:
+        from tactico_api import (
+            enriquecer_senal,
+            filtro_antifake_partido,
+            filtrar_value_bets_reales,
+        )
+        return enriquecer_senal, filtro_antifake_partido, filtrar_value_bets_reales
+    except Exception as e:
+        print(f"[PIPELINE] tactico helpers no disponibles -> {e}")
+        return None, None, None
+
+
+# =========================================================
 # HELPERS
 # =========================================================
 def _safe_upper(value) -> str:
@@ -199,6 +205,8 @@ def generar_senal_fallback(datos: Dict) -> Dict:
 # PIPELINE
 # =========================================================
 def procesar_partido(partido: Dict) -> Optional[Dict]:
+    enriquecer_senal, filtro_antifake_partido, filtrar_value_bets_reales = _get_tactico_helpers()
+
     # =========================================
     # 1. GENERAR SEÑAL
     # =========================================
@@ -227,6 +235,7 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
         senal = generar_senal_fallback(datos)
 
     if not senal or senal.get("mercado") == "SIN_SEÑAL":
+        print(f"[PIPELINE] fallback activado -> {partido.get('local')} vs {partido.get('visitante')}")
         senal = generar_senal_fallback(datos)
 
     # =========================================
@@ -268,6 +277,11 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
         "value_categoria": senal.get("value_categoria", "SIN_VALUE"),
         "recomendacion_value": senal.get("recomendacion_value", "OBSERVAR"),
         "razon_value": senal.get("razon_value", ""),
+        "stake_pct": 0,
+        "stake_amount": 0,
+        "stake_label": "N/A",
+        "bankroll_mode": "FLAT",
+        "permitido_operar": True,
     }
 
     # =========================================
@@ -278,7 +292,6 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
             senal_final = enriquecer_senal(senal_final, partido)
         except Exception as e:
             print(f"[PIPELINE] ERROR ENRIQUECER -> {e}")
-            return None
 
     # =========================================
     # 3.1 AUTO BALANCE
@@ -315,8 +328,8 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
                 senal_final.update(context)
 
             if validar_contexto_dinamico and not validar_contexto_dinamico(senal_final):
-                if _safe_float(senal_final.get("confidence", 0)) < 65:
-                    print("[PIPELINE] RECHAZADO CONTEXT DINAMICO")
+                if _safe_float(senal_final.get("confidence", 0)) < 55:
+                    print(f"[PIPELINE] RECHAZADO CONTEXT -> {partido.get('local')} vs {partido.get('visitante')}")
                     return None
         except Exception as e:
             print(f"[PIPELINE] ERROR CONTEXT -> {e}")
@@ -331,8 +344,8 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
                 senal_final.update(chaos)
 
             if validar_chaos_dinamico and not validar_chaos_dinamico(senal_final):
-                if _safe_float(senal_final.get("confidence", 0)) < 70:
-                    print("[PIPELINE] RECHAZADO CHAOS DINAMICO")
+                if _safe_float(senal_final.get("confidence", 0)) < 58:
+                    print(f"[PIPELINE] RECHAZADO CHAOS -> {partido.get('local')} vs {partido.get('visitante')}")
                     return None
         except Exception as e:
             print(f"[PIPELINE] ERROR CHAOS -> {e}")
@@ -382,29 +395,32 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
             print(f"[PIPELINE] ERROR PLAYER IMPACT -> {e}")
 
     # =========================================
-    # 4. FILTROS
+    # 4. FILTROS SUAVIZADOS
     # =========================================
     if filtro_antifake_partido:
         try:
-            if not filtro_antifake_partido(partido, senal_final):
+            antifake_ok = filtro_antifake_partido(partido, senal_final)
+            if not antifake_ok and _safe_float(senal_final.get("confidence", 0)) < 62:
+                print(f"[PIPELINE] RECHAZADO ANTIFAKE -> {partido.get('local')} vs {partido.get('visitante')}")
                 return None
         except Exception as e:
             print(f"[PIPELINE] ERROR ANTIFAKE -> {e}")
-            return None
 
     if filtrar_value_bets_reales:
         try:
-            if not filtrar_value_bets_reales(senal_final):
+            value_ok = filtrar_value_bets_reales(senal_final)
+            if not value_ok:
                 if permitir_value_flex:
                     flex_mode = permitir_value_flex(senal_final)
-                    if not flex_mode and _safe_float(senal_final.get("confidence", 0)) < 70:
+                    if not flex_mode and _safe_float(senal_final.get("confidence", 0)) < 60:
+                        print(f"[PIPELINE] RECHAZADO VALUE -> {partido.get('local')} vs {partido.get('visitante')}")
                         return None
                 else:
-                    if _safe_float(senal_final.get("confidence", 0)) < 70:
+                    if _safe_float(senal_final.get("confidence", 0)) < 60:
+                        print(f"[PIPELINE] RECHAZADO VALUE -> {partido.get('local')} vs {partido.get('visitante')}")
                         return None
         except Exception as e:
             print(f"[PIPELINE] ERROR VALUE -> {e}")
-            return None
 
     # =========================================
     # 5. VALIDACIÓN FINAL DE CONFIANZA
@@ -412,7 +428,8 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
     if validar_confianza_dinamica:
         try:
             if not validar_confianza_dinamica(senal_final):
-                if _safe_float(senal_final.get("confidence", 0)) < 60:
+                if _safe_float(senal_final.get("confidence", 0)) < 55:
+                    print(f"[PIPELINE] RECHAZADO CONFIANZA -> {partido.get('local')} vs {partido.get('visitante')}")
                     return None
         except Exception as e:
             print(f"[PIPELINE] ERROR CONFIANZA DINAMICA -> {e}")
@@ -466,13 +483,29 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
             print(f"[PIPELINE] ERROR AUTO LEARNING -> {e}")
 
     # =========================================
-    # 7. DECISIÓN FINAL
+    # 7. DECISIÓN FINAL SUAVIZADA
     # =========================================
-    if _safe_upper(senal_final.get("ai_recommendation")) == "NO_APOSTAR":
-        return None
+    decision = _safe_upper(senal_final.get("ai_recommendation"))
+    confidence = _safe_float(senal_final.get("confidence", 0))
+    value = _safe_float(senal_final.get("value", 0))
+    ai_score = _safe_float(senal_final.get("ai_decision_score", 0))
+
+    if decision == "NO_APOSTAR":
+        if confidence < 75:
+            print(f"[PIPELINE] RECHAZADO IA FINAL -> {partido.get('local')} vs {partido.get('visitante')}")
+            return None
 
     if not senal_final.get("permitido_operar", True):
-        return None
+        if confidence < 72:
+            print(f"[PIPELINE] RECHAZADO BANKROLL -> {partido.get('local')} vs {partido.get('visitante')}")
+            return None
+
+    if decision == "OBSERVAR":
+        if ai_score >= 50 and confidence >= 60 and value >= 3:
+            senal_final["ai_recommendation"] = "APOSTAR_SUAVE"
+        else:
+            print(f"[PIPELINE] RECHAZADO OBSERVAR -> {partido.get('local')} vs {partido.get('visitante')}")
+            return None
 
     senal_final["publish_ready"] = True
     senal_final["publish_rank"] = 1
@@ -483,7 +516,8 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
     if formatear_senal_protocolo:
         try:
             protocol_data = formatear_senal_protocolo(senal_final)
-            senal_final.update(protocol_data)
+            if isinstance(protocol_data, dict):
+                senal_final.update(protocol_data)
         except Exception as e:
             print(f"[PIPELINE] ERROR PROTOCOL FORMATTER -> {e}")
 
@@ -501,5 +535,13 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
             guardar_senal(senal_final)
         except Exception as e:
             print(f"[PIPELINE] ERROR GUARDAR HISTORIAL -> {e}")
+
+    print(
+        f"[PIPELINE OK] {senal_final.get('home')} vs {senal_final.get('away')} | "
+        f"market={senal_final.get('market')} | "
+        f"conf={senal_final.get('confidence')} | "
+        f"value={senal_final.get('value')} | "
+        f"ai={senal_final.get('ai_recommendation')}"
+    )
 
     return senal_final
