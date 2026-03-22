@@ -1046,60 +1046,65 @@
       `;
     }
 
-    function renderHotMatches(){
-      const list = document.getElementById("hotMatchesList");
-      const filtered = (appState.hotMatches || []).filter(passesFilters);
+<script>
+function renderHotMatches(){
+  const list = document.getElementById("hotMatchesList");
+  const filtered = (appState.hotMatches || []).filter(passesFilters);
 
-      if(!filtered.length){
-        list.innerHTML = `<div class="empty">No hay partidos calientes todavía.</div>`;
-        return;
-      }
+  if(!filtered.length){
+    list.innerHTML = `<div class="empty">No hay partidos calientes todavía.</div>`;
+    return;
+  }
 
-      list.innerHTML = filtered.map(match => `
-        <div class="match-card">
-          <div>
-            <div class="match-league">${countryFlag(match.country)} ${esc(match.league)} · ${esc(match.country)}</div>
-            <div class="match-name">${esc(match.local)} vs ${esc(match.visitante)}</div>
-            <div class="match-meta">Min ${esc(match.minuto)} · Marcador ${esc(match.marcador_local)}-${esc(match.marcador_visitante)} · Momentum ${esc(match.momentum)}</div>
+  list.innerHTML = filtered.map(match => `
+    <div class="match-card">
+      <div>
+        <div class="match-league">${countryFlag(match.country)} ${esc(match.league)} · ${esc(match.country)}</div>
+        <div class="match-name">${esc(match.local)} vs ${esc(match.visitante)}</div>
+        <div class="match-meta">Min ${esc(match.minuto)} · Marcador ${esc(match.marcador_local)}-${esc(match.marcador_visitante)} · Momentum ${esc(match.momentum)}</div>
 
-            <div class="match-badges">
-              <span class="${badgeClassByState(match.estado_partido)}">${esc(match.estado_partido)}</span>
-              <span class="pill blue">xG ${fmtNumber(match.xG)}</span>
-              <span class="pill blue">Shots ${fmtNumber(match.shots)}</span>
-              <span class="pill blue">On target ${fmtNumber(match.shots_on_target)}</span>
-              <span class="pill blue">Danger ${fmtNumber(match.dangerous_attacks)}</span>
-            </div>
+        <div class="match-badges">
+          <span class="${badgeClassByState(match.estado_partido)}">${esc(match.estado_partido)}</span>
+          <span class="pill blue">xG ${fmtNumber(match.xG)}</span>
+          <span class="pill blue">Shots ${fmtNumber(match.shots)}</span>
+          <span class="pill blue">On target ${fmtNumber(match.shots_on_target)}</span>
+          <span class="pill blue">Danger ${fmtNumber(match.dangerous_attacks)}</span>
+        </div>
 
-            <div class="match-stats">
-              <div class="match-stat">
-                <div class="label">Signal</div>
-                <div class="value">${fmtNumber(findSignalScore(match.id))}</div>
-              </div>
-              <div class="match-stat">
-                <div class="label">AI</div>
-                <div class="value">${fmtNumber(findAIScore(match.id))}</div>
-              </div>
-              <div class="match-stat">
-                <div class="label">Value</div>
-                <div class="value">${fmtPercent(findValue(match.id))}</div>
-              </div>
-            </div>
-
-            <div class="match-info">
-  <strong>Mercado:</strong> ${esc(findMarket(match.id))}<br>
-  <strong>IA:</strong> ${esc(findAIReason(match.id))}<br>
-  <strong>Motivo:</strong> ${esc(findReason(match.id))}<br>
-  <strong>Stake:</strong> ${fmtNumber(findStakePct(match.id))}% · ${esc(findStakeLabel(match.id))}<br>
-  <strong>Operable:</strong> ${findOperable(match.id) ? "Sí" : "No"}
-</div>
-
-          <div class="match-right">
-            <div class="score-badge">${esc(match.marcador_local)}-${esc(match.marcador_visitante)}</div>
-            <a class="league-btn" href="/match/${encodeURIComponent(match.id)}">Ver partido</a>
+        <div class="match-stats">
+          <div class="match-stat">
+            <div class="label">Signal</div>
+            <div class="value">${fmtNumber(findSignalScore(match.id))}</div>
+          </div>
+          <div class="match-stat">
+            <div class="label">AI</div>
+            <div class="value">${fmtNumber(findAIScore(match.id))}</div>
+          </div>
+          <div class="match-stat">
+            <div class="label">Value</div>
+            <div class="value">${fmtPercent(findValue(match.id))}</div>
           </div>
         </div>
-      `).join("");
-    }
+
+        <!-- 🔥 FIX AQUÍ -->
+        <div class="match-info">
+          <strong>Mercado:</strong> ${esc(findMarket(match.id))}<br>
+          <strong>IA:</strong> ${esc(findAIReason(match.id))}<br>
+          <strong>Motivo:</strong> ${esc(findReason(match.id))}<br>
+          <strong>Stake:</strong> ${fmtNumber(findStakePct(match.id))}% · ${esc(findStakeLabel(match.id))}<br>
+          <strong>Operable:</strong> ${findOperable(match.id) ? "Sí" : "No"}
+        </div>
+      </div>
+
+      <!-- 🔥 ESTE BLOQUE YA QUEDA BIEN -->
+      <div class="match-right">
+        <div class="score-badge">${esc(match.marcador_local)}-${esc(match.marcador_visitante)}</div>
+        <a class="league-btn" href="/match/${encodeURIComponent(match.id)}">Ver partido</a>
+      </div>
+    </div>
+  `).join("");
+}
+</script>
 
     function renderLiveMatches(){
       const list = document.getElementById("liveMatchesList");
