@@ -244,28 +244,72 @@ def health():
 @app.route("/scan")
 def scan():
     partidos_fake = [
-        {
-            "id": 1,
-            "local": "Equipo A",
-            "visitante": "Equipo B",
-            "liga": "Demo League",
-            "pais": "World",
-            "minuto": 25,
-            "marcador_local": 1,
-            "marcador_visitante": 0,
-            "xG": 1.4,
-            "shots": 9,
-            "shots_on_target": 4,
-            "dangerous_attacks": 22,
-            "momentum": "ALTO",
-            "goal_pressure": {"pressure_score": 7},
-            "goal_predictor": {
-                "predictor_score": 8,
-                "goal_next_5_prob": 0.34,
-                "goal_next_10_prob": 0.41
-            },
-            "chaos": {"chaos_score": 3}
-        }
+    {
+        "id": 1,
+        "local": "Equipo A",
+        "visitante": "Equipo B",
+        "liga": "Demo League",
+        "pais": "World",
+        "minuto": 25,
+        "marcador_local": 1,
+        "marcador_visitante": 0,
+        "xG": 1.4,
+        "shots": 9,
+        "shots_on_target": 4,
+        "dangerous_attacks": 22,
+        "momentum": "ALTO",
+        "goal_pressure": {"pressure_score": 7},
+        "goal_predictor": {
+            "predictor_score": 8,
+            "goal_next_5_prob": 0.34,
+            "goal_next_10_prob": 0.41
+        },
+        "chaos": {"chaos_score": 3}
+    },
+    {
+        "id": 2,
+        "local": "Equipo C",
+        "visitante": "Equipo D",
+        "liga": "Demo League",
+        "pais": "World",
+        "minuto": 31,
+        "marcador_local": 0,
+        "marcador_visitante": 0,
+        "xG": 1.8,
+        "shots": 11,
+        "shots_on_target": 5,
+        "dangerous_attacks": 28,
+        "momentum": "MUY ALTO",
+        "goal_pressure": {"pressure_score": 8},
+        "goal_predictor": {
+            "predictor_score": 9,
+            "goal_next_5_prob": 0.42,
+            "goal_next_10_prob": 0.55
+        },
+        "chaos": {"chaos_score": 2}
+    },
+    {
+        "id": 3,
+        "local": "Equipo E",
+        "visitante": "Equipo F",
+        "liga": "Demo League",
+        "pais": "World",
+        "minuto": 67,
+        "marcador_local": 2,
+        "marcador_visitante": 1,
+        "xG": 2.1,
+        "shots": 14,
+        "shots_on_target": 6,
+        "dangerous_attacks": 35,
+        "momentum": "ALTO",
+        "goal_pressure": {"pressure_score": 9},
+        "goal_predictor": {
+            "predictor_score": 8.5,
+            "goal_next_5_prob": 0.38,
+            "goal_next_10_prob": 0.49
+        },
+        "chaos": {"chaos_score": 4}
+    }
     ]
 
     senales = procesar_partidos(partidos_fake)
