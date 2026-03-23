@@ -12,6 +12,8 @@ except Exception as e:
     print(f"[IMPORT ERROR] decision_pipeline -> {e}")
     procesar_partido = None
 
+from core.signal_storage import obtener_senales
+
 # =========================================================
 # IMPORT STORAGE
 # =========================================================
@@ -294,17 +296,8 @@ def scan():
 # =========================================================
 @app.route("/signals")
 def signals():
-    if obtener_senales:
-        try:
-            data = obtener_senales()
-            return jsonify({
-                "signals": data[-50:]
-            })
-        except Exception as e:
-            print(f"[STORAGE] ERROR obtener_senales -> {e}")
-
     return jsonify({
-        "signals": STATE["signals"]
+        "signals": obtener_senales()
     })
 
 
