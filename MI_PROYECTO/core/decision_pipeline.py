@@ -12,32 +12,44 @@ except Exception as e:
 
 try:
     from ai_brain import decision_final_ia
-except Exception:
+    print("[IMPORT] ai_brain OK")
+except Exception as e:
+    print(f"[IMPORT] ai_brain ERROR -> {e}")
     decision_final_ia = None
 
 try:
     from core.context_engine import evaluar_contexto_partido
-except Exception:
+    print("[IMPORT] context_engine OK")
+except Exception as e:
+    print(f"[IMPORT] context_engine ERROR -> {e}")
     evaluar_contexto_partido = None
 
 try:
     from core.chaos_guardian import evaluar_chaos_partido
-except Exception:
+    print("[IMPORT] chaos_guardian OK")
+except Exception as e:
+    print(f"[IMPORT] chaos_guardian ERROR -> {e}")
     evaluar_chaos_partido = None
 
 try:
     from core.adaptive_engine import aplicar_ajuste_senal
-except Exception:
+    print("[IMPORT] adaptive_engine OK")
+except Exception as e:
+    print(f"[IMPORT] adaptive_engine ERROR -> {e}")
     aplicar_ajuste_senal = None
 
 try:
     from core.market_memory import aplicar_memoria_mercado
-except Exception:
+    print("[IMPORT] market_memory OK")
+except Exception as e:
+    print(f"[IMPORT] market_memory ERROR -> {e}")
     aplicar_memoria_mercado = None
 
 try:
     from core.learning_engine import registrar_senal
-except Exception:
+    print("[IMPORT] learning_engine OK")
+except Exception as e:
+    print(f"[IMPORT] learning_engine ERROR -> {e}")
     registrar_senal = None
 
 try:
@@ -48,7 +60,9 @@ try:
         validar_chaos_dinamico,
         permitir_value_flex,
     )
-except Exception:
+    print("[IMPORT] auto_balance_engine OK")
+except Exception as e:
+    print(f"[IMPORT] auto_balance_engine ERROR -> {e}")
     aplicar_auto_balance = None
     validar_confianza_dinamica = None
     validar_contexto_dinamico = None
@@ -57,7 +71,9 @@ except Exception:
 
 try:
     from core.bankroll_manager import aplicar_bankroll
-except Exception:
+    print("[IMPORT] bankroll_manager OK")
+except Exception as e:
+    print(f"[IMPORT] bankroll_manager ERROR -> {e}")
     aplicar_bankroll = None
 
 try:
@@ -65,7 +81,9 @@ try:
         evaluar_pre_match,
         aplicar_pre_match_a_senal,
     )
-except Exception:
+    print("[IMPORT] pre_match_engine OK")
+except Exception as e:
+    print(f"[IMPORT] pre_match_engine ERROR -> {e}")
     evaluar_pre_match = None
     aplicar_pre_match_a_senal = None
 
@@ -74,7 +92,9 @@ try:
         evaluar_estado_emocional,
         aplicar_emocion_a_senal,
     )
-except Exception:
+    print("[IMPORT] emotional_engine OK")
+except Exception as e:
+    print(f"[IMPORT] emotional_engine ERROR -> {e}")
     evaluar_estado_emocional = None
     aplicar_emocion_a_senal = None
 
@@ -83,7 +103,9 @@ try:
         evaluar_arbitro,
         aplicar_arbitro_a_senal,
     )
-except Exception:
+    print("[IMPORT] referee_engine OK")
+except Exception as e:
+    print(f"[IMPORT] referee_engine ERROR -> {e}")
     evaluar_arbitro = None
     aplicar_arbitro_a_senal = None
 
@@ -92,7 +114,9 @@ try:
         evaluar_tempo_partido,
         aplicar_tempo_a_senal,
     )
-except Exception:
+    print("[IMPORT] tempo_engine OK")
+except Exception as e:
+    print(f"[IMPORT] tempo_engine ERROR -> {e}")
     evaluar_tempo_partido = None
     aplicar_tempo_a_senal = None
 
@@ -101,23 +125,31 @@ try:
         evaluar_player_impact,
         aplicar_player_impact_a_senal,
     )
-except Exception:
+    print("[IMPORT] player_impact_engine OK")
+except Exception as e:
+    print(f"[IMPORT] player_impact_engine ERROR -> {e}")
     evaluar_player_impact = None
     aplicar_player_impact_a_senal = None
 
 try:
     from core.protocol_output_formatter import formatear_senal_protocolo
-except Exception:
+    print("[IMPORT] protocol_output_formatter OK")
+except Exception as e:
+    print(f"[IMPORT] protocol_output_formatter ERROR -> {e}")
     formatear_senal_protocolo = None
 
 try:
     from core.auto_learning_engine import aplicar_auto_learning
-except Exception:
+    print("[IMPORT] auto_learning_engine OK")
+except Exception as e:
+    print(f"[IMPORT] auto_learning_engine ERROR -> {e}")
     aplicar_auto_learning = None
 
 try:
     from core.history_manager import guardar_senal
-except Exception:
+    print("[IMPORT] history_manager OK")
+except Exception as e:
+    print(f"[IMPORT] history_manager ERROR -> {e}")
     guardar_senal = None
 
 
@@ -132,6 +164,7 @@ def _get_tactico_helpers():
             filtro_antifake_partido,
             filtrar_value_bets_reales,
         )
+        print("[IMPORT] tactico helpers OK")
         return enriquecer_senal, filtro_antifake_partido, filtrar_value_bets_reales
     except Exception as e:
         print(f"[PIPELINE] tactico helpers no disponibles -> {e}")
@@ -329,7 +362,11 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
 
             if validar_contexto_dinamico and not validar_contexto_dinamico(senal_final):
                 if _safe_float(senal_final.get("confidence", 0)) < 55:
-                    print(f"[PIPELINE] RECHAZADO CONTEXT -> {partido.get('local')} vs {partido.get('visitante')}")
+                    print(
+                        f"[FILTER] CONTEXT bloqueó -> "
+                        f"{partido.get('local')} vs {partido.get('visitante')} | "
+                        f"conf={senal_final.get('confidence')} | value={senal_final.get('value')}"
+                    )
                     return None
         except Exception as e:
             print(f"[PIPELINE] ERROR CONTEXT -> {e}")
@@ -345,7 +382,11 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
 
             if validar_chaos_dinamico and not validar_chaos_dinamico(senal_final):
                 if _safe_float(senal_final.get("confidence", 0)) < 58:
-                    print(f"[PIPELINE] RECHAZADO CHAOS -> {partido.get('local')} vs {partido.get('visitante')}")
+                    print(
+                        f"[FILTER] CHAOS bloqueó -> "
+                        f"{partido.get('local')} vs {partido.get('visitante')} | "
+                        f"conf={senal_final.get('confidence')} | value={senal_final.get('value')}"
+                    )
                     return None
         except Exception as e:
             print(f"[PIPELINE] ERROR CHAOS -> {e}")
@@ -401,7 +442,11 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
         try:
             antifake_ok = filtro_antifake_partido(partido, senal_final)
             if not antifake_ok and _safe_float(senal_final.get("confidence", 0)) < 62:
-                print(f"[PIPELINE] RECHAZADO ANTIFAKE -> {partido.get('local')} vs {partido.get('visitante')}")
+                print(
+                    f"[FILTER] ANTIFAKE bloqueó -> "
+                    f"{partido.get('local')} vs {partido.get('visitante')} | "
+                    f"conf={senal_final.get('confidence')} | value={senal_final.get('value')}"
+                )
                 return None
         except Exception as e:
             print(f"[PIPELINE] ERROR ANTIFAKE -> {e}")
@@ -413,11 +458,21 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
                 if permitir_value_flex:
                     flex_mode = permitir_value_flex(senal_final)
                     if not flex_mode and _safe_float(senal_final.get("confidence", 0)) < 60:
-                        print(f"[PIPELINE] RECHAZADO VALUE -> {partido.get('local')} vs {partido.get('visitante')}")
+                        print(
+                            f"[FILTER] VALUE bloqueó -> "
+                            f"{partido.get('local')} vs {partido.get('visitante')} | "
+                            f"conf={senal_final.get('confidence')} | value={senal_final.get('value')} | "
+                            f"value_score={senal_final.get('value_score')}"
+                        )
                         return None
                 else:
                     if _safe_float(senal_final.get("confidence", 0)) < 60:
-                        print(f"[PIPELINE] RECHAZADO VALUE -> {partido.get('local')} vs {partido.get('visitante')}")
+                        print(
+                            f"[FILTER] VALUE bloqueó -> "
+                            f"{partido.get('local')} vs {partido.get('visitante')} | "
+                            f"conf={senal_final.get('confidence')} | value={senal_final.get('value')} | "
+                            f"value_score={senal_final.get('value_score')}"
+                        )
                         return None
         except Exception as e:
             print(f"[PIPELINE] ERROR VALUE -> {e}")
@@ -429,7 +484,11 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
         try:
             if not validar_confianza_dinamica(senal_final):
                 if _safe_float(senal_final.get("confidence", 0)) < 55:
-                    print(f"[PIPELINE] RECHAZADO CONFIANZA -> {partido.get('local')} vs {partido.get('visitante')}")
+                    print(
+                        f"[FILTER] CONFIANZA bloqueó -> "
+                        f"{partido.get('local')} vs {partido.get('visitante')} | "
+                        f"conf={senal_final.get('confidence')} | value={senal_final.get('value')}"
+                    )
                     return None
         except Exception as e:
             print(f"[PIPELINE] ERROR CONFIANZA DINAMICA -> {e}")
@@ -492,19 +551,31 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
 
     if decision == "NO_APOSTAR":
         if confidence < 75:
-            print(f"[PIPELINE] RECHAZADO IA FINAL -> {partido.get('local')} vs {partido.get('visitante')}")
+            print(
+                f"[FILTER] IA FINAL bloqueó -> "
+                f"{partido.get('local')} vs {partido.get('visitante')} | "
+                f"ai={decision} | conf={confidence} | value={value}"
+            )
             return None
 
     if not senal_final.get("permitido_operar", True):
         if confidence < 72:
-            print(f"[PIPELINE] RECHAZADO BANKROLL -> {partido.get('local')} vs {partido.get('visitante')}")
+            print(
+                f"[FILTER] BANKROLL bloqueó -> "
+                f"{partido.get('local')} vs {partido.get('visitante')} | "
+                f"conf={confidence} | value={value}"
+            )
             return None
 
     if decision == "OBSERVAR":
         if ai_score >= 50 and confidence >= 60 and value >= 3:
             senal_final["ai_recommendation"] = "APOSTAR_SUAVE"
         else:
-            print(f"[PIPELINE] RECHAZADO OBSERVAR -> {partido.get('local')} vs {partido.get('visitante')}")
+            print(
+                f"[FILTER] OBSERVAR bloqueó -> "
+                f"{partido.get('local')} vs {partido.get('visitante')} | "
+                f"ai_score={ai_score} | conf={confidence} | value={value}"
+            )
             return None
 
     senal_final["recomendacion_final"] = senal_final.get("ai_recommendation", "OBSERVAR")
@@ -541,7 +612,10 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
         f"[PIPELINE OK] {senal_final.get('home')} vs {senal_final.get('away')} | "
         f"market={senal_final.get('market')} | "
         f"conf={senal_final.get('confidence')} | "
+        f"ai_conf={senal_final.get('ai_confidence_final', senal_final.get('confidence'))} | "
         f"value={senal_final.get('value')} | "
+        f"value_score={senal_final.get('value_score')} | "
+        f"signal_score={senal_final.get('signal_score')} | "
         f"ai={senal_final.get('ai_recommendation')}"
     )
 
