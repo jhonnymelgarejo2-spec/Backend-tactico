@@ -183,23 +183,31 @@ def calcular_stats_desde_storage() -> Dict[str, Any]:
     }
 
 
-def procesar_partidos(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def procesar_partidos(partidos: List[Dict[str, Any]]) -> List[Dict]:
     senales = []
 
     if not procesar_partido:
+        print("[SCAN] procesar_partido no disponible")
         return senales
 
     for p in partidos:
         try:
+            print(f"[SCAN] procesando partido -> {p.get('id')}")
             s = procesar_partido(p)
+            print(f"[SCAN] resultado pipeline -> {s}")
+
             if s:
                 senales.append(s)
+                print(f"[SCAN] señal agregada -> {p.get('id')}")
 
                 if guardar_senal:
                     try:
                         guardar_senal(s)
+                        print(f"[STORAGE] señal guardada -> {p.get('id')}")
                     except Exception as e:
-                        print(f"[STORAGE] ERROR guardar_senal -> {e}")
+                        print(f"[STORAGE] ERROR guardando señal -> {e}")
+            else:
+                print(f"[SCAN] señal vacía -> {p.get('id')}")
 
         except Exception as e:
             print(f"[ERROR PARTIDO] {e}")
@@ -214,8 +222,8 @@ def procesar_partidos(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         reverse=True
     )
 
+    print(f"[SCAN] total señales generadas -> {len(senales)}")
     return senales
-
 
 # =========================================================
 # ENDPOINTS BASE
@@ -244,96 +252,87 @@ def health():
 @app.route("/scan")
 def scan():
     partidos_fake = [
-    {
-        "id": 1,
-        "local": "Equipo A",
-        "visitante": "Equipo B",
-        "liga": "Demo League",
-        "pais": "World",
-        "minuto": 25,
-        "marcador_local": 1,
-        "marcador_visitante": 0,
-        "xG": 1.4,
-        "shots": 9,
-        "shots_on_target": 4,
-        "dangerous_attacks": 22,
-        "momentum": "ALTO",
-        "goal_pressure": {"pressure_score": 7},
-        "goal_predictor": {
-            "predictor_score": 8,
-            "goal_next_5_prob": 0.34,
-            "goal_next_10_prob": 0.41
+        {
+            "id": 1,
+            "local": "Equipo A",
+            "visitante": "Equipo B",
+            "liga": "Demo League",
+            "pais": "World",
+            "minuto": 25,
+            "marcador_local": 1,
+            "marcador_visitante": 0,
+            "xG": 1.4,
+            "shots": 9,
+            "shots_on_target": 4,
+            "dangerous_attacks": 22,
+            "momentum": "ALTO",
+            "goal_pressure": {"pressure_score": 7},
+            "goal_predictor": {
+                "predictor_score": 8,
+                "goal_next_5_prob": 0.34,
+                "goal_next_10_prob": 0.41
+            },
+            "chaos": {"chaos_score": 3}
         },
-        "chaos": {"chaos_score": 3}
-    },
-    {
-        "id": 2,
-        "local": "Equipo C",
-        "visitante": "Equipo D",
-        "liga": "Demo League",
-        "pais": "World",
-        "minuto": 31,
-        "marcador_local": 0,
-        "marcador_visitante": 0,
-        "xG": 1.8,
-        "shots": 11,
-        "shots_on_target": 5,
-        "dangerous_attacks": 28,
-        "momentum": "MUY ALTO",
-        "goal_pressure": {"pressure_score": 8},
-        "goal_predictor": {
-            "predictor_score": 9,
-            "goal_next_5_prob": 0.42,
-            "goal_next_10_prob": 0.55
+        {
+            "id": 2,
+            "local": "Equipo C",
+            "visitante": "Equipo D",
+            "liga": "Demo League",
+            "pais": "World",
+            "minuto": 33,
+            "marcador_local": 0,
+            "marcador_visitante": 0,
+            "xG": 1.1,
+            "shots": 7,
+            "shots_on_target": 3,
+            "dangerous_attacks": 18,
+            "momentum": "MEDIO",
+            "goal_pressure": {"pressure_score": 6},
+            "goal_predictor": {
+                "predictor_score": 7,
+                "goal_next_5_prob": 0.28,
+                "goal_next_10_prob": 0.36
+            },
+            "chaos": {"chaos_score": 2}
         },
-        "chaos": {"chaos_score": 2}
-    },
-    {
-        "id": 3,
-        "local": "Equipo E",
-        "visitante": "Equipo F",
-        "liga": "Demo League",
-        "pais": "World",
-        "minuto": 67,
-        "marcador_local": 2,
-        "marcador_visitante": 1,
-        "xG": 2.1,
-        "shots": 14,
-        "shots_on_target": 6,
-        "dangerous_attacks": 35,
-        "momentum": "ALTO",
-        "goal_pressure": {"pressure_score": 9},
-        "goal_predictor": {
-            "predictor_score": 8.5,
-            "goal_next_5_prob": 0.38,
-            "goal_next_10_prob": 0.49
-        },
-        "chaos": {"chaos_score": 4}
-    }
+        {
+            "id": 3,
+            "local": "Equipo E",
+            "visitante": "Equipo F",
+            "liga": "Demo League",
+            "pais": "World",
+            "minuto": 41,
+            "marcador_local": 1,
+            "marcador_visitante": 1,
+            "xG": 1.7,
+            "shots": 11,
+            "shots_on_target": 5,
+            "dangerous_attacks": 26,
+            "momentum": "MUY ALTO",
+            "goal_pressure": {"pressure_score": 8},
+            "goal_predictor": {
+                "predictor_score": 9,
+                "goal_next_5_prob": 0.40,
+                "goal_next_10_prob": 0.48
+            },
+            "chaos": {"chaos_score": 4}
+        }
     ]
 
     senales = procesar_partidos(partidos_fake)
     hot = detectar_hot_matches(partidos_fake)
-    leagues = construir_leagues(partidos_fake)
 
     STATE["signals"] = senales
     STATE["hot_matches"] = hot
-    STATE["leagues"] = leagues
     STATE["last_scan"] = int(time.time())
-    STATE["stats"] = calcular_stats_desde_storage()
 
-    if obtener_senales:
-        try:
-            all_signals = obtener_senales()
-            STATE["history"] = all_signals[-50:]
-        except Exception as e:
-            print(f"[STORAGE] ERROR obtener_senales history -> {e}")
+    print(f"[SCAN] STATE signals -> {STATE['signals']}")
 
     return jsonify({
-        "ultimo_scan": STATE["last_scan"],
-        "total_partidos": len(partidos_fake)
+        "total_partidos": len(partidos_fake),
+        "ultimo_scan": STATE["last_scan"]
     })
-
 
 # =========================================================
 # SEÑALES
