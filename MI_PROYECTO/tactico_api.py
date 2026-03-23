@@ -12,6 +12,17 @@ except Exception as e:
     print(f"[IMPORT ERROR] decision_pipeline -> {e}")
     procesar_partido = None
 
+# =========================================================
+# IMPORT STORAGE
+# =========================================================
+try:
+    from core.signal_storage import guardar_senal, obtener_senales
+    print("[IMPORT] signal_storage OK")
+except Exception as e:
+    print(f"[IMPORT ERROR] signal_storage -> {e}")
+    guardar_senal = None
+    obtener_senales = None
+
 
 # =========================================================
 # APP FLASK (BACKEND PRINCIPAL)
@@ -41,36 +52,167 @@ STATE = {
 
 
 # =========================================================
-# FUNCIONES CORE
+# HELPERS
 # =========================================================
-def procesar_partidos(partidos: List[Dict[str, Any]]) -> List[Dict]:
-    señales = []
+def _safe_float(value: Any, default: float = 0.0) -> float:
+    try:
+        if value is None or value == "":
+            return default
+        if isinstance(value, str):
+            value = value.replace("%", "").strip()
+        return float(value)
+    except Exception:
+        return default
+
+
+def _safe_int(value: Any, default: int = 0) -> int:
+    try:
+        if value is None or value == "":
+            return default
+        if isinstance(value, str):
+            value = value.replace("%", "").strip()
+        return int(float(value))
+    except Exception:
+        return default
+
+
+def detectar_hot_matches(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    hot = []
+
+    for p in partidos:
+        xg = _safe_float(p.get("xG"), 0)
+        shots = _safe_int(p.get("shots"), 0)
+        shots_on_target = _safe_int(p.get("shots_on_target"), 0)
+        dangerous_attacks = _safe_int(p.get("dangerous_attacks"), 0)
+
+        if (
+            xg >= 1.2 or
+            shots >= 8 or
+            shots_on_target >= 3 or
+            dangerous_attacks >= 18
+        ):
+            hot.append(p)
+
+    hot.sort(
+        key=lambda x: (
+            _safe_float(x.get("xG"), 0),
+            _safe_int(x.get("shots_on_target"), 0),
+            _safe_int(x.get("dangerous_attacks"), 0),
+        ),
+        reverse=True
+    )
+
+    return hot
+
+
+def construir_leagues(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    ligas = {}
+
+    for p in partidos:
+        league = p.get("liga", "Unknown")
+        country = p.get("pais", "Unknown")
+        key = f"{country}::{league}"
+
+        if key not in ligas:
+            ligas[key] = {
+                "league": league,
+                "country": country,
+                "matches_live": 0
+            }
+
+        ligas[key]["matches_live"] += 1
+
+    return list(ligas.values())
+
+
+def calcular_stats_desde_storage() -> Dict[str, Any]:
+    if not obtener_senales:
+        return STATE["stats"]
+
+    try:
+        data = obtener_senales()
+    except Exception:
+        return STATE["stats"]
+
+    if not data:
+        return {
+            "ganadas": 0,
+            "perdidas": 0,
+            "win_rate": 0,
+            "roi_percent": 0,
+            "signals_elite": 0,
+            "signals_top": 0,
+            "value_promedio": 0,
+            "riesgo_medio": 0,
+        }
+
+    ganadas = sum(1 for x in data if str(x.get("estado_resultado", "")).lower() == "ganada")
+    perdidas = sum(1 for x in data if str(x.get("estado_resultado", "")).lower() == "perdida")
+    total_resueltas = ganadas + perdidas
+
+    win_rate = round((ganadas / total_resueltas) * 100, 2) if total_resueltas > 0 else 0
+
+    profits = sum(_safe_float(x.get("profit"), 0.0) for x in data)
+    stakes = sum(_safe_float(x.get("stake_amount"), 0.0) for x in data)
+    roi_percent = round((profits / stakes) * 100, 2) if stakes > 0 else 0
+
+    signals_elite = sum(1 for x in data if str(x.get("signal_rank", "")).upper() == "ELITE")
+    signals_top = sum(1 for x in data if str(x.get("signal_rank", "")).upper() in ["TOP", "ALTA"])
+
+    value_promedio = round(
+        sum(_safe_float(x.get("value"), 0.0) for x in data) / len(data),
+        2
+    ) if data else 0
+
+    riesgo_medio = round(
+        sum(_safe_float(x.get("risk_score"), 0.0) for x in data) / len(data),
+        2
+    ) if data else 0
+
+    return {
+        "ganadas": ganadas,
+        "perdidas": perdidas,
+        "win_rate": win_rate,
+        "roi_percent": roi_percent,
+        "signals_elite": signals_elite,
+        "signals_top": signals_top,
+        "value_promedio": value_promedio,
+        "riesgo_medio": riesgo_medio,
+    }
+
+
+def procesar_partidos(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    senales = []
 
     if not procesar_partido:
-        return señales
+        return senales
 
     for p in partidos:
         try:
             s = procesar_partido(p)
             if s:
-                señales.append(s)
+                senales.append(s)
+
+                if guardar_senal:
+                    try:
+                        guardar_senal(s)
+                    except Exception as e:
+                        print(f"[STORAGE] ERROR guardar_senal -> {e}")
+
         except Exception as e:
             print(f"[ERROR PARTIDO] {e}")
 
-    return señales
+    senales.sort(
+        key=lambda x: (
+            _safe_float(x.get("ai_decision_score"), 0),
+            _safe_float(x.get("signal_score"), 0),
+            _safe_float(x.get("confidence"), 0),
+            _safe_float(x.get("value"), 0),
+        ),
+        reverse=True
+    )
 
-
-def detectar_hot_matches(partidos: List[Dict]) -> List[Dict]:
-    hot = []
-
-    for p in partidos:
-        xg = float(p.get("xG", 0))
-        shots = int(p.get("shots", 0))
-
-        if xg >= 1.2 or shots >= 8:
-            hot.append(p)
-
-    return hot
+    return senales
 
 
 # =========================================================
@@ -99,7 +241,6 @@ def health():
 # =========================================================
 @app.route("/scan")
 def scan():
-    # 🔥 Aquí luego irá el scraper real
     partidos_fake = [
         {
             "id": 1,
@@ -125,12 +266,22 @@ def scan():
         }
     ]
 
-    señales = procesar_partidos(partidos_fake)
+    senales = procesar_partidos(partidos_fake)
     hot = detectar_hot_matches(partidos_fake)
+    leagues = construir_leagues(partidos_fake)
 
-    STATE["signals"] = señales
+    STATE["signals"] = senales
     STATE["hot_matches"] = hot
+    STATE["leagues"] = leagues
     STATE["last_scan"] = int(time.time())
+    STATE["stats"] = calcular_stats_desde_storage()
+
+    if obtener_senales:
+        try:
+            all_signals = obtener_senales()
+            STATE["history"] = all_signals[-50:]
+        except Exception as e:
+            print(f"[STORAGE] ERROR obtener_senales history -> {e}")
 
     return jsonify({
         "ultimo_scan": STATE["last_scan"],
@@ -143,6 +294,15 @@ def scan():
 # =========================================================
 @app.route("/signals")
 def signals():
+    if obtener_senales:
+        try:
+            data = obtener_senales()
+            return jsonify({
+                "signals": data[-50:]
+            })
+        except Exception as e:
+            print(f"[STORAGE] ERROR obtener_senales -> {e}")
+
     return jsonify({
         "signals": STATE["signals"]
     })
@@ -163,6 +323,7 @@ def hot_matches():
 # =========================================================
 @app.route("/learning-stats")
 def learning_stats():
+    STATE["stats"] = calcular_stats_desde_storage()
     return jsonify(STATE["stats"])
 
 
@@ -171,6 +332,13 @@ def learning_stats():
 # =========================================================
 @app.route("/history")
 def history():
+    if obtener_senales:
+        try:
+            data = obtener_senales()
+            return jsonify(data[-50:])
+        except Exception as e:
+            print(f"[STORAGE] ERROR history -> {e}")
+
     return jsonify(STATE["history"])
 
 
