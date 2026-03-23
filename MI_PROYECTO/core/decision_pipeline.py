@@ -39,20 +39,6 @@ except Exception as e:
     aplicar_ajuste_senal = None
 
 try:
-    from core.market_memory import aplicar_memoria_mercado
-    print("[IMPORT] market_memory OK")
-except Exception as e:
-    print(f"[IMPORT] market_memory ERROR -> {e}")
-    aplicar_memoria_mercado = None
-
-try:
-    from core.learning_engine import registrar_senal
-    print("[IMPORT] learning_engine OK")
-except Exception as e:
-    print(f"[IMPORT] learning_engine ERROR -> {e}")
-    registrar_senal = None
-
-try:
     from core.auto_balance_engine import (
         aplicar_auto_balance,
         validar_confianza_dinamica,
@@ -77,15 +63,14 @@ except Exception as e:
     aplicar_bankroll = None
 
 try:
-    from core.pre_match_engine import (
-        evaluar_pre_match,
-        aplicar_pre_match_a_senal,
-    )
+    from core.pre_match_engine import evaluar_pre_match
     print("[IMPORT] pre_match_engine OK")
 except Exception as e:
     print(f"[IMPORT] pre_match_engine ERROR -> {e}")
     evaluar_pre_match = None
-    aplicar_pre_match_a_senal = None
+
+# Esta función estaba rompiendo el import; la dejamos desactivada por ahora
+aplicar_pre_match_a_senal = None
 
 try:
     from core.emotional_engine import (
@@ -138,19 +123,14 @@ except Exception as e:
     print(f"[IMPORT] protocol_output_formatter ERROR -> {e}")
     formatear_senal_protocolo = None
 
-try:
-    from core.auto_learning_engine import aplicar_auto_learning
-    print("[IMPORT] auto_learning_engine OK")
-except Exception as e:
-    print(f"[IMPORT] auto_learning_engine ERROR -> {e}")
-    aplicar_auto_learning = None
-
-try:
-    from core.history_manager import guardar_senal
-    print("[IMPORT] history_manager OK")
-except Exception as e:
-    print(f"[IMPORT] history_manager ERROR -> {e}")
-    guardar_senal = None
+# =========================================================
+# MÓDULOS DESACTIVADOS TEMPORALMENTE
+# =========================================================
+# Estos estaban fallando según tus logs
+registrar_senal = None
+aplicar_memoria_mercado = None
+aplicar_auto_learning = None
+guardar_senal = None
 
 
 # =========================================================
@@ -509,19 +489,13 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
     senal_final.setdefault("ai_confidence_final", senal_final.get("confidence", 0))
 
     # =========================================
-    # 6.5 ADAPTIVE + MEMORY
+    # 6.5 ADAPTIVE
     # =========================================
     if aplicar_ajuste_senal:
         try:
             senal_final = aplicar_ajuste_senal(senal_final)
         except Exception as e:
             print(f"[PIPELINE] ERROR ADAPTIVE -> {e}")
-
-    if aplicar_memoria_mercado:
-        try:
-            senal_final = aplicar_memoria_mercado(senal_final)
-        except Exception as e:
-            print(f"[PIPELINE] ERROR MARKET MEMORY -> {e}")
 
     # =========================================
     # 6.7 BANKROLL
@@ -531,15 +505,6 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
             senal_final = aplicar_bankroll(senal_final)
         except Exception as e:
             print(f"[PIPELINE] ERROR BANKROLL -> {e}")
-
-    # =========================================
-    # 6.8 AUTO LEARNING ENGINE
-    # =========================================
-    if aplicar_auto_learning:
-        try:
-            senal_final = aplicar_auto_learning(senal_final)
-        except Exception as e:
-            print(f"[PIPELINE] ERROR AUTO LEARNING -> {e}")
 
     # =========================================
     # 7. DECISIÓN FINAL
