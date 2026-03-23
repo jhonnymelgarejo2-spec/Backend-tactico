@@ -315,14 +315,14 @@ def generar_senales(partidos: List[Dict]) -> List[Dict]:
             senal_final["recomendacion_final"] = "NO_APOSTAR"
 
         # 5. Filtros finales
-        if not filtrar_value_bets_reales(senal_final):
-            continue
+# if not filtrar_value_bets_reales(senal_final):
+#     continue
 
-        if not filtrar_por_riesgo_final(senal_final):
-            continue
+# if not filtrar_por_riesgo_final(senal_final):
+#     continue
 
-        if not filtrar_por_ia(senal_final):
-            continue
+# if not filtrar_por_ia(senal_final):
+#     continue
 
         senales.append(senal_final)
 
