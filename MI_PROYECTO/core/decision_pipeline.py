@@ -1,147 +1,94 @@
 from typing import Dict, Optional
+import importlib
+
+
+# =========================================================
+# HELPERS DE IMPORTACIÓN SEGURA
+# =========================================================
+def _import_attr(module_name: str, attr_name: str, alias: str = ""):
+    label = alias or f"{module_name}.{attr_name}"
+    try:
+        module = importlib.import_module(module_name)
+        attr = getattr(module, attr_name, None)
+        if attr is None:
+            print(f"[IMPORTAR] {label} NO DISPONIBLE")
+        else:
+            print(f"[IMPORTAR] {label} OK")
+        return attr
+    except Exception as e:
+        print(f"[IMPORTAR] {label} ERROR -> {e}")
+        return None
+
+
+def _import_module(module_name: str, alias: str = ""):
+    label = alias or module_name
+    try:
+        module = importlib.import_module(module_name)
+        print(f"[IMPORTAR] {label} OK")
+        return module
+    except Exception as e:
+        print(f"[IMPORTAR] {label} ERROR -> {e}")
+        return None
+
 
 # =========================================================
 # IMPORTS DEL SISTEMA
 # =========================================================
-try:
-    from signal_engine import generar_senal
-    print("[IMPORTAR] signal_engine OK")
-except Exception as e:
-    print(f"[IMPORTAR] signal_engine ERROR -> {e}")
-    generar_senal = None
+generar_senal = _import_attr("signal_engine", "generar_senal", "signal_engine")
+decision_final_ia = _import_attr("ai_brain", "decision_final_ia", "ai_brain")
 
-try:
-    from ai_brain import decision_final_ia
-    print("[IMPORTAR] ai_brain OK")
-except Exception as e:
-    print(f"[IMPORTAR] ai_brain ERROR -> {e}")
-    decision_final_ia = None
+evaluar_contexto_partido = _import_attr(
+    "core.context_engine", "evaluar_contexto_partido", "context_engine"
+)
+evaluar_chaos_partido = _import_attr(
+    "core.chaos_guardian", "evaluar_chaos_partido", "chaos_guardian"
+)
+aplicar_ajuste_senal = _import_attr(
+    "core.adaptive_engine", "aplicar_ajuste_senal", "motor adaptativo"
+)
 
-try:
-    from core.context_engine import evaluar_contexto_partido
-    print("[IMPORTAR] context_engine OK")
-except Exception as e:
-    print(f"[IMPORTAR] context_engine ERROR -> {e}")
-    evaluar_contexto_partido = None
+auto_balance_module = _import_module("core.auto_balance_engine", "auto_balance_engine")
+aplicar_auto_balance = getattr(auto_balance_module, "aplicar_auto_balance", None) if auto_balance_module else None
+validar_confianza_dinamica = getattr(auto_balance_module, "validar_confianza_dinamica", None) if auto_balance_module else None
+validar_contexto_dinamico = getattr(auto_balance_module, "validar_contexto_dinamico", None) if auto_balance_module else None
+validar_chaos_dinamico = getattr(auto_balance_module, "validar_chaos_dinamico", None) if auto_balance_module else None
+permitir_value_flex = getattr(auto_balance_module, "permitir_value_flex", None) if auto_balance_module else None
 
-try:
-    from core.chaos_guardian import evaluar_chaos_partido
-    print("[IMPORTAR] chaos_guardian OK")
-except Exception as e:
-    print(f"[IMPORTAR] chaos_guardian ERROR -> {e}")
-    evaluar_chaos_partido = None
+aplicar_bankroll = _import_attr(
+    "core.bankroll_manager", "aplicar_bankroll", "bankroll_manager"
+)
 
-try:
-    from core.adaptive_engine import aplicar_ajuste_senal
-    print("[IMPORTAR] motor adaptativo OK")
-except Exception as e:
-    print(f"[IMPORTAR] adaptive_engine ERROR -> {e}")
-    aplicar_ajuste_senal = None
+pre_match_module = _import_module("core.pre_match_engine", "motor de prepartido")
+evaluar_pre_match = getattr(pre_match_module, "evaluar_pre_match", None) if pre_match_module else None
+aplicar_pre_match_a_senal = getattr(pre_match_module, "aplicar_pre_match_a_senal", None) if pre_match_module else None
 
-try:
-    from core.auto_balance_engine import (
-        aplicar_auto_balance,
-        validar_confianza_dinamica,
-        validar_contexto_dinamico,
-        validar_chaos_dinamico,
-        permitir_value_flex,
-    )
-    print("[IMPORTAR] auto_balance_engine OK")
-except Exception as e:
-    print(f"[IMPORTAR] auto_balance_engine ERROR -> {e}")
-    aplicar_auto_balance = None
-    validar_confianza_dinamica = None
-    validar_contexto_dinamico = None
-    validar_chaos_dinamico = None
-    permitir_value_flex = None
+emotional_module = _import_module("core.emotional_engine", "emotional_engine")
+evaluar_estado_emocional = getattr(emotional_module, "evaluar_estado_emocional", None) if emotional_module else None
+aplicar_emocion_a_senal = getattr(emotional_module, "aplicar_emocion_a_senal", None) if emotional_module else None
 
-try:
-    from core.bankroll_manager import aplicar_bankroll
-    print("[IMPORTAR] bankroll_manager OK")
-except Exception as e:
-    print(f"[IMPORTAR] bankroll_manager ERROR -> {e}")
-    aplicar_bankroll = None
+referee_module = _import_module("core.referee_engine", "motor de árbitro")
+evaluar_arbitro = getattr(referee_module, "evaluar_arbitro", None) if referee_module else None
+aplicar_arbitro_a_senal = getattr(referee_module, "aplicar_arbitro_a_senal", None) if referee_module else None
 
-try:
-    from core.pre_match_engine import evaluar_pre_match
-    print("[IMPORTAR] motor de prepartido OK")
-except Exception as e:
-    print(f"[IMPORTAR] pre_match_engine ERROR -> {e}")
-    evaluar_pre_match = None
+tempo_module = _import_module("core.tempo_engine", "tempo_engine")
+evaluar_tempo_partido = getattr(tempo_module, "evaluar_tempo_partido", None) if tempo_module else None
+aplicar_tempo_a_senal = getattr(tempo_module, "aplicar_tempo_a_senal", None) if tempo_module else None
 
-try:
-    from core.emotional_engine import (
-        evaluar_estado_emocional,
-        aplicar_emocion_a_senal,
-    )
-    print("[IMPORTAR] emotional_engine OK")
-except Exception as e:
-    print(f"[IMPORTAR] emotional_engine ERROR -> {e}")
-    evaluar_estado_emocional = None
-    aplicar_emocion_a_senal = None
+player_module = _import_module("core.player_impact_engine", "player_impact_engine")
+evaluar_player_impact = getattr(player_module, "evaluar_player_impact", None) if player_module else None
+aplicar_player_impact_a_senal = getattr(player_module, "aplicar_player_impact_a_senal", None) if player_module else None
 
-try:
-    from core.referee_engine import (
-        evaluar_arbitro,
-        aplicar_arbitro_a_senal,
-    )
-    print("[IMPORTAR] motor de árbitro OK")
-except Exception as e:
-    print(f"[IMPORTAR] referee_engine ERROR -> {e}")
-    evaluar_arbitro = None
-    aplicar_arbitro_a_senal = None
+formatear_senal_protocolo = _import_attr(
+    "core.protocol_output_formatter", "formatear_senal_protocolo", "protocol_output_formatter"
+)
 
-try:
-    from core.tempo_engine import (
-        evaluar_tempo_partido,
-        aplicar_tempo_a_senal,
-    )
-    print("[IMPORTAR] tempo_engine OK")
-except Exception as e:
-    print(f"[IMPORTAR] tempo_engine ERROR -> {e}")
-    evaluar_tempo_partido = None
-    aplicar_tempo_a_senal = None
-
-try:
-    from core.player_impact_engine import (
-        evaluar_player_impact,
-        aplicar_player_impact_a_senal,
-    )
-    print("[IMPORTAR] player_impact_engine OK")
-except Exception as e:
-    print(f"[IMPORTAR] player_impact_engine ERROR -> {e}")
-    evaluar_player_impact = None
-    aplicar_player_impact_a_senal = None
-
-try:
-    from core.protocol_output_formatter import formatear_senal_protocolo
-    print("[IMPORTAR] protocol_output_formatter OK")
-except Exception as e:
-    print(f"[IMPORTAR] protocol_output_formatter ERROR -> {e}")
-    formatear_senal_protocolo = None
-
-# =========================================================
-# STORAGE REAL
-# =========================================================
-try:
-    from core.signal_storage import guardar_senal
-    print("[IMPORTAR] signal_storage OK")
-except Exception as e:
-    print(f"[IMPORTAR] signal_storage ERROR -> {e}")
-    guardar_senal = None
-
-# =========================================================
-# DESACTIVADOS TEMPORALMENTE
-# =========================================================
-registrar_senal = None
-aplicar_memoria_mercado = None
-aplicar_auto_learning = None
-aplicar_pre_match_a_senal = None
+guardar_senal_storage = _import_attr(
+    "core.signal_storage", "guardar_senal", "signal_storage"
+)
 
 
 # =========================================================
-# HELPERS TACTICOS LOCALES
-# SIN IMPORT CIRCULAR
+# HELPERS
 # =========================================================
 def _safe_upper(value) -> str:
     return str(value or "").strip().upper()
@@ -155,8 +102,6 @@ def _safe_float(value, default=0.0) -> float:
     try:
         if value is None or value == "":
             return default
-        if isinstance(value, str):
-            value = value.replace("%", "").strip()
         return float(value)
     except Exception:
         return default
@@ -166,8 +111,6 @@ def _safe_int(value, default=0) -> int:
     try:
         if value is None or value == "":
             return default
-        if isinstance(value, str):
-            value = value.replace("%", "").strip()
         return int(float(value))
     except Exception:
         return default
@@ -177,7 +120,70 @@ def _clamp(value: float, min_value: float, max_value: float) -> float:
     return max(min_value, min(value, max_value))
 
 
-def calcular_tactical_score(partido: Dict) -> float:
+# =========================================================
+# FUNCIONES TÁCTICAS LOCALES
+# EVITAN IMPORTACIÓN CIRCULAR CON tactico_api.py
+# =========================================================
+def calcular_prob_implicita(odd: float) -> float:
+    odd = _safe_float(odd, 0.0)
+    if odd <= 1.0:
+        return 0.0
+    return round(1.0 / odd, 4)
+
+
+def evaluar_value_local(prob_real: float, cuota: float) -> Dict:
+    prob_real = _safe_float(prob_real, 0.0)
+    cuota = _safe_float(cuota, 0.0)
+
+    if cuota <= 1.0:
+        return {
+            "prob_implicita_calculada": 0.0,
+            "edge_pct": 0.0,
+            "value_pct": 0.0,
+            "value_score": 0.0,
+            "value_categoria": "SIN_VALUE",
+            "recomendacion_value": "NO_APOSTAR",
+            "razon_value": "Cuota inválida",
+        }
+
+    prob_implicita = calcular_prob_implicita(cuota)
+    edge_pct = round((prob_real - prob_implicita) * 100, 2)
+    value_pct = edge_pct
+    value_score = round(max(0.0, edge_pct), 2)
+
+    if edge_pct >= 12:
+        categoria = "VALUE_ELITE"
+        recomendacion = "APOSTAR_FUERTE"
+        razon = "Value muy alto respecto a la probabilidad implícita"
+    elif edge_pct >= 8:
+        categoria = "VALUE_ALTO"
+        recomendacion = "APOSTAR"
+        razon = "Value alto y aprovechable"
+    elif edge_pct >= 4:
+        categoria = "VALUE_MEDIO"
+        recomendacion = "APOSTAR_SUAVE"
+        razon = "Existe valor positivo razonable en la cuota"
+    elif edge_pct > 0:
+        categoria = "VALUE_BAJO"
+        recomendacion = "OBSERVAR"
+        razon = "Hay value leve, pero no es fuerte"
+    else:
+        categoria = "SIN_VALUE"
+        recomendacion = "NO_APOSTAR"
+        razon = "No hay ventaja estadística suficiente"
+
+    return {
+        "prob_implicita_calculada": prob_implicita,
+        "edge_pct": edge_pct,
+        "value_pct": value_pct,
+        "value_score": value_score,
+        "value_categoria": categoria,
+        "recomendacion_value": recomendacion,
+        "razon_value": razon,
+    }
+
+
+def calcular_tactical_score_local(partido: Dict) -> float:
     xg = _safe_float(partido.get("xG"), 0.0)
     shots = _safe_int(partido.get("shots"), 0)
     shots_on_target = _safe_int(partido.get("shots_on_target"), 0)
@@ -221,7 +227,7 @@ def calcular_tactical_score(partido: Dict) -> float:
     return round(score, 2)
 
 
-def calcular_goal_inminente_score(senal: Dict, partido: Dict) -> float:
+def calcular_goal_inminente_score_local(senal: Dict, partido: Dict) -> float:
     gp5 = _safe_float(senal.get("goal_prob_5"), 0.0)
     gp10 = _safe_float(senal.get("goal_prob_10"), 0.0)
     gp15 = _safe_float(senal.get("goal_prob_15"), 0.0)
@@ -239,7 +245,7 @@ def calcular_goal_inminente_score(senal: Dict, partido: Dict) -> float:
         estado = _safe_upper(estado_obj)
 
     bonus = 0.0
-    if estado in ("EXPLOSIVO", "CAOS"):
+    if estado in ("EXPLOSIVO", "CAOS", "CAOS_UTIL"):
         bonus = 18
     elif estado == "CALIENTE":
         bonus = 10
@@ -250,7 +256,7 @@ def calcular_goal_inminente_score(senal: Dict, partido: Dict) -> float:
     return round(score, 2)
 
 
-def calcular_risk_score(senal: Dict, partido: Dict) -> float:
+def calcular_risk_score_local(senal: Dict, partido: Dict) -> float:
     minuto = _safe_int(partido.get("minuto"), 0)
     confidence = _safe_float(senal.get("confidence"), 0.0)
     value = _safe_float(senal.get("value"), 0.0)
@@ -268,23 +274,27 @@ def calcular_risk_score(senal: Dict, partido: Dict) -> float:
         riesgo -= 1.5
     elif confidence >= 75:
         riesgo -= 1.0
-    elif confidence < 60:
-        riesgo += 1.5
+    elif confidence < 55:
+        riesgo += 1.8
+    elif confidence < 62:
+        riesgo += 0.8
 
     if value >= 10:
         riesgo -= 1.0
-    elif value < 3:
+    elif value < 2:
         riesgo += 1.0
 
-    if odd >= 2.5:
-        riesgo += 1.2
-    elif 0 < odd <= 1.45:
+    if odd >= 2.8:
+        riesgo += 1.3
+    elif 0 < odd <= 1.35:
         riesgo += 0.8
 
-    if minuto >= 80:
+    if minuto >= 82:
         riesgo += 1.0
+    elif minuto >= 76:
+        riesgo += 0.5
 
-    if estado in ("FRIO", "MUERTO"):
+    if estado in ("FRIO", "MUERTO", "CAOS_PELIGROSO"):
         riesgo += 1.2
     elif estado in ("EXPLOSIVO", "CALIENTE"):
         riesgo -= 0.6
@@ -292,7 +302,7 @@ def calcular_risk_score(senal: Dict, partido: Dict) -> float:
     return round(_clamp(riesgo, 1.0, 10.0), 2)
 
 
-def calcular_signal_score(
+def calcular_signal_score_local(
     senal: Dict,
     partido: Dict,
     tactical_score: float,
@@ -316,112 +326,57 @@ def calcular_signal_score(
     return round(score, 2)
 
 
-def calcular_signal_rank(signal_score: float) -> str:
-    if signal_score >= 230:
+def calcular_signal_rank_local(signal_score: float) -> str:
+    if signal_score >= 260:
         return "ELITE"
-    if signal_score >= 170:
+    if signal_score >= 190:
         return "TOP"
-    if signal_score >= 110:
+    if signal_score >= 125:
         return "ALTA"
     return "NORMAL"
 
 
-def evaluar_value(prob_real: float, cuota: float) -> Dict:
-    prob_real = _safe_float(prob_real, 0.0)
-    cuota = _safe_float(cuota, 0.0)
-
-    if cuota <= 1.0:
-        return {
-            "prob_implicita": 0.0,
-            "value_pct": 0.0,
-            "edge_pct": 0.0,
-            "value_score": 0.0,
-            "value_categoria": "SIN_VALUE",
-            "recomendacion_value": "NO_APOSTAR",
-            "razon_value": "Cuota inválida",
-        }
-
-    prob_implicita = round(1.0 / cuota, 4)
-    edge_pct = round((prob_real - prob_implicita) * 100, 2)
-    value_pct = edge_pct
-    value_score = round(max(0.0, edge_pct), 2)
-
-    if edge_pct >= 12:
-        categoria = "VALUE_ELITE"
-        recomendacion = "APOSTAR_FUERTE"
-        razon = "Value muy alto respecto a la probabilidad implícita"
-    elif edge_pct >= 8:
-        categoria = "VALUE_ALTO"
-        recomendacion = "APOSTAR"
-        razon = "Value alto y aprovechable"
-    elif edge_pct >= 4:
-        categoria = "VALUE_MEDIO"
-        recomendacion = "APOSTAR_SUAVE"
-        razon = "Existe valor positivo razonable en la cuota"
-    elif edge_pct > 0:
-        categoria = "VALUE_BAJO"
-        recomendacion = "OBSERVAR"
-        razon = "Hay value leve, pero no es fuerte"
-    else:
-        categoria = "SIN_VALUE"
-        recomendacion = "NO_APOSTAR"
-        razon = "No hay ventaja estadística suficiente"
-
-    return {
-        "prob_implicita": prob_implicita,
-        "value_pct": value_pct,
-        "edge_pct": edge_pct,
-        "value_score": value_score,
-        "value_categoria": categoria,
-        "recomendacion_value": recomendacion,
-        "razon_value": razon,
-    }
-
-
-def enriquecer_senal(senal: Dict, partido: Dict) -> Dict:
-    tactical_score = calcular_tactical_score(partido)
-    goal_score = calcular_goal_inminente_score(senal, partido)
-    risk_score = calcular_risk_score(senal, partido)
+def enriquecer_senal_local(senal: Dict, partido: Dict) -> Dict:
+    tactical_score = calcular_tactical_score_local(partido)
+    goal_score = calcular_goal_inminente_score_local(senal, partido)
+    risk_score = calcular_risk_score_local(senal, partido)
 
     prob = _safe_float(senal.get("prob"), _safe_float(senal.get("prob_real"), 0.0))
     odd = _safe_float(senal.get("odd"), _safe_float(senal.get("cuota"), 0.0))
-    value_data = evaluar_value(prob, odd)
+    value_data = evaluar_value_local(prob, odd)
 
-    senal["prob_implicita_calculada"] = value_data["prob_implicita"]
-    senal["value_pct"] = value_data["value_pct"]
+    senal["prob_implicita_calculada"] = value_data["prob_implicita_calculada"]
     senal["edge_pct"] = value_data["edge_pct"]
-    senal["value_score"] = max(
-        _safe_float(senal.get("value_score"), 0.0),
-        _safe_float(value_data["value_score"], 0.0),
-    )
+    senal["value_pct"] = value_data["value_pct"]
+
+    current_value_score = _safe_float(senal.get("value_score"), 0.0)
+    senal["value_score"] = max(current_value_score, _safe_float(value_data["value_score"], 0.0))
     senal["value_categoria"] = senal.get("value_categoria") or value_data["value_categoria"]
     senal["recomendacion_value"] = senal.get("recomendacion_value") or value_data["recomendacion_value"]
     senal["razon_value"] = senal.get("razon_value") or value_data["razon_value"]
 
-    if "ai_decision_score" not in senal or _safe_float(senal.get("ai_decision_score"), 0.0) == 0.0:
+    if _safe_float(senal.get("ai_decision_score"), 0.0) == 0.0:
         senal["ai_decision_score"] = round(
             (_safe_float(senal.get("confidence"), 0.0) * 0.65) +
             (_safe_float(senal.get("value"), 0.0) * 1.2),
             2
         )
 
-    signal_score = calcular_signal_score(
+    signal_score = calcular_signal_score_local(
         senal=senal,
         partido=partido,
         tactical_score=tactical_score,
         goal_score=goal_score,
         risk_score=risk_score,
     )
-    signal_rank = calcular_signal_rank(signal_score)
 
     senal["tactical_score"] = tactical_score
     senal["goal_inminente_score"] = goal_score
     senal["risk_score"] = risk_score
     senal["signal_score"] = signal_score
-    senal["signal_rank"] = signal_rank
+    senal["signal_rank"] = calcular_signal_rank_local(signal_score)
 
     senal.setdefault("ai_reason", "Lectura IA sin anomalías extremas")
-    senal.setdefault("razon_value", "La cuota ofrece valor razonable frente a la probabilidad estimada")
     senal.setdefault("motivo_operacion", "OK")
     senal.setdefault("permitido_operar", True)
     senal.setdefault("stake_pct", 0.0)
@@ -432,7 +387,7 @@ def enriquecer_senal(senal: Dict, partido: Dict) -> Dict:
     return senal
 
 
-def filtro_antifake_partido(partido: Dict, senal: Dict) -> bool:
+def filtro_antifake_local(partido: Dict, senal: Dict) -> bool:
     minuto = _safe_int(partido.get("minuto"), 0)
     xg = _safe_float(partido.get("xG"), 0.0)
     shots = _safe_int(partido.get("shots"), 0)
@@ -445,33 +400,38 @@ def filtro_antifake_partido(partido: Dict, senal: Dict) -> bool:
 
     if minuto < 8:
         return False
-    if confidence < 58:
+
+    if confidence < 50:
         return False
-    if value <= 0:
+
+    if value < 0:
         return False
 
     sin_stats = (
-        xg == 0 and shots == 0 and shots_on_target == 0 and dangerous_attacks == 0
+        xg == 0 and
+        shots == 0 and
+        shots_on_target == 0 and
+        dangerous_attacks == 0
     )
 
     if sin_stats:
-        return confidence >= 74
+        return confidence >= 72
 
-    if "OVER" in market or "GOAL" in market or "NEXT_GOAL" in market:
-        if xg < 0.60 and shots_on_target < 1 and dangerous_attacks < 12:
+    if "OVER" in market or "GOAL" in market:
+        if xg < 0.45 and shots_on_target < 1 and dangerous_attacks < 10:
             return False
 
     if "RESULT" in market:
-        if minuto < 20 and xg > 1.8 and shots_on_target >= 3:
+        if minuto < 20 and xg > 2.0 and shots_on_target >= 3:
             return False
 
-    if momentum == "BAJO" and dangerous_attacks < 8 and shots_on_target == 0 and confidence < 75:
+    if momentum == "BAJO" and dangerous_attacks < 8 and shots_on_target == 0 and confidence < 72:
         return False
 
     return True
 
 
-def filtrar_value_bets_reales(senal: Dict) -> bool:
+def filtrar_value_bets_reales_local(senal: Dict) -> bool:
     league = _safe_lower(senal.get("league"))
     market = _safe_upper(senal.get("market"))
     value = _safe_float(senal.get("value"), 0.0)
@@ -496,23 +456,31 @@ def filtrar_value_bets_reales(senal: Dict) -> bool:
 
     if minute >= 89:
         return False
-    if 0 < odd < 1.30:
+
+    if 0 < odd < 1.22:
         return False
 
     if league in ligas_top:
-        if value < 4 or confidence < 62:
+        if value < 2:
+            return False
+        if confidence < 58:
             return False
     else:
-        if value < 2 or confidence < 58:
+        if value < 1:
+            return False
+        if confidence < 54:
             return False
 
-    if tactical_score < 6:
+    if tactical_score < 5:
         return False
-    if signal_score < 70:
+
+    if signal_score < 55:
         return False
-    if risk_score > 8.5:
+
+    if risk_score > 9.2:
         return False
-    if "RESULT" in market and confidence < 64:
+
+    if "RESULT" in market and confidence < 60:
         return False
 
     return True
@@ -536,7 +504,7 @@ def generar_senal_fallback(datos: Dict) -> Dict:
         "prob_real": 0.64,
         "valor": 6.0,
         "confianza": 72,
-        "razon": "Fallback por falta de señal",
+        "razon": "Fallback por falta de señal principal",
         "tier": "NORMAL",
         "signal_status": "OPEN",
         "goal_prob_5": 30,
@@ -551,7 +519,7 @@ def generar_senal_fallback(datos: Dict) -> Dict:
         "linea_goles_probable": "OVER_2_5",
         "over_under_probable": "OVER 2.5",
         "confianza_prediccion": 72,
-        "recomendacion_final": "APOSTAR",
+        "recomendacion_final": "APOSTAR_SUAVE",
         "riesgo_operativo": "MEDIO",
         "value_score": 6.0,
         "value_categoria": "VALUE_MEDIO",
@@ -561,9 +529,110 @@ def generar_senal_fallback(datos: Dict) -> Dict:
 
 
 # =========================================================
-# PIPELINE
+# VALIDACIONES BASE
+# =========================================================
+def _partido_es_valido(partido: Dict) -> bool:
+    minuto = _safe_int(partido.get("minuto"), 0)
+    estado = _safe_lower(partido.get("estado_partido", "activo"))
+
+    estados_bloqueados = {"finalizado", "finished", "ft", "ended"}
+    if estado in estados_bloqueados:
+        return False
+
+    if minuto >= 90:
+        return False
+
+    return True
+
+
+def _calcular_ranking_score(senal: Dict) -> float:
+    ai_score = _safe_float(senal.get("ai_decision_score"), 0.0)
+    signal_score = _safe_float(senal.get("signal_score"), 0.0)
+    confidence = _safe_float(senal.get("confidence"), 0.0)
+    value = _safe_float(senal.get("value"), 0.0)
+    tactical_score = _safe_float(senal.get("tactical_score"), 0.0)
+    goal_score = _safe_float(senal.get("goal_inminente_score"), 0.0)
+    risk_score = _safe_float(senal.get("risk_score"), 10.0)
+
+    ranking = 0.0
+    ranking += ai_score * 1.35
+    ranking += signal_score * 0.85
+    ranking += confidence * 1.10
+    ranking += value * 2.20
+    ranking += tactical_score * 0.60
+    ranking += goal_score * 0.45
+    ranking -= risk_score * 6.0
+
+    return round(ranking, 2)
+
+
+def _clasificar_publicacion(senal: Dict) -> Dict:
+    confidence = _safe_float(senal.get("confidence"), 0.0)
+    value = _safe_float(senal.get("value"), 0.0)
+    ai_score = _safe_float(senal.get("ai_decision_score"), 0.0)
+    ranking_score = _safe_float(senal.get("ranking_score"), 0.0)
+    risk_score = _safe_float(senal.get("risk_score"), 10.0)
+    ai_rec = _safe_upper(senal.get("ai_recommendation"))
+    antifake_ok = bool(senal.get("antifake_ok", True))
+    value_filter_ok = bool(senal.get("value_filter_ok", True))
+
+    blocked_reasons = []
+
+    if ai_rec == "NO_APOSTAR":
+        blocked_reasons.append("IA_NO_APOSTAR")
+    if confidence < 54:
+        blocked_reasons.append("CONFIANZA_BAJA")
+    if value < 0:
+        blocked_reasons.append("VALUE_NEGATIVO")
+    if risk_score >= 9.5:
+        blocked_reasons.append("RIESGO_EXTREMO")
+    if not antifake_ok and confidence < 60:
+        blocked_reasons.append("ANTIFAKE_DURO")
+    if not value_filter_ok and value < 1 and confidence < 58:
+        blocked_reasons.append("VALUE_INSUFICIENTE")
+
+    publish_ready = len(blocked_reasons) == 0
+
+    qualifies_for_top = (
+        confidence >= 58 and
+        value >= 1 and
+        risk_score <= 8.8 and
+        ai_rec != "NO_APOSTAR" and
+        ranking_score >= 70
+    )
+
+    if confidence >= 78 and value >= 8 and ai_score >= 70 and risk_score <= 6.5:
+        publish_rank = 1
+    elif confidence >= 70 and value >= 4 and ai_score >= 60 and risk_score <= 7.5:
+        publish_rank = 2
+    elif confidence >= 60 and value >= 1 and ai_score >= 50 and risk_score <= 8.8:
+        publish_rank = 3
+    else:
+        publish_rank = 4
+
+    return {
+        "publish_ready": publish_ready,
+        "publish_blocked_reasons": blocked_reasons,
+        "qualifies_for_top": qualifies_for_top,
+        "publish_rank": publish_rank,
+    }
+
+
+# =========================================================
+# PIPELINE PRINCIPAL
+# MENOS ESTRICTO: PRIORIZA RANKING, NO RECHAZO ABSOLUTO
 # =========================================================
 def procesar_partido(partido: Dict) -> Optional[Dict]:
+    if not isinstance(partido, dict):
+        return None
+
+    if not _partido_es_valido(partido):
+        print(f"[PIPELINE] partido inválido o no operable -> {partido}")
+        return None
+
+    # =========================================
+    # 1. GENERAR SEÑAL BASE
+    # =========================================
     datos = {
         "id": partido.get("id"),
         "xG": partido.get("xG"),
@@ -589,9 +658,11 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
         senal = generar_senal_fallback(datos)
 
     if not senal or senal.get("mercado") == "SIN_SEÑAL":
-        print(f"[PIPELINE] fallback activado -> {partido.get('local')} vs {partido.get('visitante')}")
         senal = generar_senal_fallback(datos)
 
+    # =========================================
+    # 2. NORMALIZAR
+    # =========================================
     senal_final = {
         "match_id": partido.get("id"),
         "home": partido.get("local"),
@@ -603,10 +674,10 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
         "market": senal.get("mercado"),
         "selection": senal.get("apuesta"),
         "line": senal.get("linea"),
-        "odd": senal.get("cuota", 1.85),
-        "prob": senal.get("prob_real", 0.0),
-        "value": senal.get("valor", 0),
-        "confidence": senal.get("confianza", 0),
+        "odd": senal.get("cuota", partido.get("cuota", 1.85)),
+        "prob": senal.get("prob_real", partido.get("prob_real", 0.0)),
+        "value": senal.get("valor", 0.0),
+        "confidence": senal.get("confianza", 0.0),
         "reason": senal.get("razon", ""),
         "tier": senal.get("tier", "NORMAL"),
         "goal_prob_5": senal.get("goal_prob_5", 0),
@@ -628,25 +699,37 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
         "value_categoria": senal.get("value_categoria", "SIN_VALUE"),
         "recomendacion_value": senal.get("recomendacion_value", "OBSERVAR"),
         "razon_value": senal.get("razon_value", ""),
-        "stake_pct": 0,
-        "stake_amount": 0,
+        "stake_pct": 0.0,
+        "stake_amount": 0.0,
         "stake_label": "N/A",
         "bankroll_mode": "FLAT",
         "permitido_operar": True,
+        "publish_ready": False,
+        "qualifies_for_top": False,
+        "publish_rank": 4,
+        "ranking_score": 0.0,
+        "publish_blocked_reasons": [],
     }
 
+    # =========================================
+    # 3. ENRIQUECIMIENTO BASE LOCAL
+    # =========================================
     try:
-        senal_final = enriquecer_senal(senal_final, partido)
+        senal_final = enriquecer_senal_local(senal_final, partido)
     except Exception as e:
-        print(f"[PIPELINE] ERROR enriquecer_senal -> {e}")
+        print(f"[PIPELINE] ERROR enriquecer local -> {e}")
 
+    # =========================================
+    # 4. MÓDULOS OPCIONALES
+    # NO BLOQUEAN SEÑAL SI FALLAN
+    # =========================================
     if aplicar_auto_balance:
         try:
             senal_final = aplicar_auto_balance(senal_final)
         except Exception as e:
             print(f"[PIPELINE] ERROR AUTO BALANCE -> {e}")
 
-    if evaluar_pre_match:
+    if evaluar_pre_match and aplicar_pre_match_a_senal:
         try:
             pre_match_data = evaluar_pre_match(
                 partido,
@@ -655,8 +738,7 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
                 partido.get("h2h_matches", []),
                 partido.get("league_stats", {}),
             )
-            if isinstance(pre_match_data, dict):
-                senal_final.update(pre_match_data)
+            senal_final = aplicar_pre_match_a_senal(senal_final, pre_match_data)
         except Exception as e:
             print(f"[PIPELINE] ERROR PRE MATCH -> {e}")
 
@@ -665,11 +747,6 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
             context = evaluar_contexto_partido(partido)
             if isinstance(context, dict):
                 senal_final.update(context)
-
-            if validar_contexto_dinamico and not validar_contexto_dinamico(senal_final):
-                if _safe_float(senal_final.get("confidence", 0)) < 55:
-                    print(f"[FILTRO] CONTEXT bloqueó -> {partido.get('local')} vs {partido.get('visitante')}")
-                    return None
         except Exception as e:
             print(f"[PIPELINE] ERROR CONTEXT -> {e}")
 
@@ -678,11 +755,6 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
             chaos = evaluar_chaos_partido(partido, senal_final)
             if isinstance(chaos, dict):
                 senal_final.update(chaos)
-
-            if validar_chaos_dinamico and not validar_chaos_dinamico(senal_final):
-                if _safe_float(senal_final.get("confidence", 0)) < 58:
-                    print(f"[FILTRO] CHAOS bloqueó -> {partido.get('local')} vs {partido.get('visitante')}")
-                    return None
         except Exception as e:
             print(f"[PIPELINE] ERROR CHAOS -> {e}")
 
@@ -718,38 +790,10 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
         except Exception as e:
             print(f"[PIPELINE] ERROR PLAYER IMPACT -> {e}")
 
-    try:
-        antifake_ok = filtro_antifake_partido(partido, senal_final)
-        if not antifake_ok and _safe_float(senal_final.get("confidence", 0)) < 62:
-            print(f"[FILTRO] ANTIFAKE bloqueó -> {partido.get('local')} vs {partido.get('visitante')}")
-            return None
-    except Exception as e:
-        print(f"[PIPELINE] ERROR ANTIFAKE -> {e}")
-
-    try:
-        value_ok = filtrar_value_bets_reales(senal_final)
-        if not value_ok:
-            if permitir_value_flex:
-                flex_mode = permitir_value_flex(senal_final)
-                if not flex_mode and _safe_float(senal_final.get("confidence", 0)) < 60:
-                    print(f"[FILTRO] VALUE bloqueó -> {partido.get('local')} vs {partido.get('visitante')}")
-                    return None
-            else:
-                if _safe_float(senal_final.get("confidence", 0)) < 60:
-                    print(f"[FILTRO] VALUE bloqueó -> {partido.get('local')} vs {partido.get('visitante')}")
-                    return None
-    except Exception as e:
-        print(f"[PIPELINE] ERROR VALUE -> {e}")
-
-    if validar_confianza_dinamica:
-        try:
-            if not validar_confianza_dinamica(senal_final):
-                if _safe_float(senal_final.get("confidence", 0)) < 55:
-                    print(f"[FILTRO] CONFIANZA bloqueó -> {partido.get('local')} vs {partido.get('visitante')}")
-                    return None
-        except Exception as e:
-            print(f"[PIPELINE] ERROR CONFIANZA DINAMICA -> {e}")
-
+    # =========================================
+    # 5. IA
+    # NO BLOQUEA SALVO CASOS EXTREMOS
+    # =========================================
     if decision_final_ia:
         try:
             ai_data = decision_final_ia(partido, senal_final)
@@ -759,9 +803,13 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
             print(f"[PIPELINE] ERROR IA -> {e}")
 
     senal_final.setdefault("ai_recommendation", "APOSTAR_SUAVE")
-    senal_final.setdefault("ai_decision_score", 60)
+    senal_final.setdefault("ai_decision_score", 60.0)
     senal_final.setdefault("ai_confidence_final", senal_final.get("confidence", 0))
+    senal_final.setdefault("ai_reason", "Sin bloqueo IA")
 
+    # =========================================
+    # 6. AJUSTES
+    # =========================================
     if aplicar_ajuste_senal:
         try:
             senal_final = aplicar_ajuste_senal(senal_final)
@@ -774,32 +822,112 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
         except Exception as e:
             print(f"[PIPELINE] ERROR BANKROLL -> {e}")
 
-    decision = _safe_upper(senal_final.get("ai_recommendation"))
-    confidence = _safe_float(senal_final.get("confidence", 0))
-    value = _safe_float(senal_final.get("value", 0))
-    ai_score = _safe_float(senal_final.get("ai_decision_score", 0))
+    # =========================================
+    # 7. RE-ENRIQUECER
+    # POR SI LOS MÓDULOS CAMBIARON DATOS
+    # =========================================
+    try:
+        senal_final = enriquecer_senal_local(senal_final, partido)
+    except Exception as e:
+        print(f"[PIPELINE] ERROR re-enriquecer local -> {e}")
 
-    if decision == "NO_APOSTAR":
-        if confidence < 75:
-            print(f"[FILTRO] IA FINAL bloqueó -> {partido.get('local')} vs {partido.get('visitante')}")
-            return None
+    # =========================================
+    # 8. FILTROS SUAVES
+    # NO RECHAZAN POR DEFECTO; SOLO MARCAN
+    # =========================================
+    antifake_ok = True
+    value_filter_ok = True
+    context_ok = True
+    chaos_ok = True
+    confianza_ok = True
 
-    if not senal_final.get("permitido_operar", True):
-        if confidence < 72:
-            print(f"[FILTRO] BANKROLL bloqueó -> {partido.get('local')} vs {partido.get('visitante')}")
-            return None
+    try:
+        antifake_ok = filtro_antifake_local(partido, senal_final)
+    except Exception as e:
+        print(f"[PIPELINE] ERROR ANTIFAKE -> {e}")
 
-    if decision == "OBSERVAR":
-        if ai_score >= 50 and confidence >= 60 and value >= 3:
-            senal_final["ai_recommendation"] = "APOSTAR_SUAVE"
-        else:
-            print(f"[FILTRO] OBSERVAR bloqueó -> {partido.get('local')} vs {partido.get('visitante')}")
-            return None
+    try:
+        value_filter_ok = filtrar_value_bets_reales_local(senal_final)
+    except Exception as e:
+        print(f"[PIPELINE] ERROR VALUE FILTER -> {e}")
 
-    senal_final["recomendacion_final"] = senal_final.get("ai_recommendation", "OBSERVAR")
-    senal_final["publish_ready"] = True
-    senal_final["publish_rank"] = 1
+    if validar_contexto_dinamico:
+        try:
+            context_ok = validar_contexto_dinamico(senal_final)
+        except Exception as e:
+            print(f"[PIPELINE] ERROR CONTEXT VALIDATOR -> {e}")
 
+    if validar_chaos_dinamico:
+        try:
+            chaos_ok = validar_chaos_dinamico(senal_final)
+        except Exception as e:
+            print(f"[PIPELINE] ERROR CHAOS VALIDATOR -> {e}")
+
+    if validar_confianza_dinamica:
+        try:
+            confianza_ok = validar_confianza_dinamica(senal_final)
+        except Exception as e:
+            print(f"[PIPELINE] ERROR CONFIANZA VALIDATOR -> {e}")
+
+    senal_final["antifake_ok"] = antifake_ok
+    senal_final["value_filter_ok"] = value_filter_ok
+    senal_final["context_ok"] = context_ok
+    senal_final["chaos_ok"] = chaos_ok
+    senal_final["confianza_ok"] = confianza_ok
+
+    # =========================================
+    # 9. RANKING
+    # AQUÍ ESTÁ EL CAMBIO CLAVE:
+    # NO BLOQUEAMOS CASI TODO, ORDENAMOS
+    # =========================================
+    soft_penalty = 0.0
+
+    if not antifake_ok:
+        soft_penalty += 18
+    if not value_filter_ok:
+        soft_penalty += 14
+    if not context_ok:
+        soft_penalty += 12
+    if not chaos_ok:
+        soft_penalty += 12
+    if not confianza_ok:
+        soft_penalty += 10
+
+    if _safe_upper(senal_final.get("ai_recommendation")) == "OBSERVAR":
+        soft_penalty += 8
+    elif _safe_upper(senal_final.get("ai_recommendation")) == "NO_APOSTAR":
+        soft_penalty += 22
+
+    base_ranking = _calcular_ranking_score(senal_final)
+    senal_final["ranking_score_base"] = base_ranking
+    senal_final["ranking_penalty"] = round(soft_penalty, 2)
+    senal_final["ranking_score"] = round(base_ranking - soft_penalty, 2)
+
+    publish_meta = _clasificar_publicacion(senal_final)
+    senal_final.update(publish_meta)
+
+    # =========================================
+    # 10. RECOMENDACIÓN FINAL
+    # =========================================
+    ai_rec = _safe_upper(senal_final.get("ai_recommendation"))
+    confidence = _safe_float(senal_final.get("confidence"), 0)
+    value = _safe_float(senal_final.get("value"), 0)
+    ranking_score = _safe_float(senal_final.get("ranking_score"), 0)
+
+    if ai_rec in {"APOSTAR_FUERTE", "APOSTAR", "APOSTAR_SUAVE"}:
+        senal_final["recomendacion_final"] = ai_rec
+    elif ranking_score >= 150 and confidence >= 72 and value >= 6:
+        senal_final["recomendacion_final"] = "APOSTAR_FUERTE"
+    elif ranking_score >= 110 and confidence >= 64 and value >= 3:
+        senal_final["recomendacion_final"] = "APOSTAR"
+    elif ranking_score >= 70 and confidence >= 58 and value >= 1:
+        senal_final["recomendacion_final"] = "APOSTAR_SUAVE"
+    else:
+        senal_final["recomendacion_final"] = "OBSERVAR"
+
+    # =========================================
+    # 11. FORMATEADOR
+    # =========================================
     if formatear_senal_protocolo:
         try:
             protocol_data = formatear_senal_protocolo(senal_final)
@@ -808,18 +936,42 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
         except Exception as e:
             print(f"[PIPELINE] ERROR PROTOCOL FORMATTER -> {e}")
 
-    if registrar_senal:
+    # =========================================
+    # 12. BLOQUEO SOLO EN CASOS GRAVES
+    # =========================================
+    if not senal_final.get("market"):
+        print(f"[PIPELINE] RECHAZADO por market vacío -> {partido.get('local')} vs {partido.get('visitante')}")
+        return None
+
+    if _safe_float(senal_final.get("odd"), 0) <= 1.0:
+        print(f"[PIPELINE] RECHAZADO por cuota inválida -> {partido.get('local')} vs {partido.get('visitante')}")
+        return None
+
+    if _safe_float(senal_final.get("confidence"), 0) < 45:
+        print(f"[PIPELINE] RECHAZADO por confianza crítica -> {partido.get('local')} vs {partido.get('visitante')}")
+        return None
+
+    if _safe_float(senal_final.get("ranking_score"), 0) < 35:
+        print(f"[PIPELINE] RECHAZADO por ranking crítico -> {partido.get('local')} vs {partido.get('visitante')}")
+        return None
+
+    # =========================================
+    # 13. GUARDAR EN STORAGE SI ES PUBLICABLE O CANDIDATA
+    # =========================================
+    if guardar_senal_storage and senal_final.get("qualifies_for_top"):
         try:
-            registrar_senal(senal_final)
+            guardar_senal_storage(senal_final)
         except Exception as e:
-            print(f"[PIPELINE] ERROR REGISTRAR -> {e}")
+            print(f"[PIPELINE] ERROR GUARDAR STORAGE -> {e}")
 
     print(
         f"[PIPELINE OK] {senal_final.get('home')} vs {senal_final.get('away')} | "
         f"market={senal_final.get('market')} | "
         f"conf={senal_final.get('confidence')} | "
         f"value={senal_final.get('value')} | "
-        f"ai={senal_final.get('ai_recommendation')}"
+        f"ai={senal_final.get('ai_recommendation')} | "
+        f"rank={senal_final.get('ranking_score')} | "
+        f"top={senal_final.get('qualifies_for_top')}"
     )
 
     return senal_final
