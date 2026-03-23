@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify
 from typing import Dict, Any, List
 import time
 
@@ -16,12 +16,11 @@ except Exception as e:
 # IMPORT STORAGE
 # =========================================================
 try:
-    from core.signal_storage import obtener_senales, guardar_senal
+    from core.signal_storage import obtener_senales
     print("[IMPORTAR] almacenamiento de señales OK")
 except Exception as e:
     print(f"[ERROR IMPORTAR] signal_storage -> {e}")
     obtener_senales = None
-    guardar_senal = None
 
 # =========================================================
 # APP FLASK
@@ -453,19 +452,11 @@ def procesar_partidos(partidos: List[Dict[str, Any]]) -> List[Dict]:
         try:
             print(f"[SCAN] procesando partido -> {p.get('id')}")
             s = procesar_partido(p)
-
             print(f"[SCAN] resultado pipeline -> {s}")
 
             if s:
                 senales.append(s)
                 print(f"[SCAN] señal agregada -> {p.get('id')}")
-
-                if guardar_senal:
-                    try:
-                        guardar_senal(s)
-                        print(f"[ALMACENAMIENTO] señal guardada -> {p.get('id')}")
-                    except Exception as e:
-                        print(f"[ALMACENAMIENTO] ERROR guardar_senal -> {e}")
             else:
                 print(f"[SCAN] señal vacía -> {p.get('id')}")
 
@@ -481,6 +472,9 @@ def procesar_partidos(partidos: List[Dict[str, Any]]) -> List[Dict]:
         ),
         reverse=True
     )
+
+    # máximo 10 señales
+    senales = senales[:10]
 
     print(f"[SCAN] total señales generadas -> {len(senales)}")
     print(f"[SCAN] ESTADO señales -> {senales}")
@@ -602,25 +596,34 @@ def scan():
 
     return jsonify({
         "ultimo_scan": STATE["last_scan"],
-        "total_partidos": len(partidos_fake)
+        "total_partidos": len(partidos_fake),
+        "total_senales": len(senales)
     })
 
 
 @app.route("/signals")
 def signals():
+    # 1) primero usar señales vivas del último scan
+    if STATE["signals"]:
+        print(f"[SIGNALS] desde memoria -> {len(STATE['signals'])}")
+        return jsonify({
+            "signals": STATE["signals"][:10]
+        })
+
+    # 2) si no hay memoria, leer archivo
     if obtener_senales:
         try:
             data = obtener_senales()
-            print(f"[SIGNALS] obtenidas desde archivo -> {len(data)}")
+            print(f"[SIGNALS] desde archivo -> {len(data)}")
             return jsonify({
-                "signals": data[-50:]
+                "signals": data[-10:]
             })
         except Exception as e:
             print(f"[SIGNALS] ERROR obtener_senales -> {e}")
 
-    print(f"[SIGNALS] fallback STATE -> {len(STATE['signals'])}")
+    print("[SIGNALS] sin señales disponibles")
     return jsonify({
-        "signals": STATE["signals"]
+        "signals": []
     })
 
 
