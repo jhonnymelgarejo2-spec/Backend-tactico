@@ -1,13 +1,19 @@
+from typing import Any, Dict, List
 import os
 import requests
-from typing import Any, Dict, List
 
 
-DEFAULT_API_FOOTBALL_URL = "https://v3.football.api-sports.io/fixtures?live=all"
+# =========================================================
+# CONFIG
+# =========================================================
 API_KEY_ENV = "FOOTBALL_API_KEY"
 API_URL_ENV = "FOOTBALL_API_URL"
+DEFAULT_API_URL = "https://v3.football.api-sports.io/fixtures?live=all"
 
 
+# =========================================================
+# HELPERS
+# =========================================================
 def _to_int(value: Any, default: int = 0) -> int:
     try:
         if value is None or value == "":
@@ -21,8 +27,6 @@ def _to_float(value: Any, default: float = 0.0) -> float:
     try:
         if value is None or value == "":
             return default
-        if isinstance(value, str):
-            value = value.replace("%", "").strip()
         return float(value)
     except Exception:
         return default
@@ -47,13 +51,23 @@ def _build_headers() -> Dict[str, str]:
     }
 
 
-def _get_api_url() -> str:
-    return os.getenv(API_URL_ENV, DEFAULT_API_FOOTBALL_URL).strip()
+def _build_url() -> str:
+    return os.getenv(API_URL_ENV, DEFAULT_API_URL).strip()
+
+
+def _parse_momentum(minuto: int, goles_totales: int, shots: int, shots_on_target: int, dangerous_attacks: int) -> str:
+    if dangerous_attacks >= 25 or shots_on_target >= 5:
+        return "MUY ALTO"
+    if dangerous_attacks >= 16 or shots_on_target >= 3 or shots >= 9:
+        return "ALTO"
+    if minuto >= 20 or goles_totales >= 1 or shots >= 4:
+        return "MEDIO"
+    return "BAJO"
 
 
 def _parse_estado_partido(status_short: str, status_long: str) -> str:
-    short = _safe_text(status_short).upper()
-    long_ = _safe_text(status_long).lower()
+    short = (status_short or "").upper()
+    long_ = (status_long or "").lower()
 
     if short in {"FT", "AET", "PEN", "CANC", "ABD", "AWD", "WO"}:
         return "finalizado"
@@ -67,228 +81,168 @@ def _parse_estado_partido(status_short: str, status_long: str) -> str:
     return "en_juego"
 
 
-def _parse_momentum(
-    minuto: int,
-    goles_totales: int,
-    shots_total: int,
-    shots_on_target_total: int,
-    dangerous_attacks_total: int
-) -> str:
-    score = 0
+def _extract_statistics(item: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    API-Football en /fixtures?live=all normalmente no trae estadísticas completas.
+    Si no existen, dejamos base en 0 para que tu pipeline no reviente.
+    """
+    stats_home = {}
+    stats_away = {}
 
-    if goles_totales >= 1:
-        score += 2
-    if goles_totales >= 3:
-        score += 2
+    statistics = item.get("statistics", [])
+    if isinstance(statistics, list):
+        for team_stats in statistics:
+            team = team_stats.get("team", {}) or {}
+            team_name = _safe_text(team.get("name"))
+            values = team_stats.get("statistics", []) or []
 
-    if minuto >= 20:
-        score += 1
-    if 25 <= minuto <= 75:
-        score += 2
-    elif 76 <= minuto <= 85:
-        score += 1
+            parsed = {}
+            for row in values:
+                key = _safe_text(row.get("type"))
+                val = row.get("value")
+                parsed[key] = val
 
-    if shots_total >= 8:
-        score += 2
-    elif shots_total >= 5:
-        score += 1
+            if team_name:
+                if not stats_home:
+                    stats_home = parsed
+                else:
+                    stats_away = parsed
 
-    if shots_on_target_total >= 3:
-        score += 3
-    elif shots_on_target_total >= 1:
-        score += 1
+    def pick_stat(*keys, source=None, default=0):
+        source = source or {}
+        for key in keys:
+            if key in source and source.get(key) is not None:
+                return source.get(key)
+        return default
 
-    if dangerous_attacks_total >= 20:
-        score += 3
-    elif dangerous_attacks_total >= 12:
-        score += 2
-    elif dangerous_attacks_total >= 6:
-        score += 1
+    shots_home = _to_int(pick_stat("Total Shots", source=stats_home), 0)
+    shots_away = _to_int(pick_stat("Total Shots", source=stats_away), 0)
 
-    if score >= 9:
-        return "MUY ALTO"
-    if score >= 6:
-        return "ALTO"
-    if score >= 3:
-        return "MEDIO"
-    return "BAJO"
+    shots_on_target_home = _to_int(pick_stat("Shots on Goal", source=stats_home), 0)
+    shots_on_target_away = _to_int(pick_stat("Shots on Goal", source=stats_away), 0)
 
+    dangerous_home = _to_int(pick_stat("Dangerous Attacks", source=stats_home), 0)
+    dangerous_away = _to_int(pick_stat("Dangerous Attacks", source=stats_away), 0)
 
-def _build_pressure_score(
-    minuto: int,
-    shots_on_target_total: int,
-    dangerous_attacks_total: int,
-    corners_total: int
-) -> float:
-    score = 0.0
+    possession_home = _to_float(str(pick_stat("Ball Possession", source=stats_home, default="0")).replace("%", ""), 0.0)
+    possession_away = _to_float(str(pick_stat("Ball Possession", source=stats_away, default="0")).replace("%", ""), 0.0)
 
-    if minuto >= 20:
-        score += 1.0
-    if 25 <= minuto <= 75:
-        score += 1.0
-    if minuto >= 60:
-        score += 0.8
+    corners_home = _to_int(pick_stat("Corner Kicks", source=stats_home), 0)
+    corners_away = _to_int(pick_stat("Corner Kicks", source=stats_away), 0)
 
-    score += shots_on_target_total * 0.9
-    score += dangerous_attacks_total * 0.08
-    score += corners_total * 0.25
+    yellow_home = _to_int(pick_stat("Yellow Cards", source=stats_home), 0)
+    yellow_away = _to_int(pick_stat("Yellow Cards", source=stats_away), 0)
 
-    return round(score, 2)
-
-
-def _build_predictor_score(
-    minuto: int,
-    goles_totales: int,
-    shots_total: int,
-    shots_on_target_total: int,
-    dangerous_attacks_total: int
-) -> float:
-    score = 0.0
-
-    if minuto >= 20:
-        score += 0.8
-    if minuto >= 60:
-        score += 1.0
-
-    if goles_totales >= 1:
-        score += 0.8
-    if goles_totales >= 3:
-        score += 1.2
-
-    score += shots_total * 0.10
-    score += shots_on_target_total * 0.75
-    score += dangerous_attacks_total * 0.06
-
-    return round(score, 2)
-
-
-def _build_goal_probs(
-    predictor_score: float,
-    pressure_score: float,
-    minuto: int
-) -> Dict[str, float]:
-    base = predictor_score + (pressure_score * 0.7)
-
-    gp5 = min(max((base * 3.2) + (0.08 * minuto), 0), 85)
-    gp10 = min(max((base * 4.3) + (0.10 * minuto), 0), 92)
+    red_home = _to_int(pick_stat("Red Cards", source=stats_home), 0)
+    red_away = _to_int(pick_stat("Red Cards", source=stats_away), 0)
 
     return {
-        "goal_next_5_prob": round(gp5 / 100, 4),
-        "goal_next_10_prob": round(gp10 / 100, 4),
+        "shots_home": shots_home,
+        "shots_away": shots_away,
+        "shots_total": shots_home + shots_away,
+        "shots_on_target_home": shots_on_target_home,
+        "shots_on_target_away": shots_on_target_away,
+        "shots_on_target_total": shots_on_target_home + shots_on_target_away,
+        "dangerous_attacks_home": dangerous_home,
+        "dangerous_attacks_away": dangerous_away,
+        "dangerous_attacks_total": dangerous_home + dangerous_away,
+        "possession_home": possession_home,
+        "possession_away": possession_away,
+        "corners_home": corners_home,
+        "corners_away": corners_away,
+        "corners_total": corners_home + corners_away,
+        "yellow_home": yellow_home,
+        "yellow_away": yellow_away,
+        "yellow_total": yellow_home + yellow_away,
+        "red_home": red_home,
+        "red_away": red_away,
+        "red_total": red_home + red_away,
     }
 
 
-def _build_chaos_score(
-    minuto: int,
-    goles_totales: int,
-    yellow_total: int,
-    red_total: int
-) -> float:
+def _build_pressure_score(minuto: int, shots_on_target: int, dangerous_attacks: int, corners: int) -> float:
     score = 0.0
 
-    if goles_totales >= 1:
+    score += min(shots_on_target * 1.6, 12.0)
+    score += min(dangerous_attacks * 0.22, 12.0)
+    score += min(corners * 0.6, 4.0)
+
+    if 20 <= minuto <= 75:
+        score += 1.5
+    elif 76 <= minuto <= 88:
         score += 1.0
-    if goles_totales >= 3:
-        score += 2.0
-
-    if minuto >= 75:
-        score += 1.2
-
-    score += yellow_total * 0.20
-    score += red_total * 1.8
 
     return round(score, 2)
 
 
-def _build_xg_proxy(
-    shots_total: int,
-    shots_on_target_total: int,
-    dangerous_attacks_total: int,
-    goals_total: int
-) -> float:
-    xg = 0.0
-    xg += shots_total * 0.06
-    xg += shots_on_target_total * 0.18
-    xg += dangerous_attacks_total * 0.025
-    xg += goals_total * 0.15
+def _build_predictor_score(minuto: int, goles_totales: int, shots_on_target: int, dangerous_attacks: int) -> float:
+    score = 0.0
+
+    score += min(shots_on_target * 1.4, 10.0)
+    score += min(dangerous_attacks * 0.18, 10.0)
+
+    if goles_totales >= 1:
+        score += 1.0
+    if minuto >= 60:
+        score += 1.2
+    if minuto >= 75:
+        score += 1.0
+
+    return round(score, 2)
+
+
+def _build_chaos_score(goles_totales: int, yellow_total: int, red_total: int, minuto: int) -> float:
+    score = 0.0
+
+    score += min(goles_totales * 1.3, 4.0)
+    score += min(yellow_total * 0.35, 3.0)
+    score += min(red_total * 2.5, 5.0)
+
+    if minuto >= 75:
+        score += 1.0
+
+    return round(score, 2)
+
+
+def _estimate_xg(shots: int, shots_on_target: int, dangerous_attacks: int, corners: int) -> float:
+    xg = (
+        shots * 0.05 +
+        shots_on_target * 0.18 +
+        dangerous_attacks * 0.025 +
+        corners * 0.03
+    )
     return round(xg, 2)
 
 
-def _parse_statistics(item: Dict[str, Any]) -> Dict[str, Any]:
-    stats_block = item.get("statistics") or []
+def _goal_probs(minuto: int, pressure_score: float, predictor_score: float, chaos_score: float) -> Dict[str, float]:
+    base5 = 0.0
+    base10 = 0.0
 
-    parsed = {
-        "shots_home": 0,
-        "shots_away": 0,
-        "shots_on_target_home": 0,
-        "shots_on_target_away": 0,
-        "possession_home": 0,
-        "possession_away": 0,
-        "corners_home": 0,
-        "corners_away": 0,
-        "yellow_home": 0,
-        "yellow_away": 0,
-        "red_home": 0,
-        "red_away": 0,
-        "dangerous_attacks_home": 0,
-        "dangerous_attacks_away": 0,
+    base5 += pressure_score * 0.018
+    base5 += predictor_score * 0.022
+    base5 += chaos_score * 0.008
+
+    base10 += pressure_score * 0.024
+    base10 += predictor_score * 0.03
+    base10 += chaos_score * 0.012
+
+    if 25 <= minuto <= 45:
+        base5 += 0.03
+        base10 += 0.05
+    elif 60 <= minuto <= 75:
+        base5 += 0.04
+        base10 += 0.06
+    elif 76 <= minuto <= 85:
+        base5 += 0.03
+        base10 += 0.05
+
+    base5 = max(0.0, min(base5, 0.65))
+    base10 = max(0.0, min(base10, 0.78))
+
+    return {
+        "goal_next_5_prob": round(base5, 4),
+        "goal_next_10_prob": round(base10, 4),
     }
-
-    if not isinstance(stats_block, list):
-        return parsed
-
-    for team_stats in stats_block:
-        team_info = team_stats.get("team", {}) or {}
-        team_name = _safe_text(team_info.get("name"))
-        values = team_stats.get("statistics", []) or []
-
-        bucket = {}
-        for row in values:
-            typ = _safe_text(row.get("type"))
-            val = row.get("value")
-            bucket[typ] = val
-
-        shots = _to_int(
-            bucket.get("Total Shots", bucket.get("Shots Total", bucket.get("Shots on Goal", 0))),
-            0
-        )
-        shots_on_target = _to_int(
-            bucket.get("Shots on Goal", bucket.get("Shots on Target", 0)),
-            0
-        )
-        possession = _to_int(bucket.get("Ball Possession", 0), 0)
-        corners = _to_int(bucket.get("Corner Kicks", 0), 0)
-        yellow = _to_int(bucket.get("Yellow Cards", 0), 0)
-        red = _to_int(bucket.get("Red Cards", 0), 0)
-
-        dangerous_attacks = _to_int(
-            bucket.get("Dangerous Attacks", bucket.get("Attacks Dangerous", bucket.get("Attacks", 0))),
-            0
-        )
-
-        if "home" not in parsed.get("team_name_home", "") and "away" not in parsed.get("team_name_away", ""):
-            pass
-
-        if not parsed.get("team_name_home"):
-            parsed["team_name_home"] = team_name
-            parsed["shots_home"] = shots
-            parsed["shots_on_target_home"] = shots_on_target
-            parsed["possession_home"] = possession
-            parsed["corners_home"] = corners
-            parsed["yellow_home"] = yellow
-            parsed["red_home"] = red
-            parsed["dangerous_attacks_home"] = dangerous_attacks
-        else:
-            parsed["team_name_away"] = team_name
-            parsed["shots_away"] = shots
-            parsed["shots_on_target_away"] = shots_on_target
-            parsed["possession_away"] = possession
-            parsed["corners_away"] = corners
-            parsed["yellow_away"] = yellow
-            parsed["red_away"] = red
-            parsed["dangerous_attacks_away"] = dangerous_attacks
-
-    return parsed
 
 
 def _normalizar_fixture(item: Dict[str, Any]) -> Dict[str, Any]:
@@ -298,90 +252,35 @@ def _normalizar_fixture(item: Dict[str, Any]) -> Dict[str, Any]:
     goals = item.get("goals", {}) or {}
     status = fixture.get("status", {}) or {}
 
-    local = _safe_text((teams.get("home") or {}).get("name"), "Local")
-    visitante = _safe_text((teams.get("away") or {}).get("name"), "Visitante")
+    local = ((teams.get("home") or {}).get("name")) or "Local"
+    visitante = ((teams.get("away") or {}).get("name")) or "Visitante"
 
     marcador_local = _to_int(goals.get("home"), 0)
     marcador_visitante = _to_int(goals.get("away"), 0)
     minuto = _to_int(status.get("elapsed"), 0)
     goles_totales = marcador_local + marcador_visitante
 
-    stats = _parse_statistics(item)
+    stats = _extract_statistics(item)
 
-    shots_home = _to_int(stats.get("shots_home"), 0)
-    shots_away = _to_int(stats.get("shots_away"), 0)
-    shots_total = shots_home + shots_away
+    shots = stats["shots_total"]
+    shots_on_target = stats["shots_on_target_total"]
+    dangerous_attacks = stats["dangerous_attacks_total"]
+    corners_total = stats["corners_total"]
+    yellow_total = stats["yellow_total"]
+    red_total = stats["red_total"]
 
-    shots_on_target_home = _to_int(stats.get("shots_on_target_home"), 0)
-    shots_on_target_away = _to_int(stats.get("shots_on_target_away"), 0)
-    shots_on_target_total = shots_on_target_home + shots_on_target_away
+    pressure_score = _build_pressure_score(minuto, shots_on_target, dangerous_attacks, corners_total)
+    predictor_score = _build_predictor_score(minuto, goles_totales, shots_on_target, dangerous_attacks)
+    chaos_score = _build_chaos_score(goles_totales, yellow_total, red_total, minuto)
+    xg = _estimate_xg(shots, shots_on_target, dangerous_attacks, corners_total)
 
-    dangerous_attacks_home = _to_int(stats.get("dangerous_attacks_home"), 0)
-    dangerous_attacks_away = _to_int(stats.get("dangerous_attacks_away"), 0)
-    dangerous_attacks_total = dangerous_attacks_home + dangerous_attacks_away
-
-    corners_home = _to_int(stats.get("corners_home"), 0)
-    corners_away = _to_int(stats.get("corners_away"), 0)
-    corners_total = corners_home + corners_away
-
-    yellow_home = _to_int(stats.get("yellow_home"), 0)
-    yellow_away = _to_int(stats.get("yellow_away"), 0)
-    yellow_total = yellow_home + yellow_away
-
-    red_home = _to_int(stats.get("red_home"), 0)
-    red_away = _to_int(stats.get("red_away"), 0)
-    red_total = red_home + red_away
-
-    possession_home = _to_int(stats.get("possession_home"), 0)
-    possession_away = _to_int(stats.get("possession_away"), 0)
-
-    pressure_score = _build_pressure_score(
-        minuto=minuto,
-        shots_on_target_total=shots_on_target_total,
-        dangerous_attacks_total=dangerous_attacks_total,
-        corners_total=corners_total,
-    )
-
-    predictor_score = _build_predictor_score(
-        minuto=minuto,
-        goles_totales=goles_totales,
-        shots_total=shots_total,
-        shots_on_target_total=shots_on_target_total,
-        dangerous_attacks_total=dangerous_attacks_total,
-    )
-
-    goal_probs = _build_goal_probs(
-        predictor_score=predictor_score,
-        pressure_score=pressure_score,
-        minuto=minuto,
-    )
-
-    chaos_score = _build_chaos_score(
-        minuto=minuto,
-        goles_totales=goles_totales,
-        yellow_total=yellow_total,
-        red_total=red_total,
-    )
-
-    xg_proxy = _build_xg_proxy(
-        shots_total=shots_total,
-        shots_on_target_total=shots_on_target_total,
-        dangerous_attacks_total=dangerous_attacks_total,
-        goals_total=goles_totales,
-    )
-
-    momentum = _parse_momentum(
-        minuto=minuto,
-        goles_totales=goles_totales,
-        shots_total=shots_total,
-        shots_on_target_total=shots_on_target_total,
-        dangerous_attacks_total=dangerous_attacks_total,
-    )
+    probs = _goal_probs(minuto, pressure_score, predictor_score, chaos_score)
+    momentum = _parse_momentum(minuto, goles_totales, shots, shots_on_target, dangerous_attacks)
 
     return {
         "id": fixture.get("id", 0),
-        "liga": _safe_text(league.get("name"), "Liga desconocida"),
-        "pais": _safe_text(league.get("country"), "País desconocido"),
+        "liga": league.get("name", "Liga desconocida"),
+        "pais": league.get("country", "País desconocido"),
         "local": local,
         "visitante": visitante,
         "minuto": minuto,
@@ -391,51 +290,38 @@ def _normalizar_fixture(item: Dict[str, Any]) -> Dict[str, Any]:
             status.get("short", ""),
             status.get("long", "")
         ),
-
-        "xG": xg_proxy,
-        "shots": shots_total,
-        "shots_on_target": shots_on_target_total,
-        "dangerous_attacks": dangerous_attacks_total,
-
-        "possession_home": possession_home,
-        "possession_away": possession_away,
-        "corners_home": corners_home,
-        "corners_away": corners_away,
-        "yellow_cards_home": yellow_home,
-        "yellow_cards_away": yellow_away,
-        "red_cards_home": red_home,
-        "red_cards_away": red_away,
-
+        "xG": xg,
+        "shots": shots,
+        "shots_on_target": shots_on_target,
+        "dangerous_attacks": dangerous_attacks,
+        "corners": corners_total,
+        "tarjetas_amarillas": yellow_total,
+        "tarjetas_rojas": red_total,
+        "posesion_local": stats["possession_home"],
+        "posesion_visitante": stats["possession_away"],
         "momentum": momentum,
         "cuota": 1.85,
         "prob_real": 0.75,
         "prob_implicita": 0.54,
-
         "goal_pressure": {
             "pressure_score": pressure_score,
-            "pressure_level": "ALTA" if pressure_score >= 5 else "MEDIA" if pressure_score >= 2.5 else "BAJA",
-            "pressure_reason": "Score base generado desde ritmo, remates a puerta, corners y ataques peligrosos",
+            "pressure_level": "ALTA" if pressure_score >= 10 else "MEDIA" if pressure_score >= 5 else "BAJA",
+            "pressure_reason": "Score calculado desde tiros, ataques peligrosos y corners",
         },
-
         "goal_predictor": {
-            "goal_next_5_prob": goal_probs["goal_next_5_prob"],
-            "goal_next_10_prob": goal_probs["goal_next_10_prob"],
+            "goal_next_5_prob": probs["goal_next_5_prob"],
+            "goal_next_10_prob": probs["goal_next_10_prob"],
             "predictor_score": predictor_score,
-            "alert_level": "ROJA" if predictor_score >= 6 else "AMARILLA" if predictor_score >= 3 else "BAJA",
-            "alert_reason": "Predictor base generado desde minuto, goles, remates y ataques peligrosos",
+            "alert_level": "ROJA" if predictor_score >= 12 else "AMARILLA" if predictor_score >= 6 else "BAJA",
+            "alert_reason": "Predictor calculado desde volumen ofensivo y tramo del partido",
         },
-
         "chaos": {
             "chaos_score": chaos_score,
-            "chaos_level": "ALTO" if chaos_score >= 4 else "MEDIO" if chaos_score >= 2 else "BAJO",
-            "chaos_reason": "Caos base generado desde goles, tarjetas y tramo del partido",
+            "chaos_level": "ALTO" if chaos_score >= 6 else "MEDIO" if chaos_score >= 3 else "BAJO",
+            "chaos_reason": "Caos calculado desde goles, tarjetas y minuto",
         },
-
-        "fixture": fixture,
-        "league_raw": league,
-        "teams_raw": teams,
-        "goals_raw": goals,
-        "status_raw": status,
+        "fixture_raw": fixture,
+        "source": "api_football_real",
     }
 
 
@@ -450,49 +336,50 @@ def _fallback_demo() -> List[Dict[str, Any]]:
         "marcador_local": 2,
         "marcador_visitante": 1,
         "estado_partido": "en_juego",
-        "xG": 1.12,
-        "shots": 11,
-        "shots_on_target": 5,
-        "dangerous_attacks": 18,
-        "possession_home": 54,
-        "possession_away": 46,
-        "corners_home": 4,
-        "corners_away": 3,
-        "yellow_cards_home": 1,
-        "yellow_cards_away": 2,
-        "red_cards_home": 0,
-        "red_cards_away": 0,
+        "xG": 1.6,
+        "shots": 12,
+        "shots_on_target": 6,
+        "dangerous_attacks": 24,
+        "corners": 6,
+        "tarjetas_amarillas": 2,
+        "tarjetas_rojas": 0,
+        "posesion_local": 53.0,
+        "posesion_visitante": 47.0,
         "momentum": "ALTO",
         "cuota": 1.85,
         "prob_real": 0.75,
         "prob_implicita": 0.54,
         "goal_pressure": {
-            "pressure_score": 4.3,
-            "pressure_level": "MEDIA",
+            "pressure_score": 9.0,
+            "pressure_level": "ALTA",
             "pressure_reason": "Fallback demo",
         },
         "goal_predictor": {
             "goal_next_5_prob": 0.27,
             "goal_next_10_prob": 0.39,
-            "predictor_score": 3.8,
+            "predictor_score": 8.0,
             "alert_level": "AMARILLA",
             "alert_reason": "Fallback demo",
         },
         "chaos": {
-            "chaos_score": 2.4,
+            "chaos_score": 3.0,
             "chaos_level": "MEDIO",
             "chaos_reason": "Fallback demo",
         },
+        "source": "fallback_demo",
     }]
 
 
+# =========================================================
+# FETCH PRINCIPAL
+# =========================================================
 def obtener_partidos_en_vivo() -> List[Dict[str, Any]]:
     try:
         headers = _build_headers()
-        api_url = _get_api_url()
+        url = _build_url()
 
         response = requests.get(
-            api_url,
+            url,
             headers=headers,
             timeout=25,
         )
@@ -502,15 +389,18 @@ def obtener_partidos_en_vivo() -> List[Dict[str, Any]]:
         fixtures = data.get("response", [])
 
         if not isinstance(fixtures, list):
-            print("API-Football respondió en formato no esperado. Usando fallback demo.")
+            print("API-Football respondió sin lista válida. Usando fallback demo.")
             return _fallback_demo()
 
         resultados = []
         for item in fixtures:
             try:
-                partido = _normalizar_fixture(item)
-                if partido.get("estado_partido") != "finalizado":
-                    resultados.append(partido)
+                normalizado = _normalizar_fixture(item)
+
+                if normalizado.get("estado_partido") == "finalizado":
+                    continue
+
+                resultados.append(normalizado)
             except Exception as e:
                 print("Error normalizando fixture API-Football:", e)
 
@@ -518,7 +408,7 @@ def obtener_partidos_en_vivo() -> List[Dict[str, Any]]:
             print(f"OK: API-Football devolvió {len(resultados)} partidos en vivo")
             return resultados
 
-        print("API-Football no devolvió partidos live. Usando fallback demo.")
+        print("API-Football no devolvió partidos live utilizables. Usando fallback demo.")
         return _fallback_demo()
 
     except Exception as e:
