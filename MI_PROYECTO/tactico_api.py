@@ -16,11 +16,22 @@ except Exception as e:
 # IMPORT STORAGE
 # =========================================================
 try:
-    from core.signal_storage import obtener_senales
+    from core.signal_storage import obtener_senales, guardar_senal
     print("[IMPORTAR] almacenamiento de señales OK")
 except Exception as e:
     print(f"[ERROR IMPORTAR] signal_storage -> {e}")
     obtener_senales = None
+    guardar_senal = None
+
+# =========================================================
+# IMPORT FETCHER REAL
+# =========================================================
+try:
+    from api_football_fetcher import obtener_partidos_en_vivo as obtener_partidos_api
+    print("[IMPORTAR] api_football_fetcher OK")
+except Exception as e:
+    print(f"[ERROR IMPORTAR] api_football_fetcher -> {e}")
+    obtener_partidos_api = None
 
 # =========================================================
 # APP FLASK
@@ -440,85 +451,10 @@ STATE = {
 
 
 # =========================================================
-# PROCESAMIENTO
+# FALLBACK SI LA API REAL NO RESPONDE
 # =========================================================
-def procesar_partidos(partidos: List[Dict[str, Any]]) -> List[Dict]:
-    senales = []
-
-    if not procesar_partido:
-        return senales
-
-    for p in partidos:
-        try:
-            print(f"[SCAN] procesando partido -> {p.get('id')}")
-            s = procesar_partido(p)
-            print(f"[SCAN] resultado pipeline -> {s}")
-
-            if s:
-                senales.append(s)
-                print(f"[SCAN] señal agregada -> {p.get('id')}")
-            else:
-                print(f"[SCAN] señal vacía -> {p.get('id')}")
-
-        except Exception as e:
-            print(f"[ERROR PARTIDO] {e}")
-
-    senales.sort(
-        key=lambda x: (
-            float(x.get("ai_decision_score", 0) or 0),
-            float(x.get("signal_score", 0) or 0),
-            float(x.get("confidence", 0) or 0),
-            float(x.get("value", 0) or 0),
-        ),
-        reverse=True
-    )
-
-    # máximo 10 señales
-    senales = senales[:10]
-
-    print(f"[SCAN] total señales generadas -> {len(senales)}")
-    print(f"[SCAN] ESTADO señales -> {senales}")
-
-    return senales
-
-
-def detectar_hot_matches(partidos: List[Dict]) -> List[Dict]:
-    hot = []
-
-    for p in partidos:
-        xg = float(p.get("xG", 0) or 0)
-        shots = int(p.get("shots", 0) or 0)
-
-        if xg >= 1.2 or shots >= 8:
-            hot.append(p)
-
-    return hot
-
-
-# =========================================================
-# ENDPOINTS
-# =========================================================
-@app.route("/")
-def home():
-    return "JHONNY ELITE V16 BACKEND ACTIVO"
-
-
-@app.route("/status")
-def status():
-    return jsonify({
-        "status": "ok",
-        "service": "jhonny_elite_v16"
-    })
-
-
-@app.route("/health")
-def health():
-    return jsonify({"status": "ok"})
-
-
-@app.route("/scan")
-def scan():
-    partidos_fake = [
+def _partidos_demo_fallback() -> List[Dict[str, Any]]:
+    return [
         {
             "id": 1,
             "local": "Equipo A",
@@ -587,34 +523,138 @@ def scan():
         }
     ]
 
-    senales = procesar_partidos(partidos_fake)
-    hot = detectar_hot_matches(partidos_fake)
+
+# =========================================================
+# OBTENER PARTIDOS LIVE
+# =========================================================
+def obtener_partidos_live() -> List[Dict[str, Any]]:
+    if obtener_partidos_api:
+        try:
+            partidos = obtener_partidos_api()
+            if isinstance(partidos, list) and partidos:
+                print(f"[SCAN] partidos reales obtenidos -> {len(partidos)}")
+                return partidos
+            print("[SCAN] api_football_fetcher devolvió vacío, usando fallback demo")
+        except Exception as e:
+            print(f"[SCAN] ERROR fetcher real -> {e}")
+
+    print("[SCAN] usando partidos demo fallback")
+    return _partidos_demo_fallback()
+
+
+# =========================================================
+# PROCESAMIENTO
+# =========================================================
+def procesar_partidos(partidos: List[Dict[str, Any]]) -> List[Dict]:
+    senales = []
+
+    if not procesar_partido:
+        return senales
+
+    for p in partidos:
+        try:
+            print(f"[SCAN] procesando partido -> {p.get('id')}")
+            s = procesar_partido(p)
+            print(f"[SCAN] resultado pipeline -> {s}")
+
+            if s:
+                senales.append(s)
+                print(f"[SCAN] señal agregada -> {p.get('id')}")
+            else:
+                print(f"[SCAN] señal vacía -> {p.get('id')}")
+
+        except Exception as e:
+            print(f"[ERROR PARTIDO] {e}")
+
+    senales.sort(
+        key=lambda x: (
+            float(x.get("ai_decision_score", 0) or 0),
+            float(x.get("signal_score", 0) or 0),
+            float(x.get("confidence", 0) or 0),
+            float(x.get("value", 0) or 0),
+        ),
+        reverse=True
+    )
+
+    senales = senales[:10]
+
+    print(f"[SCAN] total señales generadas -> {len(senales)}")
+    print(f"[SCAN] ESTADO señales -> {senales}")
+
+    return senales
+
+
+def detectar_hot_matches(partidos: List[Dict]) -> List[Dict]:
+    hot = []
+
+    for p in partidos:
+        xg = float(p.get("xG", 0) or 0)
+        shots = int(p.get("shots", 0) or 0)
+
+        if xg >= 1.2 or shots >= 8:
+            hot.append(p)
+
+    return hot[:10]
+
+
+# =========================================================
+# ENDPOINTS
+# =========================================================
+@app.route("/")
+def home():
+    return "JHONNY ELITE V16 BACKEND ACTIVO"
+
+
+@app.route("/status")
+def status():
+    return jsonify({
+        "status": "ok",
+        "service": "jhonny_elite_v16"
+    })
+
+
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok"})
+
+
+@app.route("/scan")
+def scan():
+    partidos = obtener_partidos_live()
+    senales = procesar_partidos(partidos)
+    hot = detectar_hot_matches(partidos)
 
     STATE["signals"] = senales
     STATE["hot_matches"] = hot
     STATE["last_scan"] = int(time.time())
 
+    if guardar_senal:
+        for s in senales:
+            try:
+                guardar_senal(s)
+                print(f"[ALMACENAMIENTO] señal guardada -> {s.get('match_id')}")
+            except Exception as e:
+                print(f"[ALMACENAMIENTO] ERROR guardar_senal -> {e}")
+
     return jsonify({
         "ultimo_scan": STATE["last_scan"],
-        "total_partidos": len(partidos_fake),
+        "total_partidos": len(partidos),
         "total_senales": len(senales)
     })
 
 
 @app.route("/signals")
 def signals():
-    # 1) primero usar señales vivas del último scan
     if STATE["signals"]:
         print(f"[SIGNALS] desde memoria -> {len(STATE['signals'])}")
         return jsonify({
             "signals": STATE["signals"][:10]
         })
 
-    # 2) si no hay memoria, leer archivo
     if obtener_senales:
         try:
             data = obtener_senales()
-            print(f"[SIGNALS] desde archivo -> {len(data)}")
+            print(f"[SIGNALS] obtenidas desde archivo -> {len(data)}")
             return jsonify({
                 "signals": data[-10:]
             })
