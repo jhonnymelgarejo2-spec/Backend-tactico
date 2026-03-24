@@ -1,166 +1,453 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JHONNY ELITE V16</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JHONNY_ELITE V16 PRO</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-  <div class="app-shell">
-    <header class="topbar">
-      <div>
-        <div class="eyebrow">Sistema predictivo en vivo</div>
-        <h1>JHONNY ELITE V16</h1>
-        <p class="subtitle">Escaneo, interpretación, filtrado y selección de oportunidades reales.</p>
-      </div>
-      <div class="top-actions">
-        <button id="scanBtn" class="btn btn-primary">Escanear ahora</button>
-        <button id="refreshBtn" class="btn btn-secondary">Actualizar panel</button>
-      </div>
-    </header>
+    <div class="page-shell">
+        <header class="topbar">
+            <div class="brand-block">
+                <div class="brand-kicker">SISTEMA PREDICTIVO EN VIVO</div>
+                <h1 class="brand-title">JHONNY ELITE V16 <span>PRO</span></h1>
+                <p class="brand-subtitle">
+                    Escaneo, interpretación, filtrado y selección de oportunidades reales.
+                </p>
+            </div>
 
-    <section class="stats-grid">
-      <div class="stat-card">
-        <span class="stat-label">Estado</span>
-        <strong id="serviceStatus">Cargando...</strong>
-      </div>
-      <div class="stat-card">
-        <span class="stat-label">Último scan</span>
-        <strong id="lastScan">--</strong>
-      </div>
-      <div class="stat-card">
-        <span class="stat-label">Señales activas</span>
-        <strong id="totalSignals">0</strong>
-      </div>
-      <div class="stat-card">
-        <span class="stat-label">Hot matches</span>
-        <strong id="totalHotMatches">0</strong>
-      </div>
-    </section>
+            <div class="topbar-actions">
+                <button id="scanBtn" class="btn btn-primary">Escanear ahora</button>
+                <button id="refreshBtn" class="btn btn-secondary">Actualizar panel</button>
+            </div>
+        </header>
 
-    <section class="panel">
-      <div class="panel-header">
-        <div>
-          <h2>Top señales del momento</h2>
-          <p>Máximo 10 señales con mejor perfil operativo.</p>
-        </div>
-      </div>
+        <section class="status-strip">
+            <div class="status-chip">
+                <span class="status-label">Sistema</span>
+                <span id="systemStatus" class="status-value ok">OK</span>
+            </div>
+            <div class="status-chip">
+                <span class="status-label">Auto Scan</span>
+                <span class="status-value active">ACTIVO</span>
+            </div>
+            <div class="status-chip">
+                <span class="status-label">Refresco</span>
+                <span class="status-value">Cada 60s</span>
+            </div>
+            <div class="status-chip">
+                <span class="status-label">Último scan</span>
+                <span id="lastScanHeader" class="status-value">--</span>
+            </div>
+        </section>
 
-      <div id="emptyState" class="empty-state" style="display:none;">
-        No hay señales publicables en este momento.
-      </div>
+        <section class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-title">Estado</div>
+                <div id="kpiStatus" class="kpi-value ok">ok</div>
+            </div>
 
-      <div class="table-wrap">
-        <table class="signals-table">
-          <thead>
-            <tr>
-              <th>Partido</th>
-              <th>Min</th>
-              <th>Mercado</th>
-              <th>Selección</th>
-              <th>Cuota</th>
-              <th>Confianza</th>
-              <th>Value</th>
-              <th>Riesgo</th>
-              <th>Rank</th>
-              <th>Recomendación</th>
-            </tr>
-          </thead>
-          <tbody id="signalsTableBody"></tbody>
-        </table>
-      </div>
-    </section>
-  </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Último scan</div>
+                <div id="kpiLastScan" class="kpi-value">--</div>
+            </div>
 
-  <script>
-    function formatTime(unixTs) {
-      if (!unixTs) return "--";
-      const d = new Date(unixTs * 1000);
-      return d.toLocaleString();
-    }
+            <div class="kpi-card">
+                <div class="kpi-title">Señales activas</div>
+                <div id="kpiSignals" class="kpi-value">0</div>
+            </div>
 
-    function badgeClass(rank) {
-      const r = String(rank || "").toUpperCase();
-      if (r === "ELITE") return "badge elite";
-      if (r === "TOP") return "badge top";
-      if (r === "ALTA") return "badge alta";
-      return "badge normal";
-    }
+            <div class="kpi-card">
+                <div class="kpi-title">Hot matches</div>
+                <div id="kpiHotMatches" class="kpi-value">0</div>
+            </div>
+        </section>
 
-    function renderSignals(signals) {
-      const tbody = document.getElementById("signalsTableBody");
-      const emptyState = document.getElementById("emptyState");
+        <section class="main-grid">
+            <div class="main-left">
+                <div class="panel-card hero-card">
+                    <div class="panel-header">
+                        <span class="panel-kicker">SEÑAL PRINCIPAL</span>
+                        <span id="heroRankBadge" class="rank-badge normal">NORMAL</span>
+                    </div>
 
-      tbody.innerHTML = "";
+                    <div id="heroEmpty" class="empty-hero">
+                        No hay señal principal publicada en este momento.
+                    </div>
 
-      if (!signals || signals.length === 0) {
-        emptyState.style.display = "block";
-        return;
-      }
+                    <div id="heroContent" class="hero-content hidden">
+                        <div class="hero-top">
+                            <h2 id="heroSelection" class="hero-selection">--</h2>
+                            <div id="heroMatch" class="hero-match">--</div>
+                            <div id="heroMeta" class="hero-meta">--</div>
+                        </div>
 
-      emptyState.style.display = "none";
+                        <div class="hero-metrics">
+                            <div class="metric-pill">
+                                <span class="metric-name">Cuota</span>
+                                <span id="heroOdd" class="metric-value">--</span>
+                            </div>
+                            <div class="metric-pill">
+                                <span class="metric-name">Confianza</span>
+                                <span id="heroConfidence" class="metric-value">--</span>
+                            </div>
+                            <div class="metric-pill">
+                                <span class="metric-name">Value</span>
+                                <span id="heroValue" class="metric-value">--</span>
+                            </div>
+                            <div class="metric-pill">
+                                <span class="metric-name">Riesgo</span>
+                                <span id="heroRisk" class="metric-value">--</span>
+                            </div>
+                        </div>
 
-      signals.forEach(signal => {
-        const row = document.createElement("tr");
+                        <div class="score-grid">
+                            <div class="score-box">
+                                <span>Signal Score</span>
+                                <strong id="heroSignalScore">--</strong>
+                            </div>
+                            <div class="score-box">
+                                <span>Tactical Score</span>
+                                <strong id="heroTacticalScore">--</strong>
+                            </div>
+                            <div class="score-box">
+                                <span>AI Decision</span>
+                                <strong id="heroAiScore">--</strong>
+                            </div>
+                            <div class="score-box">
+                                <span>Goal Score</span>
+                                <strong id="heroGoalScore">--</strong>
+                            </div>
+                        </div>
 
-        row.innerHTML = `
-          <td>
-            <div class="match-name">${signal.home || "-"} vs ${signal.away || "-"}</div>
-            <div class="match-meta">${signal.league || "-"} · ${signal.score || "-"}</div>
-          </td>
-          <td>${signal.minute ?? "-"}</td>
-          <td>${signal.market || "-"}</td>
-          <td>${signal.selection || "-"}</td>
-          <td>${signal.odd ?? "-"}</td>
-          <td>${signal.confidence ?? "-"}</td>
-          <td>${signal.value ?? "-"}</td>
-          <td>${signal.risk_score ?? "-"}</td>
-          <td><span class="${badgeClass(signal.signal_rank)}">${signal.signal_rank || "NORMAL"}</span></td>
-          <td>${signal.recomendacion_final || "-"}</td>
-        `;
+                        <div class="reason-list">
+                            <div><strong>Motivo táctico:</strong> <span id="heroReason">--</span></div>
+                            <div><strong>Motivo value:</strong> <span id="heroValueReason">--</span></div>
+                            <div><strong>Lectura IA:</strong> <span id="heroAiReason">--</span></div>
+                        </div>
+                    </div>
+                </div>
 
-        tbody.appendChild(row);
-      });
-    }
+                <div class="panel-card table-card">
+                    <div class="panel-header">
+                        <div>
+                            <h3>Top señales del momento</h3>
+                            <p>Máximo 10 señales con mejor perfil operativo.</p>
+                        </div>
+                    </div>
 
-    async function loadDashboard() {
-      try {
-        const res = await fetch("/dashboard-data");
-        const data = await res.json();
+                    <div id="signalsEmpty" class="empty-table">
+                        No hay señales publicables en este momento.
+                    </div>
 
-        document.getElementById("serviceStatus").textContent = data.status || "ok";
-        document.getElementById("lastScan").textContent = formatTime(data.last_scan);
-        document.getElementById("totalSignals").textContent = data.total_signals ?? 0;
-        document.getElementById("totalHotMatches").textContent = data.total_hot_matches ?? 0;
+                    <div class="table-wrap">
+                        <table id="signalsTable" class="signals-table hidden">
+                            <thead>
+                                <tr>
+                                    <th>Partido</th>
+                                    <th>Min</th>
+                                    <th>Mercado</th>
+                                    <th>Selección</th>
+                                    <th>Cuota</th>
+                                    <th>Confianza</th>
+                                    <th>Value</th>
+                                    <th>Riesgo</th>
+                                    <th>Rank</th>
+                                    <th>Recomendación</th>
+                                </tr>
+                            </thead>
+                            <tbody id="signalsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-        renderSignals(data.signals || []);
-      } catch (err) {
-        console.error("Error cargando dashboard:", err);
-      }
-    }
+            <aside class="main-right">
+                <div class="panel-card side-card">
+                    <div class="panel-header">
+                        <h3>Rendimiento del sistema</h3>
+                    </div>
 
-    async function runScan() {
-      const btn = document.getElementById("scanBtn");
-      btn.disabled = true;
-      btn.textContent = "Escaneando...";
+                    <div class="mini-stats">
+                        <div class="mini-stat">
+                            <span>Win Rate</span>
+                            <strong id="statWinRate">0%</strong>
+                        </div>
+                        <div class="mini-stat">
+                            <span>ROI</span>
+                            <strong id="statROI">0%</strong>
+                        </div>
+                        <div class="mini-stat">
+                            <span>Ganadas</span>
+                            <strong id="statWon">0</strong>
+                        </div>
+                        <div class="mini-stat">
+                            <span>Perdidas</span>
+                            <strong id="statLost">0</strong>
+                        </div>
+                        <div class="mini-stat">
+                            <span>Elite</span>
+                            <strong id="statElite">0</strong>
+                        </div>
+                        <div class="mini-stat">
+                            <span>Top</span>
+                            <strong id="statTop">0</strong>
+                        </div>
+                    </div>
+                </div>
 
-      try {
-        await fetch("/scan");
-        await loadDashboard();
-      } catch (err) {
-        console.error("Error en scan:", err);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Escanear ahora";
-      }
-    }
+                <div class="panel-card side-card">
+                    <div class="panel-header">
+                        <h3>Hot matches</h3>
+                    </div>
+                    <div id="hotMatchesList" class="list-block empty-list">
+                        No hay hot matches en este momento.
+                    </div>
+                </div>
 
-    document.getElementById("scanBtn").addEventListener("click", runScan);
-    document.getElementById("refreshBtn").addEventListener("click", loadDashboard);
+                <div class="panel-card side-card">
+                    <div class="panel-header">
+                        <h3>Resumen operativo</h3>
+                    </div>
+                    <div class="summary-lines">
+                        <div class="summary-line">
+                            <span>Señales cargadas</span>
+                            <strong id="summarySignals">0</strong>
+                        </div>
+                        <div class="summary-line">
+                            <span>Value promedio</span>
+                            <strong id="summaryValue">0</strong>
+                        </div>
+                        <div class="summary-line">
+                            <span>Riesgo medio</span>
+                            <strong id="summaryRisk">0</strong>
+                        </div>
+                        <div class="summary-line">
+                            <span>Mejor rank</span>
+                            <strong id="summaryRank">--</strong>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </section>
+    </div>
 
-    loadDashboard();
-    setInterval(loadDashboard, 30000);
-  </script>
+    <script>
+        function formatTimestamp(ts) {
+            if (!ts) return "--";
+            const date = new Date(ts * 1000);
+            if (isNaN(date.getTime())) return "--";
+            return date.toLocaleString("es-ES");
+        }
+
+        function safeNumber(value, fallback = 0) {
+            const n = Number(value);
+            return Number.isFinite(n) ? n : fallback;
+        }
+
+        function safeText(value, fallback = "--") {
+            if (value === null || value === undefined || value === "") return fallback;
+            return String(value);
+        }
+
+        function getRankClass(rank) {
+            const r = safeText(rank, "NORMAL").toUpperCase();
+            if (r === "ELITE") return "elite";
+            if (r === "TOP") return "top";
+            if (r === "ALTA") return "alta";
+            return "normal";
+        }
+
+        function setText(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value;
+        }
+
+        async function fetchJSON(url) {
+            const res = await fetch(url, { cache: "no-store" });
+            if (!res.ok) {
+                throw new Error(`Error ${res.status} en ${url}`);
+            }
+            return await res.json();
+        }
+
+        function renderHero(signal) {
+            const heroEmpty = document.getElementById("heroEmpty");
+            const heroContent = document.getElementById("heroContent");
+            const badge = document.getElementById("heroRankBadge");
+
+            if (!signal) {
+                heroEmpty.classList.remove("hidden");
+                heroContent.classList.add("hidden");
+                badge.textContent = "NORMAL";
+                badge.className = "rank-badge normal";
+                return;
+            }
+
+            heroEmpty.classList.add("hidden");
+            heroContent.classList.remove("hidden");
+
+            const rank = safeText(signal.signal_rank || signal.rank, "NORMAL").toUpperCase();
+            badge.textContent = rank;
+            badge.className = `rank-badge ${getRankClass(rank)}`;
+
+            setText("heroSelection", safeText(signal.selection));
+            setText("heroMatch", `${safeText(signal.home)} vs ${safeText(signal.away)}`);
+            setText(
+                "heroMeta",
+                `${safeText(signal.league)} · ${safeText(signal.country)} · Min ${safeText(signal.minute)} · Marcador ${safeText(signal.score)}`
+            );
+
+            setText("heroOdd", safeText(signal.odd));
+            setText("heroConfidence", `${safeNumber(signal.confidence)}%`);
+            setText("heroValue", safeText(signal.value));
+            setText("heroRisk", safeText(signal.risk_score ?? signal.riesgo_operativo));
+
+            setText("heroSignalScore", safeText(signal.signal_score));
+            setText("heroTacticalScore", safeText(signal.tactical_score));
+            setText("heroAiScore", safeText(signal.ai_decision_score));
+            setText("heroGoalScore", safeText(signal.goal_inminente_score));
+
+            setText("heroReason", safeText(signal.reason));
+            setText("heroValueReason", safeText(signal.razon_value));
+            setText("heroAiReason", safeText(signal.ai_reason));
+        }
+
+        function renderSignalsTable(signals) {
+            const empty = document.getElementById("signalsEmpty");
+            const table = document.getElementById("signalsTable");
+            const tbody = document.getElementById("signalsTableBody");
+
+            tbody.innerHTML = "";
+
+            if (!signals || signals.length === 0) {
+                empty.classList.remove("hidden");
+                table.classList.add("hidden");
+                return;
+            }
+
+            empty.classList.add("hidden");
+            table.classList.remove("hidden");
+
+            signals.slice(0, 10).forEach(signal => {
+                const tr = document.createElement("tr");
+
+                const rank = safeText(signal.signal_rank || signal.rank, "NORMAL").toUpperCase();
+                const rec = safeText(signal.recomendacion_final || signal.ai_recommendation || "OBSERVAR");
+
+                tr.innerHTML = `
+                    <td>
+                        <div class="cell-main">${safeText(signal.home)} vs ${safeText(signal.away)}</div>
+                        <div class="cell-sub">${safeText(signal.league)} · ${safeText(signal.score)}</div>
+                    </td>
+                    <td>${safeText(signal.minute)}</td>
+                    <td>${safeText(signal.market)}</td>
+                    <td>${safeText(signal.selection)}</td>
+                    <td>${safeText(signal.odd)}</td>
+                    <td>${safeNumber(signal.confidence)}%</td>
+                    <td>${safeText(signal.value)}</td>
+                    <td>${safeText(signal.risk_score ?? signal.riesgo_operativo)}</td>
+                    <td><span class="rank-badge ${getRankClass(rank)}">${rank}</span></td>
+                    <td><span class="rec-badge">${rec}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderHotMatches(matches) {
+            const box = document.getElementById("hotMatchesList");
+
+            if (!matches || matches.length === 0) {
+                box.className = "list-block empty-list";
+                box.innerHTML = "No hay hot matches en este momento.";
+                return;
+            }
+
+            box.className = "list-block";
+            box.innerHTML = matches.slice(0, 8).map(match => `
+                <div class="list-item">
+                    <div class="list-item-title">${safeText(match.local)} vs ${safeText(match.visitante)}</div>
+                    <div class="list-item-sub">
+                        ${safeText(match.liga)} · Min ${safeText(match.minuto)} · xG ${safeText(match.xG)}
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        function renderStats(stats, signals) {
+            const safeSignals = signals || [];
+            const valueAvg = safeSignals.length
+                ? (safeSignals.reduce((acc, s) => acc + safeNumber(s.value), 0) / safeSignals.length).toFixed(2)
+                : "0";
+
+            const riskAvg = safeSignals.length
+                ? (safeSignals.reduce((acc, s) => acc + safeNumber(s.risk_score), 0) / safeSignals.length).toFixed(2)
+                : "0";
+
+            const bestRank = safeSignals.length
+                ? safeText(safeSignals[0].signal_rank || safeSignals[0].rank, "--")
+                : "--";
+
+            setText("statWinRate", `${safeNumber(stats?.win_rate)}%`);
+            setText("statROI", `${safeNumber(stats?.roi_percent)}%`);
+            setText("statWon", safeText(stats?.ganadas, "0"));
+            setText("statLost", safeText(stats?.perdidas, "0"));
+            setText("statElite", safeText(stats?.signals_elite, "0"));
+            setText("statTop", safeText(stats?.signals_top, "0"));
+
+            setText("summarySignals", String(safeSignals.length));
+            setText("summaryValue", valueAvg);
+            setText("summaryRisk", riskAvg);
+            setText("summaryRank", bestRank);
+        }
+
+        async function runScan() {
+            try {
+                const data = await fetchJSON("/scan");
+                setText("kpiLastScan", formatTimestamp(data.ultimo_scan));
+                setText("lastScanHeader", formatTimestamp(data.ultimo_scan));
+            } catch (err) {
+                console.error(err);
+            }
+            await loadDashboard();
+        }
+
+        async function loadDashboard() {
+            try {
+                const [status, signalsRes, hotRes, statsRes] = await Promise.all([
+                    fetchJSON("/health"),
+                    fetchJSON("/signals"),
+                    fetchJSON("/hot-matches"),
+                    fetchJSON("/learning-stats")
+                ]);
+
+                const signals = Array.isArray(signalsRes.signals) ? signalsRes.signals : [];
+                const hotMatches = Array.isArray(hotRes.hot_matches) ? hotRes.hot_matches : [];
+
+                const topSignals = [...signals].sort((a, b) => {
+                    return safeNumber(b.signal_score) - safeNumber(a.signal_score);
+                }).slice(0, 10);
+
+                setText("systemStatus", safeText(status.status, "ok").toUpperCase());
+                setText("kpiStatus", safeText(status.status, "ok"));
+                setText("kpiSignals", String(topSignals.length));
+                setText("kpiHotMatches", String(hotMatches.length));
+
+                renderHero(topSignals[0] || null);
+                renderSignalsTable(topSignals);
+                renderHotMatches(hotMatches);
+                renderStats(statsRes, topSignals);
+            } catch (err) {
+                console.error("Error cargando dashboard:", err);
+            }
+        }
+
+        document.getElementById("scanBtn").addEventListener("click", runScan);
+        document.getElementById("refreshBtn").addEventListener("click", loadDashboard);
+
+        loadDashboard();
+        setInterval(loadDashboard, 60000);
+    </script>
 </body>
-          </html>
+              </html>
