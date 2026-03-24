@@ -493,10 +493,20 @@ def signals():
     fallback = _signals_from_storage()
     if fallback:
         print(f"[SIGNALS] obtenidas desde archivo -> {len(fallback)}")
-        return jsonify({"signals": fallback})
+        STATE["signals"] = fallback[:10]
+        return jsonify({"signals": fallback[:10]})
 
-    print("[SIGNALS] sin señales disponibles")
-    return jsonify({"signals": []})
+    print("[SIGNALS] memoria vacía y archivo vacío -> ejecutando rescan")
+    partidos = obtener_partidos_para_scan()
+    senales = procesar_partidos(partidos)
+
+    STATE["signals"] = senales
+    STATE["hot_matches"] = detectar_hot_matches(partidos)
+    STATE["last_scan"] = int(time.time())
+    STATE["last_total_matches"] = len(partidos)
+    STATE["stats"] = _build_stats_from_signals(senales)
+
+    return jsonify({"signals": senales[:10]})
 
 # =========================================================
 # HOT MATCHES
