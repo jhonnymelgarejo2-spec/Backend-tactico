@@ -3,8 +3,9 @@ import requests
 from typing import Any, Dict, List
 
 
-API_FOOTBALL_URL = "https://v3.football.api-sports.io/fixtures"
-API_KEY_ENV = "API_FOOTBALL_KEY"
+DEFAULT_API_FOOTBALL_URL = "https://v3.football.api-sports.io/fixtures"
+API_KEY_ENV = "FOOTBALL_API_KEY"
+API_URL_ENV = "FOOTBALL_API_URL"
 
 
 def _to_int(value: Any, default: int = 0) -> int:
@@ -31,8 +32,12 @@ def _build_headers() -> Dict[str, str]:
     return {
         "x-apisports-key": api_key,
         "Accept": "application/json",
-        "User-Agent": "JHONNY_ELITE_V13/1.0",
+        "User-Agent": "JHONNY_ELITE_V16/1.0",
     }
+
+
+def _get_api_url() -> str:
+    return os.getenv(API_URL_ENV, DEFAULT_API_FOOTBALL_URL).strip()
 
 
 def _parse_momentum(minuto: int, goles_totales: int) -> str:
@@ -52,7 +57,7 @@ def _parse_estado_partido(status_short: str, status_long: str) -> str:
     if short in {"FT", "AET", "PEN", "CANC", "ABD", "AWD", "WO"}:
         return "finalizado"
 
-    if short in {"1H", "2H", "HT", "ET", "BT", "P"}:
+    if short in {"1H", "2H", "HT", "ET", "BT", "P", "LIVE"}:
         return "en_juego"
 
     if "live" in long_ or "half" in long_ or "playing" in long_:
@@ -78,7 +83,6 @@ def _normalizar_fixture(item: Dict[str, Any]) -> Dict[str, Any]:
 
     momentum = _parse_momentum(minuto, goles_totales)
 
-    # Base táctica inicial. Luego tu motor la enriquecerá.
     pressure_score = 0.0
     predictor_score = 0.0
     chaos_score = 0.0
@@ -115,6 +119,9 @@ def _normalizar_fixture(item: Dict[str, Any]) -> Dict[str, Any]:
             status.get("long", "")
         ),
         "xG": 0.0,
+        "shots": 0,
+        "shots_on_target": 0,
+        "dangerous_attacks": 0,
         "momentum": momentum,
         "cuota": 1.85,
         "prob_real": 0.75,
@@ -151,6 +158,9 @@ def _fallback_demo() -> List[Dict[str, Any]]:
         "marcador_visitante": 1,
         "estado_partido": "en_juego",
         "xG": 0.0,
+        "shots": 0,
+        "shots_on_target": 0,
+        "dangerous_attacks": 0,
         "momentum": "MEDIO",
         "cuota": 1.85,
         "prob_real": 0.75,
@@ -178,10 +188,11 @@ def _fallback_demo() -> List[Dict[str, Any]]:
 def obtener_partidos_en_vivo() -> List[Dict[str, Any]]:
     try:
         headers = _build_headers()
+        api_url = _get_api_url()
+
         response = requests.get(
-            API_FOOTBALL_URL,
+            api_url,
             headers=headers,
-            params={"live": "all"},
             timeout=25,
         )
         response.raise_for_status()
@@ -190,6 +201,7 @@ def obtener_partidos_en_vivo() -> List[Dict[str, Any]]:
         fixtures = data.get("response", [])
 
         if not isinstance(fixtures, list):
+            print("API-Football respondió en formato no esperado. Usando fallback demo.")
             return _fallback_demo()
 
         resultados = []
