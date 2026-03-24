@@ -3,451 +3,1081 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>JHONNY_ELITE V16 PRO</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>JHONNY ELITE V16 PRO</title>
+    <style>
+        :root {
+            --bg: #07111f;
+            --bg-2: #0b1728;
+            --panel: rgba(14, 25, 44, 0.92);
+            --panel-2: rgba(17, 31, 54, 0.95);
+            --line: rgba(120, 160, 220, 0.16);
+            --line-strong: rgba(120, 160, 220, 0.28);
+            --text: #f5f7fb;
+            --muted: #93a4bf;
+            --accent: #35b8ff;
+            --accent-2: #54e0b5;
+            --gold: #ffd452;
+            --danger: #ff6b7a;
+            --success: #7dff91;
+            --elite: linear-gradient(135deg, #b18cff, #7cf5ff);
+            --top: linear-gradient(135deg, #26c6ff, #4fffb3);
+            --normal: linear-gradient(135deg, #4f6b91, #7a8ba8);
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+            --radius-xl: 22px;
+            --radius-lg: 18px;
+            --radius-md: 14px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            background:
+                radial-gradient(circle at top left, rgba(38, 198, 255, 0.10), transparent 28%),
+                radial-gradient(circle at top right, rgba(255, 212, 82, 0.10), transparent 24%),
+                linear-gradient(180deg, #06111d 0%, #09182b 100%);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+        }
+
+        .wrap {
+            max-width: 1450px;
+            margin: 0 auto;
+            padding: 22px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px;
+            padding: 18px 22px;
+            border: 1px solid var(--line);
+            background: linear-gradient(180deg, rgba(10, 18, 32, 0.9), rgba(8, 16, 28, 0.82));
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow);
+            margin-bottom: 18px;
+        }
+
+        .brand-block {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .eyebrow {
+            font-size: 12px;
+            letter-spacing: 1.8px;
+            text-transform: uppercase;
+            color: #8fb8d7;
+            font-weight: 700;
+        }
+
+        .brand-title {
+            margin: 0;
+            font-size: 28px;
+            line-height: 1.05;
+            font-weight: 900;
+            letter-spacing: 0.4px;
+        }
+
+        .brand-title .pro {
+            color: var(--gold);
+        }
+
+        .brand-sub {
+            margin: 0;
+            color: var(--muted);
+            font-size: 15px;
+        }
+
+        .system-strip {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .strip-pill {
+            border: 1px solid var(--line);
+            background: rgba(15, 29, 49, 0.92);
+            padding: 10px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            color: var(--muted);
+            white-space: nowrap;
+        }
+
+        .strip-pill strong {
+            color: var(--text);
+        }
+
+        .ok {
+            color: var(--success);
+            font-weight: 800;
+        }
+
+        .warn {
+            color: var(--gold);
+            font-weight: 800;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1.45fr 0.95fr;
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+
+        .hero-left,
+        .hero-right {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .panel {
+            background: linear-gradient(180deg, rgba(13, 24, 42, 0.94), rgba(10, 18, 33, 0.96));
+            border: 1px solid var(--line);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow);
+        }
+
+        .panel-inner {
+            padding: 20px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            appearance: none;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 18px;
+            cursor: pointer;
+            font-weight: 800;
+            font-size: 14px;
+            transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            opacity: 0.96;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #27a7ff, #42d0ff);
+            color: #fff;
+            box-shadow: 0 8px 18px rgba(39, 167, 255, 0.28);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text);
+            border: 1px solid var(--line);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+
+        .stat-card {
+            min-height: 104px;
+            padding: 18px;
+            border-radius: var(--radius-lg);
+            background: linear-gradient(180deg, rgba(17, 31, 54, 0.95), rgba(12, 23, 41, 0.95));
+            border: 1px solid var(--line);
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 17px;
+            font-weight: 900;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+
+        .stat-value.big {
+            font-size: 22px;
+        }
+
+        .signal-main {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .signal-main::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at top left, rgba(83, 199, 255, 0.13), transparent 26%),
+                radial-gradient(circle at top right, rgba(255, 212, 82, 0.12), transparent 18%);
+            pointer-events: none;
+        }
+
+        .section-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(92, 255, 189, 0.1);
+            border: 1px solid rgba(92, 255, 189, 0.22);
+            color: #b7ffdb;
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .signal-header-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-top: 14px;
+            margin-bottom: 12px;
+        }
+
+        .signal-title {
+            margin: 0;
+            font-size: 28px;
+            line-height: 1.08;
+            font-weight: 900;
+        }
+
+        .signal-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 78px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            color: #06111d;
+        }
+
+        .badge.elite {
+            background: var(--elite);
+        }
+
+        .badge.top {
+            background: var(--top);
+        }
+
+        .badge.normal {
+            background: var(--normal);
+            color: white;
+        }
+
+        .match-line {
+            color: var(--text);
+            font-size: 17px;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .meta-line {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .metric-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 14px;
+        }
+
+        .metric-box .k {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .metric-box .v {
+            font-size: 20px;
+            font-weight: 900;
+        }
+
+        .reason-list {
+            margin-top: 16px;
+            display: grid;
+            gap: 8px;
+        }
+
+        .reason-item {
+            font-size: 14px;
+            color: #dbe5f4;
+            line-height: 1.45;
+        }
+
+        .reason-item strong {
+            color: #ffffff;
+        }
+
+        .mini-panels {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+
+        .mini-card {
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--line);
+            background: linear-gradient(180deg, rgba(17, 31, 54, 0.95), rgba(11, 22, 40, 0.96));
+            padding: 18px;
+            min-height: 112px;
+        }
+
+        .mini-title {
+            margin: 0 0 14px 0;
+            font-size: 15px;
+            font-weight: 900;
+        }
+
+        .mini-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .mini-kpi {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 12px;
+        }
+
+        .mini-kpi .label {
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+
+        .mini-kpi .value {
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .empty-box {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .table-panel .panel-inner {
+            padding: 18px 18px 10px 18px;
+        }
+
+        .table-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .table-head h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .table-head p {
+            margin: 4px 0 0 0;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: 14px;
+            border: 1px solid var(--line);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 980px;
+            background: rgba(7, 13, 24, 0.65);
+        }
+
+        thead th {
+            text-align: left;
+            font-size: 12px;
+            color: #9ab1ca;
+            padding: 14px 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            border-bottom: 1px solid var(--line);
+            white-space: nowrap;
+        }
+
+        tbody td {
+            padding: 16px 14px;
+            border-bottom: 1px solid rgba(120, 160, 220, 0.08);
+            vertical-align: top;
+            font-size: 14px;
+        }
+
+        tbody tr:hover {
+            background: rgba(53, 184, 255, 0.05);
+        }
+
+        .match-col-main {
+            font-weight: 800;
+            margin-bottom: 4px;
+            line-height: 1.35;
+        }
+
+        .match-col-sub {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .cell-strong {
+            font-weight: 900;
+        }
+
+        .rank-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 74px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .rank-chip.elite {
+            background: var(--elite);
+            color: #07111f;
+        }
+
+        .rank-chip.top {
+            background: var(--top);
+            color: #07111f;
+        }
+
+        .rank-chip.normal {
+            background: rgba(149, 168, 194, 0.18);
+            color: #d7e4f6;
+            border: 1px solid rgba(149, 168, 194, 0.25);
+        }
+
+        .rec-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 7px 12px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            background: rgba(125, 255, 145, 0.12);
+            color: #a6ffb3;
+            border: 1px solid rgba(125, 255, 145, 0.18);
+        }
+
+        .footer-note {
+            margin-top: 18px;
+            text-align: center;
+            color: #6d809c;
+            font-size: 12px;
+        }
+
+        .loading {
+            opacity: 0.75;
+        }
+
+        @media (max-width: 1180px) {
+            .hero {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 760px) {
+            .wrap {
+                padding: 14px;
+            }
+
+            .topbar {
+                padding: 16px;
+            }
+
+            .brand-title {
+                font-size: 24px;
+            }
+
+            .system-strip {
+                justify-content: flex-start;
+            }
+
+            .stats-grid,
+            .metrics-grid,
+            .mini-panels,
+            .mini-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .signal-header-row {
+                flex-direction: column;
+            }
+
+            .signal-badges {
+                justify-content: flex-start;
+            }
+
+            .signal-title {
+                font-size: 24px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="page-shell">
+    <div class="wrap">
         <header class="topbar">
             <div class="brand-block">
-                <div class="brand-kicker">SISTEMA PREDICTIVO EN VIVO</div>
-                <h1 class="brand-title">JHONNY ELITE V16 <span>PRO</span></h1>
-                <p class="brand-subtitle">
-                    Escaneo, interpretación, filtrado y selección de oportunidades reales.
-                </p>
+                <div class="eyebrow">Sistema predictivo en vivo</div>
+                <h1 class="brand-title">JHONNY ELITE V16 <span class="pro">PRO</span></h1>
+                <p class="brand-sub">Escaneo, interpretación, filtrado y selección de oportunidades reales.</p>
             </div>
 
-            <div class="topbar-actions">
-                <button id="scanBtn" class="btn btn-primary">Escanear ahora</button>
-                <button id="refreshBtn" class="btn btn-secondary">Actualizar panel</button>
+            <div class="system-strip">
+                <div class="strip-pill">Sistema: <strong id="sys-status">...</strong></div>
+                <div class="strip-pill">Auto Scan: <span class="warn">ACTIVO</span></div>
+                <div class="strip-pill">Refresco: <strong>Cada 60s</strong></div>
+                <div class="actions">
+                    <button class="btn btn-primary" onclick="runScan()">Escanear ahora</button>
+                    <button class="btn btn-secondary" onclick="loadDashboard()">Actualizar panel</button>
+                </div>
             </div>
         </header>
 
-        <section class="status-strip">
-            <div class="status-chip">
-                <span class="status-label">Sistema</span>
-                <span id="systemStatus" class="status-value ok">OK</span>
-            </div>
-            <div class="status-chip">
-                <span class="status-label">Auto Scan</span>
-                <span class="status-value active">ACTIVO</span>
-            </div>
-            <div class="status-chip">
-                <span class="status-label">Refresco</span>
-                <span class="status-value">Cada 60s</span>
-            </div>
-            <div class="status-chip">
-                <span class="status-label">Último scan</span>
-                <span id="lastScanHeader" class="status-value">--</span>
-            </div>
-        </section>
-
-        <section class="kpi-grid">
-            <div class="kpi-card">
-                <div class="kpi-title">Estado</div>
-                <div id="kpiStatus" class="kpi-value ok">ok</div>
-            </div>
-
-            <div class="kpi-card">
-                <div class="kpi-title">Último scan</div>
-                <div id="kpiLastScan" class="kpi-value">--</div>
-            </div>
-
-            <div class="kpi-card">
-                <div class="kpi-title">Señales activas</div>
-                <div id="kpiSignals" class="kpi-value">0</div>
-            </div>
-
-            <div class="kpi-card">
-                <div class="kpi-title">Hot matches</div>
-                <div id="kpiHotMatches" class="kpi-value">0</div>
-            </div>
-        </section>
-
-        <section class="main-grid">
-            <div class="main-left">
-                <div class="panel-card hero-card">
-                    <div class="panel-header">
-                        <span class="panel-kicker">SEÑAL PRINCIPAL</span>
-                        <span id="heroRankBadge" class="rank-badge normal">NORMAL</span>
-                    </div>
-
-                    <div id="heroEmpty" class="empty-hero">
-                        No hay señal principal publicada en este momento.
-                    </div>
-
-                    <div id="heroContent" class="hero-content hidden">
-                        <div class="hero-top">
-                            <h2 id="heroSelection" class="hero-selection">--</h2>
-                            <div id="heroMatch" class="hero-match">--</div>
-                            <div id="heroMeta" class="hero-meta">--</div>
+        <div class="hero">
+            <div class="hero-left">
+                <section class="panel">
+                    <div class="panel-inner">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-label">Estado</div>
+                                <div class="stat-value big" id="estado-kpi">ok</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Último scan</div>
+                                <div class="stat-value big" id="ultimo-scan-kpi">--</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Señales activas</div>
+                                <div class="stat-value big" id="signals-count-kpi">0</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Hot matches</div>
+                                <div class="stat-value big" id="hot-count-kpi">0</div>
+                            </div>
                         </div>
+                    </div>
+                </section>
 
-                        <div class="hero-metrics">
-                            <div class="metric-pill">
-                                <span class="metric-name">Cuota</span>
-                                <span id="heroOdd" class="metric-value">--</span>
+                <section class="panel signal-main">
+                    <div class="panel-inner">
+                        <div class="section-tag">Señal principal</div>
+
+                        <div class="signal-header-row">
+                            <div>
+                                <h2 class="signal-title" id="main-selection">No hay señales publicables</h2>
+                                <div class="match-line" id="main-match">Esperando próximo escaneo...</div>
+                                <div class="meta-line" id="main-meta">Sin datos disponibles</div>
                             </div>
-                            <div class="metric-pill">
-                                <span class="metric-name">Confianza</span>
-                                <span id="heroConfidence" class="metric-value">--</span>
-                            </div>
-                            <div class="metric-pill">
-                                <span class="metric-name">Value</span>
-                                <span id="heroValue" class="metric-value">--</span>
-                            </div>
-                            <div class="metric-pill">
-                                <span class="metric-name">Riesgo</span>
-                                <span id="heroRisk" class="metric-value">--</span>
+
+                            <div class="signal-badges">
+                                <span class="badge normal" id="main-rank">NORMAL</span>
+                                <span class="badge top" id="main-decision">OBSERVAR</span>
                             </div>
                         </div>
 
-                        <div class="score-grid">
-                            <div class="score-box">
-                                <span>Signal Score</span>
-                                <strong id="heroSignalScore">--</strong>
+                        <div class="metrics-grid">
+                            <div class="metric-box">
+                                <div class="k">Cuota</div>
+                                <div class="v" id="main-odd">--</div>
                             </div>
-                            <div class="score-box">
-                                <span>Tactical Score</span>
-                                <strong id="heroTacticalScore">--</strong>
+                            <div class="metric-box">
+                                <div class="k">Confianza</div>
+                                <div class="v" id="main-confidence">--</div>
                             </div>
-                            <div class="score-box">
-                                <span>AI Decision</span>
-                                <strong id="heroAiScore">--</strong>
+                            <div class="metric-box">
+                                <div class="k">Value</div>
+                                <div class="v" id="main-value">--</div>
                             </div>
-                            <div class="score-box">
-                                <span>Goal Score</span>
-                                <strong id="heroGoalScore">--</strong>
+                            <div class="metric-box">
+                                <div class="k">Riesgo</div>
+                                <div class="v" id="main-risk">--</div>
+                            </div>
+
+                            <div class="metric-box">
+                                <div class="k">Signal Score</div>
+                                <div class="v" id="main-signal-score">--</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="k">Tactical Score</div>
+                                <div class="v" id="main-tactical-score">--</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="k">AI Decision</div>
+                                <div class="v" id="main-ai-score">--</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="k">Goal Score</div>
+                                <div class="v" id="main-goal-score">--</div>
                             </div>
                         </div>
 
                         <div class="reason-list">
-                            <div><strong>Motivo táctico:</strong> <span id="heroReason">--</span></div>
-                            <div><strong>Motivo value:</strong> <span id="heroValueReason">--</span></div>
-                            <div><strong>Lectura IA:</strong> <span id="heroAiReason">--</span></div>
+                            <div class="reason-item"><strong>Motivo táctico:</strong> <span id="main-reason-tactical">Sin lectura disponible</span></div>
+                            <div class="reason-item"><strong>Motivo value:</strong> <span id="main-reason-value">Sin lectura disponible</span></div>
+                            <div class="reason-item"><strong>Lectura IA:</strong> <span id="main-reason-ai">Sin lectura disponible</span></div>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <div class="panel-card table-card">
-                    <div class="panel-header">
-                        <div>
-                            <h3>Top señales del momento</h3>
-                            <p>Máximo 10 señales con mejor perfil operativo.</p>
+                <section class="panel table-panel">
+                    <div class="panel-inner">
+                        <div class="table-head">
+                            <div>
+                                <h2>Top señales del momento</h2>
+                                <p>Máximo 10 señales con mejor perfil operativo.</p>
+                            </div>
+                        </div>
+
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Partido</th>
+                                        <th>Min</th>
+                                        <th>Mercado</th>
+                                        <th>Selección</th>
+                                        <th>Cuota</th>
+                                        <th>Confianza</th>
+                                        <th>Value</th>
+                                        <th>Riesgo</th>
+                                        <th>Rank</th>
+                                        <th>Recomendación</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="signals-table-body">
+                                    <tr>
+                                        <td colspan="10" style="text-align:center; color: var(--muted); padding: 24px;">
+                                            Cargando señales...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-
-                    <div id="signalsEmpty" class="empty-table">
-                        No hay señales publicables en este momento.
-                    </div>
-
-                    <div class="table-wrap">
-                        <table id="signalsTable" class="signals-table hidden">
-                            <thead>
-                                <tr>
-                                    <th>Partido</th>
-                                    <th>Min</th>
-                                    <th>Mercado</th>
-                                    <th>Selección</th>
-                                    <th>Cuota</th>
-                                    <th>Confianza</th>
-                                    <th>Value</th>
-                                    <th>Riesgo</th>
-                                    <th>Rank</th>
-                                    <th>Recomendación</th>
-                                </tr>
-                            </thead>
-                            <tbody id="signalsTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
+                </section>
             </div>
 
-            <aside class="main-right">
-                <div class="panel-card side-card">
-                    <div class="panel-header">
-                        <h3>Rendimiento del sistema</h3>
+            <aside class="hero-right">
+                <section class="panel">
+                    <div class="panel-inner">
+                        <h3 class="mini-title">Rendimiento del sistema</h3>
+                        <div class="mini-grid">
+                            <div class="mini-kpi">
+                                <div class="label">Win Rate</div>
+                                <div class="value" id="stat-winrate">0%</div>
+                            </div>
+                            <div class="mini-kpi">
+                                <div class="label">ROI</div>
+                                <div class="value" id="stat-roi">0%</div>
+                            </div>
+                            <div class="mini-kpi">
+                                <div class="label">Ganadas</div>
+                                <div class="value" id="stat-wins">0</div>
+                            </div>
+                            <div class="mini-kpi">
+                                <div class="label">Perdidas</div>
+                                <div class="value" id="stat-losses">0</div>
+                            </div>
+                            <div class="mini-kpi">
+                                <div class="label">Elite</div>
+                                <div class="value" id="stat-elite">0</div>
+                            </div>
+                            <div class="mini-kpi">
+                                <div class="label">Top</div>
+                                <div class="value" id="stat-top">0</div>
+                            </div>
+                        </div>
                     </div>
+                </section>
 
-                    <div class="mini-stats">
-                        <div class="mini-stat">
-                            <span>Win Rate</span>
-                            <strong id="statWinRate">0%</strong>
-                        </div>
-                        <div class="mini-stat">
-                            <span>ROI</span>
-                            <strong id="statROI">0%</strong>
-                        </div>
-                        <div class="mini-stat">
-                            <span>Ganadas</span>
-                            <strong id="statWon">0</strong>
-                        </div>
-                        <div class="mini-stat">
-                            <span>Perdidas</span>
-                            <strong id="statLost">0</strong>
-                        </div>
-                        <div class="mini-stat">
-                            <span>Elite</span>
-                            <strong id="statElite">0</strong>
-                        </div>
-                        <div class="mini-stat">
-                            <span>Top</span>
-                            <strong id="statTop">0</strong>
+                <section class="panel">
+                    <div class="panel-inner">
+                        <h3 class="mini-title">Hot matches</h3>
+                        <div class="empty-box" id="hot-matches-box">
+                            No hay hot matches en este momento.
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <div class="panel-card side-card">
-                    <div class="panel-header">
-                        <h3>Hot matches</h3>
-                    </div>
-                    <div id="hotMatchesList" class="list-block empty-list">
-                        No hay hot matches en este momento.
-                    </div>
-                </div>
-
-                <div class="panel-card side-card">
-                    <div class="panel-header">
-                        <h3>Resumen operativo</h3>
-                    </div>
-                    <div class="summary-lines">
-                        <div class="summary-line">
-                            <span>Señales cargadas</span>
-                            <strong id="summarySignals">0</strong>
-                        </div>
-                        <div class="summary-line">
-                            <span>Value promedio</span>
-                            <strong id="summaryValue">0</strong>
-                        </div>
-                        <div class="summary-line">
-                            <span>Riesgo medio</span>
-                            <strong id="summaryRisk">0</strong>
-                        </div>
-                        <div class="summary-line">
-                            <span>Mejor rank</span>
-                            <strong id="summaryRank">--</strong>
+                <section class="panel">
+                    <div class="panel-inner">
+                        <h3 class="mini-title">Resumen operativo</h3>
+                        <div class="mini-grid">
+                            <div class="mini-kpi">
+                                <div class="label">Señales cargadas</div>
+                                <div class="value" id="summary-signals">0</div>
+                            </div>
+                            <div class="mini-kpi">
+                                <div class="label">Value promedio</div>
+                                <div class="value" id="summary-value">0</div>
+                            </div>
+                            <div class="mini-kpi">
+                                <div class="label">Riesgo medio</div>
+                                <div class="value" id="summary-risk">0</div>
+                            </div>
+                            <div class="mini-kpi">
+                                <div class="label">Mejor rank</div>
+                                <div class="value" id="summary-rank">N/A</div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </section>
             </aside>
-        </section>
+        </div>
+
+        <div class="footer-note">
+            JHONNY ELITE V16 PRO · Panel operativo en vivo
+        </div>
     </div>
 
     <script>
-        function formatTimestamp(ts) {
-            if (!ts) return "--";
-            const date = new Date(ts * 1000);
-            if (isNaN(date.getTime())) return "--";
-            return date.toLocaleString("es-ES");
-        }
-
         function safeNumber(value, fallback = 0) {
-            const n = Number(value);
+            const n = parseFloat(value);
             return Number.isFinite(n) ? n : fallback;
         }
 
-        function safeText(value, fallback = "--") {
+        function safeText(value, fallback = "N/A") {
             if (value === null || value === undefined || value === "") return fallback;
             return String(value);
+        }
+
+        function formatDate(ts) {
+            if (!ts) return "--";
+            try {
+                const d = new Date(ts * 1000);
+                return d.toLocaleString("es-ES");
+            } catch {
+                return "--";
+            }
         }
 
         function getRankClass(rank) {
             const r = safeText(rank, "NORMAL").toUpperCase();
             if (r === "ELITE") return "elite";
-            if (r === "TOP") return "top";
-            if (r === "ALTA") return "alta";
+            if (r === "TOP" || r === "ALTA") return "top";
             return "normal";
         }
 
-        function setText(id, value) {
-            const el = document.getElementById(id);
-            if (el) el.textContent = value;
+        function getDecisionLabel(signal) {
+            return safeText(
+                signal.recomendacion_final ||
+                signal.ai_recommendation ||
+                signal.decision_ia ||
+                "OBSERVAR"
+            ).toUpperCase();
         }
 
-        async function fetchJSON(url) {
-            const res = await fetch(url, { cache: "no-store" });
-            if (!res.ok) {
-                throw new Error(`Error ${res.status} en ${url}`);
-            }
-            return await res.json();
+        function getMainReasonTactical(s) {
+            return (
+                s.razon_tactica ||
+                s.reason ||
+                s.tempo_reason ||
+                s.context_reason ||
+                "Sin lectura táctica disponible"
+            );
         }
 
-        function renderHero(signal) {
-            const heroEmpty = document.getElementById("heroEmpty");
-            const heroContent = document.getElementById("heroContent");
-            const badge = document.getElementById("heroRankBadge");
+        function getMainReasonValue(s) {
+            return (
+                s.razon_value ||
+                s.value_reason ||
+                "Sin lectura de value disponible"
+            );
+        }
 
+        function getMainReasonAI(s) {
+            return (
+                s.ai_reason ||
+                s.razon_ia ||
+                s.ai_fit_reason ||
+                "Sin lectura IA disponible"
+            );
+        }
+
+        function renderMainSignal(signal) {
             if (!signal) {
-                heroEmpty.classList.remove("hidden");
-                heroContent.classList.add("hidden");
-                badge.textContent = "NORMAL";
-                badge.className = "rank-badge normal";
+                document.getElementById("main-selection").textContent = "No hay señales publicables";
+                document.getElementById("main-match").textContent = "Esperando próximo escaneo...";
+                document.getElementById("main-meta").textContent = "Sin datos disponibles";
+                document.getElementById("main-rank").textContent = "NORMAL";
+                document.getElementById("main-rank").className = "badge normal";
+                document.getElementById("main-decision").textContent = "OBSERVAR";
+                document.getElementById("main-decision").className = "badge normal";
+
+                [
+                    "main-odd","main-confidence","main-value","main-risk",
+                    "main-signal-score","main-tactical-score","main-ai-score","main-goal-score"
+                ].forEach(id => document.getElementById(id).textContent = "--");
+
+                document.getElementById("main-reason-tactical").textContent = "Sin lectura disponible";
+                document.getElementById("main-reason-value").textContent = "Sin lectura disponible";
+                document.getElementById("main-reason-ai").textContent = "Sin lectura disponible";
                 return;
             }
 
-            heroEmpty.classList.add("hidden");
-            heroContent.classList.remove("hidden");
-
+            const match = `${safeText(signal.home, "Local")} vs ${safeText(signal.away, "Visitante")}`;
+            const meta = `${safeText(signal.league, "Liga desconocida")} · ${safeText(signal.country, "World")} · Min ${safeText(signal.minute, "--")} · Marcador ${safeText(signal.score, "--")}`;
             const rank = safeText(signal.signal_rank || signal.rank, "NORMAL").toUpperCase();
-            badge.textContent = rank;
-            badge.className = `rank-badge ${getRankClass(rank)}`;
+            const decision = getDecisionLabel(signal);
 
-            setText("heroSelection", safeText(signal.selection));
-            setText("heroMatch", `${safeText(signal.home)} vs ${safeText(signal.away)}`);
-            setText(
-                "heroMeta",
-                `${safeText(signal.league)} · ${safeText(signal.country)} · Min ${safeText(signal.minute)} · Marcador ${safeText(signal.score)}`
-            );
+            document.getElementById("main-selection").textContent = safeText(signal.selection, "Sin selección");
+            document.getElementById("main-match").textContent = match;
+            document.getElementById("main-meta").textContent = meta;
 
-            setText("heroOdd", safeText(signal.odd));
-            setText("heroConfidence", `${safeNumber(signal.confidence)}%`);
-            setText("heroValue", safeText(signal.value));
-            setText("heroRisk", safeText(signal.risk_score ?? signal.riesgo_operativo));
+            const rankEl = document.getElementById("main-rank");
+            rankEl.textContent = rank;
+            rankEl.className = `badge ${getRankClass(rank)}`;
 
-            setText("heroSignalScore", safeText(signal.signal_score));
-            setText("heroTacticalScore", safeText(signal.tactical_score));
-            setText("heroAiScore", safeText(signal.ai_decision_score));
-            setText("heroGoalScore", safeText(signal.goal_inminente_score));
+            const decisionEl = document.getElementById("main-decision");
+            decisionEl.textContent = decision;
+            decisionEl.className = `badge ${decision === "APOSTAR_FUERTE" ? "elite" : decision === "APOSTAR" ? "top" : "normal"}`;
 
-            setText("heroReason", safeText(signal.reason));
-            setText("heroValueReason", safeText(signal.razon_value));
-            setText("heroAiReason", safeText(signal.ai_reason));
+            document.getElementById("main-odd").textContent = safeText(signal.odd, "--");
+            document.getElementById("main-confidence").textContent = `${safeNumber(signal.confidence, 0)}%`;
+            document.getElementById("main-value").textContent = safeText(signal.value, "--");
+            document.getElementById("main-risk").textContent = safeText(signal.risk_score, safeText(signal.riesgo_operativo, "--"));
+            document.getElementById("main-signal-score").textContent = safeText(signal.signal_score, "--");
+            document.getElementById("main-tactical-score").textContent = safeText(signal.tactical_score, "--");
+            document.getElementById("main-ai-score").textContent = safeText(signal.ai_decision_score, safeText(signal.ai_score, "--"));
+            document.getElementById("main-goal-score").textContent = safeText(signal.goal_inminente_score, safeText(signal.goal_score, "--"));
+
+            document.getElementById("main-reason-tactical").textContent = getMainReasonTactical(signal);
+            document.getElementById("main-reason-value").textContent = getMainReasonValue(signal);
+            document.getElementById("main-reason-ai").textContent = getMainReasonAI(signal);
         }
 
         function renderSignalsTable(signals) {
-            const empty = document.getElementById("signalsEmpty");
-            const table = document.getElementById("signalsTable");
-            const tbody = document.getElementById("signalsTableBody");
+            const tbody = document.getElementById("signals-table-body");
 
-            tbody.innerHTML = "";
-
-            if (!signals || signals.length === 0) {
-                empty.classList.remove("hidden");
-                table.classList.add("hidden");
+            if (!signals || !signals.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="10" style="text-align:center; color: var(--muted); padding: 24px;">
+                            No hay señales publicables en este momento.
+                        </td>
+                    </tr>
+                `;
                 return;
             }
 
-            empty.classList.add("hidden");
-            table.classList.remove("hidden");
-
-            signals.slice(0, 10).forEach(signal => {
-                const tr = document.createElement("tr");
-
-                const rank = safeText(signal.signal_rank || signal.rank, "NORMAL").toUpperCase();
-                const rec = safeText(signal.recomendacion_final || signal.ai_recommendation || "OBSERVAR");
-
-                tr.innerHTML = `
-                    <td>
-                        <div class="cell-main">${safeText(signal.home)} vs ${safeText(signal.away)}</div>
-                        <div class="cell-sub">${safeText(signal.league)} · ${safeText(signal.score)}</div>
-                    </td>
-                    <td>${safeText(signal.minute)}</td>
-                    <td>${safeText(signal.market)}</td>
-                    <td>${safeText(signal.selection)}</td>
-                    <td>${safeText(signal.odd)}</td>
-                    <td>${safeNumber(signal.confidence)}%</td>
-                    <td>${safeText(signal.value)}</td>
-                    <td>${safeText(signal.risk_score ?? signal.riesgo_operativo)}</td>
-                    <td><span class="rank-badge ${getRankClass(rank)}">${rank}</span></td>
-                    <td><span class="rec-badge">${rec}</span></td>
+            tbody.innerHTML = signals.slice(0, 10).map(s => {
+                const rank = safeText(s.signal_rank || s.rank, "NORMAL").toUpperCase();
+                const decision = getDecisionLabel(s);
+                return `
+                    <tr>
+                        <td>
+                            <div class="match-col-main">${safeText(s.home, "Local")} vs ${safeText(s.away, "Visitante")}</div>
+                            <div class="match-col-sub">${safeText(s.league, "Liga")} · ${safeText(s.score, "--")}</div>
+                        </td>
+                        <td class="cell-strong">${safeText(s.minute, "--")}</td>
+                        <td>${safeText(s.market, "--")}</td>
+                        <td>${safeText(s.selection, "--")}</td>
+                        <td class="cell-strong">${safeText(s.odd, "--")}</td>
+                        <td class="cell-strong">${safeNumber(s.confidence, 0)}%</td>
+                        <td class="cell-strong">${safeText(s.value, "--")}</td>
+                        <td class="cell-strong">${safeText(s.risk_score, "--")}</td>
+                        <td><span class="rank-chip ${getRankClass(rank)}">${rank}</span></td>
+                        <td><span class="rec-chip">${decision}</span></td>
+                    </tr>
                 `;
-                tbody.appendChild(tr);
-            });
+            }).join("");
         }
 
-        function renderHotMatches(matches) {
-            const box = document.getElementById("hotMatchesList");
+        function renderStats(stats, signals) {
+            document.getElementById("stat-winrate").textContent = `${safeNumber(stats.win_rate, 0)}%`;
+            document.getElementById("stat-roi").textContent = `${safeNumber(stats.roi_percent, 0)}%`;
+            document.getElementById("stat-wins").textContent = safeText(stats.ganadas, "0");
+            document.getElementById("stat-losses").textContent = safeText(stats.perdidas, "0");
+            document.getElementById("stat-elite").textContent = safeText(stats.signals_elite, "0");
+            document.getElementById("stat-top").textContent = safeText(stats.signals_top, "0");
 
-            if (!matches || matches.length === 0) {
-                box.className = "list-block empty-list";
-                box.innerHTML = "No hay hot matches en este momento.";
+            const totalSignals = signals.length;
+            const avgValue = totalSignals
+                ? (signals.reduce((acc, s) => acc + safeNumber(s.value, 0), 0) / totalSignals).toFixed(2)
+                : "0";
+            const avgRisk = totalSignals
+                ? (signals.reduce((acc, s) => acc + safeNumber(s.risk_score, 0), 0) / totalSignals).toFixed(2)
+                : "0";
+            const bestRank = signals.some(s => safeText(s.signal_rank).toUpperCase() === "ELITE")
+                ? "ELITE"
+                : signals.some(s => safeText(s.signal_rank).toUpperCase() === "TOP")
+                ? "TOP"
+                : totalSignals ? "NORMAL" : "N/A";
+
+            document.getElementById("summary-signals").textContent = totalSignals;
+            document.getElementById("summary-value").textContent = avgValue;
+            document.getElementById("summary-risk").textContent = avgRisk;
+            document.getElementById("summary-rank").textContent = bestRank;
+        }
+
+        function renderHotMatches(hotMatches) {
+            const box = document.getElementById("hot-matches-box");
+            const count = hotMatches ? hotMatches.length : 0;
+            document.getElementById("hot-count-kpi").textContent = count;
+
+            if (!count) {
+                box.innerHTML = `No hay hot matches en este momento.`;
                 return;
             }
 
-            box.className = "list-block";
-            box.innerHTML = matches.slice(0, 8).map(match => `
-                <div class="list-item">
-                    <div class="list-item-title">${safeText(match.local)} vs ${safeText(match.visitante)}</div>
-                    <div class="list-item-sub">
-                        ${safeText(match.liga)} · Min ${safeText(match.minuto)} · xG ${safeText(match.xG)}
+            box.innerHTML = hotMatches.slice(0, 5).map(h => `
+                <div style="padding:10px 0; border-bottom: 1px solid rgba(120,160,220,0.08);">
+                    <div style="font-weight:800; margin-bottom:4px;">${safeText(h.local, "Local")} vs ${safeText(h.visitante, "Visitante")}</div>
+                    <div style="color: var(--muted); font-size: 13px;">
+                        ${safeText(h.liga, "Liga")} · Min ${safeText(h.minuto, "--")} · xG ${safeText(h.xG, "0")}
                     </div>
                 </div>
             `).join("");
         }
 
-        function renderStats(stats, signals) {
-            const safeSignals = signals || [];
-            const valueAvg = safeSignals.length
-                ? (safeSignals.reduce((acc, s) => acc + safeNumber(s.value), 0) / safeSignals.length).toFixed(2)
-                : "0";
+        async function loadDashboard() {
+            try {
+                document.body.classList.add("loading");
 
-            const riskAvg = safeSignals.length
-                ? (safeSignals.reduce((acc, s) => acc + safeNumber(s.risk_score), 0) / safeSignals.length).toFixed(2)
-                : "0";
+                const [statusRes, signalsRes, statsRes, hotRes] = await Promise.all([
+                    fetch("/status"),
+                    fetch("/signals"),
+                    fetch("/learning-stats"),
+                    fetch("/hot-matches")
+                ]);
 
-            const bestRank = safeSignals.length
-                ? safeText(safeSignals[0].signal_rank || safeSignals[0].rank, "--")
-                : "--";
+                const statusData = await statusRes.json();
+                const signalsData = await signalsRes.json();
+                const statsData = await statsRes.json();
+                const hotData = await hotRes.json();
 
-            setText("statWinRate", `${safeNumber(stats?.win_rate)}%`);
-            setText("statROI", `${safeNumber(stats?.roi_percent)}%`);
-            setText("statWon", safeText(stats?.ganadas, "0"));
-            setText("statLost", safeText(stats?.perdidas, "0"));
-            setText("statElite", safeText(stats?.signals_elite, "0"));
-            setText("statTop", safeText(stats?.signals_top, "0"));
+                const signals = Array.isArray(signalsData.signals) ? signalsData.signals : [];
+                const sortedSignals = [...signals].sort((a, b) => {
+                    const aScore =
+                        safeNumber(a.ai_decision_score, 0) * 3 +
+                        safeNumber(a.signal_score, 0) * 2 +
+                        safeNumber(a.confidence, 0) +
+                        safeNumber(a.value, 0);
 
-            setText("summarySignals", String(safeSignals.length));
-            setText("summaryValue", valueAvg);
-            setText("summaryRisk", riskAvg);
-            setText("summaryRank", bestRank);
+                    const bScore =
+                        safeNumber(b.ai_decision_score, 0) * 3 +
+                        safeNumber(b.signal_score, 0) * 2 +
+                        safeNumber(b.confidence, 0) +
+                        safeNumber(b.value, 0);
+
+                    return bScore - aScore;
+                });
+
+                document.getElementById("sys-status").textContent = safeText(statusData.status, "ok").toUpperCase();
+                document.getElementById("estado-kpi").textContent = safeText(statusData.status, "ok");
+                document.getElementById("signals-count-kpi").textContent = sortedSignals.length;
+
+                renderMainSignal(sortedSignals[0] || null);
+                renderSignalsTable(sortedSignals);
+                renderStats(statsData || {}, sortedSignals);
+                renderHotMatches(Array.isArray(hotData.hot_matches) ? hotData.hot_matches : []);
+            } catch (error) {
+                console.error("ERROR cargando dashboard:", error);
+            } finally {
+                document.body.classList.remove("loading");
+            }
         }
 
         async function runScan() {
             try {
-                const data = await fetchJSON("/scan");
-                setText("kpiLastScan", formatTimestamp(data.ultimo_scan));
-                setText("lastScanHeader", formatTimestamp(data.ultimo_scan));
-            } catch (err) {
-                console.error(err);
-            }
-            await loadDashboard();
-        }
+                const btn = event.target;
+                btn.disabled = true;
+                btn.textContent = "Escaneando...";
 
-        async function loadDashboard() {
-            try {
-                const [status, signalsRes, hotRes, statsRes] = await Promise.all([
-                    fetchJSON("/health"),
-                    fetchJSON("/signals"),
-                    fetchJSON("/hot-matches"),
-                    fetchJSON("/learning-stats")
-                ]);
+                const res = await fetch("/scan");
+                const data = await res.json();
+                console.log("SCAN:", data);
 
-                const signals = Array.isArray(signalsRes.signals) ? signalsRes.signals : [];
-                const hotMatches = Array.isArray(hotRes.hot_matches) ? hotRes.hot_matches : [];
+                document.getElementById("ultimo-scan-kpi").textContent = formatDate(data.ultimo_scan || data.last_scan || 0);
 
-                const topSignals = [...signals].sort((a, b) => {
-                    return safeNumber(b.signal_score) - safeNumber(a.signal_score);
-                }).slice(0, 10);
-
-                setText("systemStatus", safeText(status.status, "ok").toUpperCase());
-                setText("kpiStatus", safeText(status.status, "ok"));
-                setText("kpiSignals", String(topSignals.length));
-                setText("kpiHotMatches", String(hotMatches.length));
-
-                renderHero(topSignals[0] || null);
-                renderSignalsTable(topSignals);
-                renderHotMatches(hotMatches);
-                renderStats(statsRes, topSignals);
-            } catch (err) {
-                console.error("Error cargando dashboard:", err);
+                await loadDashboard();
+            } catch (error) {
+                console.error("ERROR scan:", error);
+            } finally {
+                const btn = document.querySelector(".btn-primary");
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = "Escanear ahora";
+                }
             }
         }
 
-        document.getElementById("scanBtn").addEventListener("click", runScan);
-        document.getElementById("refreshBtn").addEventListener("click", loadDashboard);
-
-        loadDashboard();
         setInterval(loadDashboard, 60000);
+        loadDashboard();
     </script>
 </body>
-              </html>
+    </html>
