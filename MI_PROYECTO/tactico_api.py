@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from typing import Dict, Any, List
 import time
 
@@ -24,14 +24,21 @@ except Exception as e:
     guardar_senal = None
 
 # =========================================================
-# IMPORT FETCHER REAL
+# IMPORT FETCHERS
 # =========================================================
 try:
-    from api_football_fetcher import obtener_partidos_en_vivo as obtener_partidos_api
+    from live_fetcher import obtener_partidos_en_vivo as obtener_partidos_live
+    print("[IMPORTAR] live_fetcher OK")
+except Exception as e:
+    print(f"[ERROR IMPORTAR] live_fetcher -> {e}")
+    obtener_partidos_live = None
+
+try:
+    from api_football_fetcher import obtener_partidos_en_vivo as obtener_partidos_api_football
     print("[IMPORTAR] api_football_fetcher OK")
 except Exception as e:
     print(f"[ERROR IMPORTAR] api_football_fetcher -> {e}")
-    obtener_partidos_api = None
+    obtener_partidos_api_football = None
 
 # =========================================================
 # APP FLASK
@@ -76,6 +83,22 @@ def _clamp(value: float, min_value: float, max_value: float) -> float:
     return max(min_value, min(value, max_value))
 
 
+def _safe_bool(value: Any, default: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return default
+    text = str(value).strip().lower()
+    if text in {"true", "1", "si", "sí", "yes", "ok"}:
+        return True
+    if text in {"false", "0", "no"}:
+        return False
+    return default
+
+
+# =========================================================
+# SCORE TACTICO
+# =========================================================
 def calcular_tactical_score(partido: Dict[str, Any]) -> float:
     xg = _safe_float(partido.get("xG"), 0.0)
     shots = _safe_int(partido.get("shots"), 0)
@@ -394,6 +417,11 @@ def filtrar_value_bets_reales(senal: Dict[str, Any]) -> bool:
         "uefa champions league",
         "europa league",
         "uefa europa league",
+        "brasileiro",
+        "serie b",
+        "liga pro",
+        "copa libertadores",
+        "sudamericana",
     }
 
     if minute >= 89:
@@ -451,95 +479,150 @@ STATE = {
 
 
 # =========================================================
-# FALLBACK SI LA API REAL NO RESPONDE
+# HELPERS DE FETCH / SALIDA
 # =========================================================
-def _partidos_demo_fallback() -> List[Dict[str, Any]]:
-    return [
-        {
-            "id": 1,
-            "local": "Equipo A",
-            "visitante": "Equipo B",
-            "liga": "Demo League",
-            "pais": "World",
-            "minuto": 25,
-            "marcador_local": 1,
-            "marcador_visitante": 0,
-            "xG": 1.4,
-            "shots": 9,
-            "shots_on_target": 4,
-            "dangerous_attacks": 22,
-            "momentum": "ALTO",
-            "goal_pressure": {"pressure_score": 7},
-            "goal_predictor": {
-                "predictor_score": 8,
-                "goal_next_5_prob": 0.34,
-                "goal_next_10_prob": 0.41
-            },
-            "chaos": {"chaos_score": 3}
-        },
-        {
-            "id": 2,
-            "local": "Equipo C",
-            "visitante": "Equipo D",
-            "liga": "Demo League",
-            "pais": "World",
-            "minuto": 67,
-            "marcador_local": 0,
-            "marcador_visitante": 0,
-            "xG": 0.8,
-            "shots": 6,
-            "shots_on_target": 2,
-            "dangerous_attacks": 14,
-            "momentum": "MEDIO",
-            "goal_pressure": {"pressure_score": 5},
-            "goal_predictor": {
-                "predictor_score": 5,
-                "goal_next_5_prob": 0.18,
-                "goal_next_10_prob": 0.29
-            },
-            "chaos": {"chaos_score": 2}
-        },
-        {
-            "id": 3,
-            "local": "Equipo E",
-            "visitante": "Equipo F",
-            "liga": "Demo League",
-            "pais": "World",
-            "minuto": 33,
-            "marcador_local": 0,
-            "marcador_visitante": 1,
-            "xG": 1.7,
-            "shots": 11,
-            "shots_on_target": 5,
-            "dangerous_attacks": 27,
-            "momentum": "MUY ALTO",
-            "goal_pressure": {"pressure_score": 8},
-            "goal_predictor": {
-                "predictor_score": 9,
-                "goal_next_5_prob": 0.42,
-                "goal_next_10_prob": 0.56
-            },
-            "chaos": {"chaos_score": 4}
-        }
-    ]
+def _obtener_partidos_reales() -> List[Dict[str, Any]]:
+    partidos: List[Dict[str, Any]] = []
 
-
-# =========================================================
-# OBTENER PARTIDOS LIVE
-# =========================================================
-def obtener_partidos_live() -> List[Dict[str, Any]]:
-    if obtener_partidos_api:
+    if obtener_partidos_api_football:
         try:
-            partidos = obtener_partidos_api()
-            if isinstance(partidos, list) and partidos:
-                print(f"[SCAN] partidos reales obtenidos -> {len(partidos)}")
-                return partidos
-            print("[SCAN] api_football_fetcher devolvió vacío, usando fallback demo")
+            partidos = obtener_partidos_api_football() or []
+            print(f"[FETCH] api_football_fetcher -> {len(partidos)} partidos")
         except Exception as e:
-            print(f"[SCAN] ERROR fetcher real -> {e}")
+            print(f"[FETCH] ERROR api_football_fetcher -> {e}")
 
-    print("[SCAN] usando partidos demo fallback")
-    return _partidos_demo_fallback()
+    if not partidos and obtener_partidos_live:
+        try:
+            partidos = obtener_partidos_live() or []
+            print(f"[FETCH] live_fetcher -> {len(partidos)} partidos")
+        except Exception as e:
+            print(f"[FETCH] ERROR live_fetcher -> {e}")
+
+    return partidos
+
+
+def _ranking_score(senal: Dict[str, Any]) -> float:
+    return round(
+        (_safe_float(senal.get("ai_decision_score"), 0.0) * 1.8) +
+        (_safe_float(senal.get("signal_score"), 0.0) * 1.3) +
+        (_safe_float(senal.get("confidence"), 0.0) * 1.0) +
+        (_safe_float(senal.get("value"), 0.0) * 3.0) +
+        (_safe_float(senal.get("value_pct"), 0.0) * 1.2) -
+        (_safe_float(senal.get("risk_score"), 0.0) * 7.0),
+        2
+    )
+
+
+def _senal_publicable(senal: Dict[str, Any]) -> bool:
+    decision = _safe_upper(senal.get("decision_ejecutiva") or senal.get("ai_recommendation") or senal.get("recomendacion_final"))
+    publish_ready = _safe_bool(senal.get("publish_ready"), True)
+    permitido_operar = _safe_bool(senal.get("permitido_operar"), True)
+
+    confidence = _safe_float(senal.get("confidence"), 0.0)
+    value = _safe_float(senal.get("value"), 0.0)
+    value_pct = _safe_float(senal.get("value_pct"), 0.0)
+    risk_score = _safe_float(senal.get("risk_score"), 10.0)
+    market = _safe_upper(senal.get("market"))
+    minute = _safe_int(senal.get("minute"), 0)
+
+    if not publish_ready:
+        return False
+
+    if not permitido_operar:
+        return False
+
+    if decision in {"NO", "NO_APOSTAR", "BLOQUEAR"}:
+        return False
+
+    if minute >= 89:
+        return False
+
+    if confidence < 58:
+        return False
+
+    if value <= 0 and value_pct <= 0:
+        return False
+
+    if risk_score > 9:
+        return False
+
+    if market == "":
+        return False
+
+    return True
+
+
+def _limpiar_senal_para_salida(senal: Dict[str, Any]) -> Dict[str, Any]:
+    ranking_score = _ranking_score(senal)
+
+    return {
+        "match_id": senal.get("match_id"),
+        "home": senal.get("home"),
+        "away": senal.get("away"),
+        "league": senal.get("league"),
+        "country": senal.get("country"),
+        "minute": senal.get("minute"),
+        "score": senal.get("score"),
+        "market": senal.get("market"),
+        "selection": senal.get("selection"),
+        "line": senal.get("line"),
+        "odd": senal.get("odd"),
+        "prob": senal.get("prob"),
+        "confidence": senal.get("confidence"),
+        "value": senal.get("value"),
+        "value_pct": senal.get("value_pct"),
+        "edge_pct": senal.get("edge_pct"),
+        "risk_score": senal.get("risk_score"),
+        "signal_score": senal.get("signal_score"),
+        "ai_decision_score": senal.get("ai_decision_score"),
+        "ranking_score": ranking_score,
+        "signal_rank": senal.get("signal_rank"),
+        "tier": senal.get("tier"),
+        "recomendacion_final": senal.get("recomendacion_final"),
+        "ai_recommendation": senal.get("ai_recommendation"),
+        "decision_ejecutiva": senal.get("decision_ejecutiva"),
+        "reason": senal.get("reason"),
+        "ai_reason": senal.get("ai_reason"),
+        "razon_value": senal.get("razon_value"),
+        "stake_pct": senal.get("stake_pct"),
+        "stake_amount": senal.get("stake_amount"),
+        "stake_label": senal.get("stake_label"),
+        "bankroll_mode": senal.get("bankroll_mode"),
+        "estado_partido": senal.get("estado_partido"),
+        "goal_prob_5": senal.get("goal_prob_5"),
+        "goal_prob_10": senal.get("goal_prob_10"),
+        "goal_prob_15": senal.get("goal_prob_15"),
+        "goal_inminente_score": senal.get("goal_inminente_score"),
+        "tactical_score": senal.get("tactical_score"),
+        "publish_ready": senal.get("publish_ready", True),
+        "permitido_operar": senal.get("permitido_operar", True),
+    }
+
+
+def _deduplicar_senales(senales: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    mejores: Dict[str, Dict[str, Any]] = {}
+
+    for s in senales:
+        match_id = str(s.get("match_id") or s.get("id") or "")
+        market = str(s.get("market") or "")
+        key = f"{match_id}::{market}"
+
+        actual = mejores.get(key)
+        if actual is None:
+            mejores[key] = s
+            continue
+
+        if _ranking_score(s) > _ranking_score(actual):
+            mejores[key] = s
+
+    return list(mejores.values())
+
+
+def _top_senales_publicables(senales: List[Dict[str, Any]], max_items: int = 10) -> List[Dict[str, Any]]:
+    candidatas = [s for s in senales if _senal_publicable(s)]
+    candidatas = _deduplicar_senales(candidatas)
+    candidatas.sort(key=_ranking_score, reverse=True)
+    return candidatas[:max_items]
 
 
 # =========================================================
@@ -555,6 +638,7 @@ def procesar_partidos(partidos: List[Dict[str, Any]]) -> List[Dict]:
         try:
             print(f"[SCAN] procesando partido -> {p.get('id')}")
             s = procesar_partido(p)
+
             print(f"[SCAN] resultado pipeline -> {s}")
 
             if s:
@@ -566,17 +650,8 @@ def procesar_partidos(partidos: List[Dict[str, Any]]) -> List[Dict]:
         except Exception as e:
             print(f"[ERROR PARTIDO] {e}")
 
-    senales.sort(
-        key=lambda x: (
-            float(x.get("ai_decision_score", 0) or 0),
-            float(x.get("signal_score", 0) or 0),
-            float(x.get("confidence", 0) or 0),
-            float(x.get("value", 0) or 0),
-        ),
-        reverse=True
-    )
-
-    senales = senales[:10]
+    senales = _deduplicar_senales(senales)
+    senales.sort(key=_ranking_score, reverse=True)
 
     print(f"[SCAN] total señales generadas -> {len(senales)}")
     print(f"[SCAN] ESTADO señales -> {senales}")
@@ -590,11 +665,25 @@ def detectar_hot_matches(partidos: List[Dict]) -> List[Dict]:
     for p in partidos:
         xg = float(p.get("xG", 0) or 0)
         shots = int(p.get("shots", 0) or 0)
+        pressure = _safe_float((p.get("goal_pressure") or {}).get("pressure_score"), 0.0)
 
-        if xg >= 1.2 or shots >= 8:
+        if xg >= 1.2 or shots >= 8 or pressure >= 5:
             hot.append(p)
 
-    return hot[:10]
+    return hot
+
+
+def _guardar_senales_top(senales: List[Dict[str, Any]]):
+    if not guardar_senal:
+        return
+
+    top = _top_senales_publicables(senales, max_items=10)
+    for s in top:
+        try:
+            guardar_senal(s)
+            print(f"[ALMACENAMIENTO] señal guardada -> {s.get('match_id')}")
+        except Exception as e:
+            print(f"[ALMACENAMIENTO] ERROR guardar_senal -> {e}")
 
 
 # =========================================================
@@ -620,50 +709,68 @@ def health():
 
 @app.route("/scan")
 def scan():
-    partidos = obtener_partidos_live()
+    partidos = _obtener_partidos_reales()
+
+    if not partidos:
+        partidos = [
+            {
+                "id": 99999,
+                "local": "Argentina",
+                "visitante": "Brasil",
+                "liga": "Demo fallback",
+                "pais": "Demo",
+                "minuto": 45,
+                "marcador_local": 2,
+                "marcador_visitante": 1,
+                "xG": 0.8,
+                "shots": 7,
+                "shots_on_target": 3,
+                "dangerous_attacks": 15,
+                "momentum": "ALTO",
+                "goal_pressure": {"pressure_score": 3},
+                "goal_predictor": {"predictor_score": 2},
+                "chaos": {"chaos_score": 1},
+            }
+        ]
+        print("[SCAN] usando fallback interno")
+
     senales = procesar_partidos(partidos)
+    senales_top = _top_senales_publicables(senales, max_items=10)
     hot = detectar_hot_matches(partidos)
 
-    STATE["signals"] = senales
+    STATE["signals"] = senales_top
     STATE["hot_matches"] = hot
     STATE["last_scan"] = int(time.time())
 
-    if guardar_senal:
-        for s in senales:
-            try:
-                guardar_senal(s)
-                print(f"[ALMACENAMIENTO] señal guardada -> {s.get('match_id')}")
-            except Exception as e:
-                print(f"[ALMACENAMIENTO] ERROR guardar_senal -> {e}")
+    _guardar_senales_top(senales_top)
 
     return jsonify({
         "ultimo_scan": STATE["last_scan"],
         "total_partidos": len(partidos),
-        "total_senales": len(senales)
+        "total_senales": len(senales_top),
     })
 
 
 @app.route("/signals")
 def signals():
-    if STATE["signals"]:
-        print(f"[SIGNALS] desde memoria -> {len(STATE['signals'])}")
-        return jsonify({
-            "signals": STATE["signals"][:10]
-        })
+    data: List[Dict[str, Any]] = []
 
     if obtener_senales:
         try:
-            data = obtener_senales()
+            data = obtener_senales() or []
             print(f"[SIGNALS] obtenidas desde archivo -> {len(data)}")
-            return jsonify({
-                "signals": data[-10:]
-            })
         except Exception as e:
             print(f"[SIGNALS] ERROR obtener_senales -> {e}")
 
-    print("[SIGNALS] sin señales disponibles")
+    if not data:
+        data = STATE["signals"]
+        print(f"[SIGNALS] fallback STATE -> {len(data)}")
+
+    top = _top_senales_publicables(data, max_items=10)
+    salida = [_limpiar_senal_para_salida(s) for s in top]
+
     return jsonify({
-        "signals": []
+        "signals": salida
     })
 
 
@@ -681,12 +788,49 @@ def learning_stats():
 
 @app.route("/history")
 def history():
-    return jsonify(STATE["history"])
+    raw_data: List[Dict[str, Any]] = []
+    if obtener_senales:
+        try:
+            raw_data = obtener_senales() or []
+        except Exception:
+            raw_data = []
+
+    if not raw_data:
+        raw_data = STATE["signals"]
+
+    raw_data = _deduplicar_senales(raw_data)
+    raw_data.sort(key=_ranking_score, reverse=True)
+
+    return jsonify({
+        "history": [_limpiar_senal_para_salida(s) for s in raw_data[-50:]]
+    })
 
 
 @app.route("/api/leagues")
 def leagues():
-    return jsonify(STATE["leagues"])
+    leagues_map: Dict[str, Dict[str, Any]] = {}
+
+    fuente = STATE["signals"]
+    if not fuente and obtener_senales:
+        try:
+            fuente = obtener_senales() or []
+        except Exception:
+            fuente = []
+
+    for s in fuente:
+        liga = str(s.get("league") or "Liga desconocida")
+        pais = str(s.get("country") or "World")
+
+        if liga not in leagues_map:
+            leagues_map[liga] = {
+                "league": liga,
+                "country": pais,
+                "signals": 0
+            }
+
+        leagues_map[liga]["signals"] += 1
+
+    return jsonify(sorted(leagues_map.values(), key=lambda x: x["signals"], reverse=True))
 
 
 @app.route("/test-pipeline")
