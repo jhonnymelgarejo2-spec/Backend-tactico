@@ -302,22 +302,28 @@ def _master_gate(senal_final: Dict) -> bool:
 
     if minute >= 89:
         return False
-    if risk_score > 7.5:
-        return False
-    if tactical_score < 10:
-        return False
-    if signal_score < 80:
-        return False
-    if confidence < 62:
-        return False
-    if value < 1.5:
+
+    if risk_score > 8.5:
         return False
 
-    if final_decision == "NO_APOSTAR" and confidence < 75:
+    if confidence < 56:
         return False
 
-    if final_state in {"FINAL_CAOTICO", "SIN_VENTAJA"} and best_outcome < 75:
+    if value < 0.5:
         return False
+
+    if tactical_score < 6:
+        return False
+
+    if signal_score < 45:
+        return False
+
+    if final_decision == "NO_APOSTAR" and confidence < 70:
+        return False
+
+    if final_state in {"FINAL_CAOTICO", "SIN_VENTAJA"}:
+        if best_outcome < 60 and confidence < 72 and value < 8:
+            return False
 
     return True
 
@@ -608,12 +614,14 @@ def procesar_partido(partido: Dict) -> Optional[Dict]:
             print(f"[PIPELINE] RECHAZADO OBSERVAR -> {partido.get('local')} vs {partido.get('visitante')}")
             return None
 
-    # filtro maestro flexible final
     if not _master_gate(senal_final):
         print(f"[PIPELINE] RECHAZADO MASTER GATE -> {partido.get('local')} vs {partido.get('visitante')}")
         return None
 
-    senal_final["recomendacion_final"] = senal_final.get("ai_recommendation", senal_final.get("recomendacion_final", "OBSERVAR"))
+    senal_final["recomendacion_final"] = senal_final.get(
+        "ai_recommendation",
+        senal_final.get("recomendacion_final", "OBSERVAR")
+    )
     senal_final["publish_ready"] = True
     senal_final["publish_rank"] = int(senal_final.get("publish_rank", 1) or 1)
 
