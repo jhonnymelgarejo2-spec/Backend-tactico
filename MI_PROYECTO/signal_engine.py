@@ -726,7 +726,6 @@ def generar_senales_posibles(datos):
     if goal10 < 0.50:
         confianza_hold += 3
 
-    # castigo para que no domine siempre
     if gol_inminente["gol_inminente"]:
         confianza_hold -= 10
     if estado["estado"] in ("EXPLOSIVO", "CALIENTE", "CAOS"):
@@ -836,7 +835,6 @@ def score_mercado(senal, datos, estado, gol_inminente):
             score += 4
         if xg < 1.3:
             score += 3
-        # penalización para que no gane por defecto
         if gol_inminente.get("gol_inminente"):
             score -= 18
         if estado["estado"] in ("EXPLOSIVO", "CALIENTE", "CAOS"):
@@ -851,6 +849,38 @@ def score_mercado(senal, datos, estado, gol_inminente):
     return round(score, 2)
 
 
+def aplicar_balance_mercados(senales_ordenadas):
+    if not senales_ordenadas:
+        return []
+
+    max_por_mercado = {
+        "NEXT_GOAL": 3,
+        "OVER_NEXT_15_DYNAMIC": 3,
+        "OVER_MATCH_DYNAMIC": 3,
+        "UNDER_MATCH_DYNAMIC": 3,
+        "RESULT_HOLDS_NEXT_15": 2,
+    }
+
+    usados = {}
+    resultado = []
+
+    for senal in senales_ordenadas:
+        mercado = senal.get("mercado", "")
+        usados.setdefault(mercado, 0)
+
+        limite = max_por_mercado.get(mercado, 2)
+        if usados[mercado] >= limite:
+            continue
+
+        resultado.append(senal)
+        usados[mercado] += 1
+
+        if len(resultado) >= 10:
+            break
+
+    return resultado
+
+
 def elegir_mejor_senal(senales, datos, estado, gol_inminente):
     if not senales:
         return None
@@ -861,7 +891,7 @@ def elegir_mejor_senal(senales, datos, estado, gol_inminente):
         s2["_market_score"] = score_mercado(s2, datos, estado, gol_inminente)
         enriquecidas.append(s2)
 
-    return sorted(
+    elegida = sorted(
         enriquecidas,
         key=lambda s: (
             float(s.get("_market_score", 0) or 0),
@@ -872,12 +902,32 @@ def elegir_mejor_senal(senales, datos, estado, gol_inminente):
         reverse=True
     )[0]
 
+    return elegida
+
 
 def generar_senal(datos):
     estado = clasificar_partido(datos)
     gol_inminente = detectar_gol_inminente(datos)
     senales = generar_senales_posibles(datos)
-    mejor = elegir_mejor_senal(senales, datos, estado, gol_inminente)
+
+    senales_enriquecidas = []
+    for s in senales:
+        s2 = dict(s)
+        s2["_market_score"] = score_mercado(s2, datos, estado, gol_inminente)
+        senales_enriquecidas.append(s2)
+
+    senales_ordenadas = sorted(
+        senales_enriquecidas,
+        key=lambda s: (
+            float(s.get("_market_score", 0) or 0),
+            float(s.get("value_score", 0) or 0),
+            float(s.get("confianza", 0) or 0),
+            float(s.get("valor", 0) or 0)
+        ),
+        reverse=True
+    )
+
+    mejor = senales_ordenadas[0] if senales_ordenadas else None
 
     total_goles_estimado = estimar_total_goles(datos)
     pred_ganador = predecir_ganador(datos)
@@ -962,6 +1012,8 @@ def generar_senal(datos):
     resultado["recomendacion_final"] = "APOSTAR"
     resultado["riesgo_operativo"] = riesgo_operativo
 
+    senales_balanceadas = aplicar_balance_mercados(senales_ordenadas)
+
     resultado["senales_posibles"] = [
         {
             "mercado": s.get("mercado"),
@@ -977,7 +1029,7 @@ def generar_senal(datos):
             "value_categoria": s.get("value_categoria"),
             "recomendacion_value": s.get("recomendacion_value")
         }
-        for s in senales
+        for s in senales_balanceadas
     ]
 
     return resultado
