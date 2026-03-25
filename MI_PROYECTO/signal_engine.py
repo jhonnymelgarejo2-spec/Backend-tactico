@@ -515,6 +515,131 @@ def calcular_riesgo_operativo(datos, confianza_prediccion, estado_partido):
     return "BAJO"
 
 
+def riesgo_operativo_a_score(riesgo_operativo, datos=None, estado_partido=None):
+    score = 3.5
+
+    if normalizar_texto(riesgo_operativo) == "BAJO":
+        score = 3.2
+    elif normalizar_texto(riesgo_operativo) == "MEDIO":
+        score = 5.1
+    elif normalizar_texto(riesgo_operativo) == "ALTO":
+        score = 7.4
+
+    if datos:
+        minuto = safe_int(datos.get("minuto", 0), 0)
+        xg = safe_float(datos.get("xG", 0), 0.0)
+        shots_on_target = safe_int(datos.get("shots_on_target", 0), 0)
+        dangerous_attacks = safe_int(datos.get("dangerous_attacks", 0), 0)
+
+        if minuto >= 84:
+            score += 0.8
+        elif minuto >= 78:
+            score += 0.4
+
+        if xg < 1.0:
+            score += 0.5
+        if shots_on_target <= 1:
+            score += 0.5
+        if dangerous_attacks < 10:
+            score += 0.4
+
+    if estado_partido:
+        estado = normalizar_texto((estado_partido or {}).get("estado", ""))
+        if estado in ("FRIO", "MUERTO"):
+            score += 0.6
+        elif estado in ("EXPLOSIVO", "CAOS"):
+            score -= 0.3
+
+    return round(clamp(score, 1.0, 10.0), 2)
+
+
+def calcular_tactical_score(datos, estado_partido=None, gol_inminente=None):
+    xg = safe_float(datos.get("xG", 0), 0.0)
+    shots = safe_int(datos.get("shots", 0), 0)
+    shots_on_target = safe_int(datos.get("shots_on_target", 0), 0)
+    dangerous_attacks = safe_int(datos.get("dangerous_attacks", 0), 0)
+    minuto = safe_int(datos.get("minuto", 0), 0)
+    momentum = normalizar_texto(datos.get("momentum"))
+
+    pressure_score = safe_float((datos.get("goal_pressure") or {}).get("pressure_score", 0), 0.0)
+    predictor_score = safe_float((datos.get("goal_predictor") or {}).get("predictor_score", 0), 0.0)
+    goal5 = safe_float((datos.get("goal_predictor") or {}).get("goal_next_5_prob", 0), 0.0) * 100
+    goal10 = safe_float((datos.get("goal_predictor") or {}).get("goal_next_10_prob", 0), 0.0) * 100
+    chaos_score = safe_float((datos.get("chaos") or {}).get("chaos_score", 0), 0.0)
+
+    score = 0.0
+    score += xg * 18.0
+    score += shots * 0.8
+    score += shots_on_target * 4.0
+    score += dangerous_attacks * 0.25
+    score += pressure_score * 2.5
+    score += predictor_score * 2.0
+    score += chaos_score * 1.4
+    score += goal5 * 0.25
+    score += goal10 * 0.15
+
+    if momentum == "MUY ALTO":
+        score += 16
+    elif momentum == "ALTO":
+        score += 11
+    elif momentum == "MEDIO":
+        score += 5
+
+    if 15 <= minuto <= 75:
+        score += 8
+    elif 76 <= minuto <= 88:
+        score += 5
+
+    if estado_partido:
+        estado = normalizar_texto((estado_partido or {}).get("estado", ""))
+        if estado == "EXPLOSIVO":
+            score += 14
+        elif estado == "CALIENTE":
+            score += 9
+        elif estado == "CONTROLADO":
+            score += 4
+        elif estado in ("FRIO", "MUERTO"):
+            score -= 6
+
+    if gol_inminente and gol_inminente.get("gol_inminente"):
+        score += 10
+
+    return round(max(0.0, score), 2)
+
+
+def calcular_signal_score(senal, datos, estado_partido=None, gol_inminente=None):
+    confianza = safe_float(senal.get("confianza", 0), 0.0)
+    valor = safe_float(senal.get("valor", 0), 0.0)
+    value_score = safe_float(senal.get("value_score", 0), 0.0)
+    ai_decision_score = safe_float(senal.get("ai_decision_score", 0), 0.0)
+    confianza_prediccion = safe_float(senal.get("confianza_prediccion", 0), 0.0)
+
+    tactical_score = calcular_tactical_score(datos, estado_partido, gol_inminente)
+    riesgo_operativo = calcular_riesgo_operativo(datos, confianza_prediccion or confianza, estado_partido or {})
+    risk_score = riesgo_operativo_a_score(riesgo_operativo, datos, estado_partido)
+
+    score = 0.0
+    score += confianza * 1.30
+    score += valor * 2.40
+    score += value_score * 1.20
+    score += tactical_score * 0.90
+    score += confianza_prediccion * 0.55
+    score += ai_decision_score * 0.35
+    score -= risk_score * 5.00
+
+    return round(score, 2)
+
+
+def signal_rank_desde_score(signal_score):
+    if signal_score >= 430:
+        return "ELITE"
+    if signal_score >= 300:
+        return "TOP"
+    if signal_score >= 190:
+        return "FUERTE"
+    return "NORMAL"
+
+
 def enriquecer_con_value(senal):
     value_data = evaluar_value(
         senal.get("prob_real", 0.0),
@@ -560,7 +685,6 @@ def generar_senales_posibles(datos):
 
     senales = []
 
-    # NEXT GOAL
     confianza_next_goal = base
     if estado["estado"] in ("EXPLOSIVO", "CAOS", "CALIENTE"):
         confianza_next_goal += 10
@@ -598,7 +722,6 @@ def generar_senales_posibles(datos):
         if senal["tier"] != "DESCARTAR":
             senales.append(senal)
 
-    # OVER NEXT 15
     confianza_next15 = base
     if xg >= 1.2:
         confianza_next15 += 7
@@ -635,7 +758,6 @@ def generar_senales_posibles(datos):
         if senal["tier"] != "DESCARTAR":
             senales.append(senal)
 
-    # OVER PARTIDO
     confianza_over_match = base
     if xg >= 1.5:
         confianza_over_match += 8
@@ -672,7 +794,6 @@ def generar_senales_posibles(datos):
         if senal["tier"] != "DESCARTAR":
             senales.append(senal)
 
-    # UNDER PARTIDO
     confianza_under_match = 48
     if momentum in ("BAJO", "MEDIO"):
         confianza_under_match += 8
@@ -709,7 +830,6 @@ def generar_senales_posibles(datos):
         if senal["tier"] != "DESCARTAR":
             senales.append(senal)
 
-    # RESULT HOLDS NEXT 15
     confianza_hold = 46
     if momentum in ("BAJO", "MEDIO"):
         confianza_hold += 8
@@ -955,6 +1075,9 @@ def generar_senal(datos):
     )
 
     if mejor is None:
+        tactical_score = calcular_tactical_score(datos, estado, gol_inminente)
+        risk_score = riesgo_operativo_a_score(riesgo_operativo, datos, estado)
+
         return {
             "id": datos.get("id", ""),
             "minuto": safe_int(datos.get("minuto", 0), 0),
@@ -982,6 +1105,11 @@ def generar_senal(datos):
             "confianza_prediccion": pred_ganador["confianza_prediccion"],
             "recomendacion_final": "OBSERVAR",
             "riesgo_operativo": riesgo_operativo,
+            "risk_score": risk_score,
+            "tactical_score": tactical_score,
+            "signal_score": 0.0,
+            "signal_rank": "NORMAL",
+            "ai_decision_score": 0.0,
             "prob_implicita_calculada": 0.0,
             "value_pct": 0.0,
             "edge_pct": 0.0,
@@ -993,6 +1121,15 @@ def generar_senal(datos):
 
     resultado = dict(mejor)
     resultado.pop("_market_score", None)
+
+    tactical_score = calcular_tactical_score(datos, estado, gol_inminente)
+
+    ai_decision_score = round(
+        (safe_float(resultado.get("confianza", 0), 0.0) * 0.65) +
+        (safe_float(resultado.get("valor", 0), 0.0) * 1.2) +
+        (tactical_score * 0.25),
+        2
+    )
 
     resultado["id"] = datos.get("id", "")
     resultado["minuto"] = safe_int(datos.get("minuto", 0), 0)
@@ -1011,6 +1148,12 @@ def generar_senal(datos):
     resultado["confianza_prediccion"] = pred_ganador["confianza_prediccion"]
     resultado["recomendacion_final"] = "APOSTAR"
     resultado["riesgo_operativo"] = riesgo_operativo
+
+    resultado["tactical_score"] = tactical_score
+    resultado["ai_decision_score"] = ai_decision_score
+    resultado["risk_score"] = riesgo_operativo_a_score(riesgo_operativo, datos, estado)
+    resultado["signal_score"] = calcular_signal_score(resultado, datos, estado, gol_inminente)
+    resultado["signal_rank"] = signal_rank_desde_score(resultado["signal_score"])
 
     senales_balanceadas = aplicar_balance_mercados(senales_ordenadas)
 
