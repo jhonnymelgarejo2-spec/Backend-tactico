@@ -114,11 +114,11 @@ def _es_minuto_operable(minuto: int) -> bool:
 
 
 def _es_ventana_premium(minuto: int) -> bool:
-    return 25 <= minuto <= 45 or 60 <= minuto <= 75
+    return (25 <= minuto <= 45) or (60 <= minuto <= 85)
 
 
 def _es_ventana_secundaria(minuto: int) -> bool:
-    return 15 <= minuto <= 24 or 76 <= minuto <= 85
+    return (15 <= minuto <= 24) or (46 <= minuto <= 59) or (86 <= minuto <= 88)
 
 
 def _calcular_probabilidades_base(partido: Dict[str, Any]) -> Dict[str, float]:
@@ -618,12 +618,12 @@ def _build_ai_layer(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str
         ai_fit = "CONFLICTIVA"
         ai_reason = "Mercado poco alineado con el estado explosivo"
 
-    if confidence < 70:
-        ai_score -= 8
+    if confidence < 66:
+        ai_score -= 6
 
     ai_confidence_final = _clamp(confidence + ai_confidence_adjustment, 50.0, 95.0)
 
-    if ai_score < 45:
+    if ai_score < 42:
         ai_recommendation = "OBSERVAR"
 
     return {
@@ -649,10 +649,10 @@ def _build_dynamic_filters(signal: Dict[str, Any]) -> Dict[str, Any]:
     signal_score = _safe_float(signal.get("signal_score"), 0.0)
     estado = _estado_partido_texto(signal.get("estado_partido"))
 
-    dynamic_context_min_score = 35
-    dynamic_chaos_confidence_block = 75
-    dynamic_min_confidence = 70
-    dynamic_value_flex_mode = False
+    dynamic_context_min_score = 30
+    dynamic_chaos_confidence_block = 68
+    dynamic_min_confidence = 64
+    dynamic_value_flex_mode = True
 
     antifake_ok = True
     value_filter_ok = True
@@ -666,16 +666,19 @@ def _build_dynamic_filters(signal: Dict[str, Any]) -> Dict[str, Any]:
     if confidence < dynamic_min_confidence:
         confianza_ok = False
 
-    if value < 1.0:
+    if value < 0.50:
         value_filter_ok = False
 
-    if market == "RESULT_HOLDS_NEXT_15" and tactical_score < 18:
+    if market == "RESULT_HOLDS_NEXT_15" and tactical_score < 9:
         context_ok = False
 
-    if market in ("NEXT_GOAL", "OVER_NEXT_15_DYNAMIC") and tactical_score < 12:
+    if market in ("NEXT_GOAL", "OVER_NEXT_15_DYNAMIC") and tactical_score < 8:
         context_ok = False
 
-    if risk_score > 7.2:
+    if signal_score < 70:
+        context_ok = False
+
+    if risk_score > 8.2:
         antifake_ok = False
 
     if estado == "CAOS" and confidence < dynamic_chaos_confidence_block and market in ("UNDER_MATCH_DYNAMIC", "RESULT_HOLDS_NEXT_15"):
@@ -707,20 +710,20 @@ def _build_operation_fields(signal: Dict[str, Any]) -> Dict[str, Any]:
     stake_pct = 2.0
     stake_label = "NORMAL"
 
-    if signal_rank == "ELITE" or (confidence >= 86 and ai_score >= 150 and value >= 10 and risk_score <= 4.5):
+    if signal_rank == "ELITE" or (confidence >= 86 and ai_score >= 150 and value >= 10 and risk_score <= 4.8):
         stake_pct = 4.9
         stake_label = "FUERTE"
-    elif signal_rank == "TOP" or (confidence >= 79 and value >= 6):
+    elif signal_rank == "TOP" or (confidence >= 78 and value >= 5):
         stake_pct = 4.0
         stake_label = "FUERTE"
-    elif confidence >= 73:
+    elif confidence >= 71:
         stake_pct = 3.2
         stake_label = "MEDIO"
     else:
         stake_pct = 2.0
         stake_label = "NORMAL"
 
-    stake_amount = round(stake_pct * 10, 1)  # placeholder simple
+    stake_amount = round(stake_pct * 10, 1)
 
     return {
         "stake_pct": round(stake_pct, 1),
@@ -731,7 +734,7 @@ def _build_operation_fields(signal: Dict[str, Any]) -> Dict[str, Any]:
         "stop_loss_consecutivo": 2,
         "permitido_operar": True,
         "decision_ejecutiva": "SI",
-        "decision_ia": "APOSTAR" if confidence >= 70 else "OBSERVAR",
+        "decision_ia": "APOSTAR" if confidence >= 64 else "OBSERVAR",
     }
 
 
@@ -741,6 +744,7 @@ def _master_gate(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str, A
     value = _safe_float(signal.get("value"), 0.0)
     risk_score = _safe_float(signal.get("risk_score"), 0.0)
     tactical_score = _safe_float(signal.get("tactical_score"), 0.0)
+    signal_score = _safe_float(signal.get("signal_score"), 0.0)
     market = _upper(signal.get("market"))
     estado = _estado_partido_texto(signal.get("estado_partido"))
 
@@ -749,22 +753,25 @@ def _master_gate(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str, A
     if not _es_minuto_operable(minute):
         blocked_reasons.append("Fuera de ventana operable")
 
-    if confidence < 68:
+    if confidence < 64:
         blocked_reasons.append("Confianza por debajo del mínimo")
 
-    if value < 1.0:
+    if value < 0.50:
         blocked_reasons.append("Value insuficiente")
 
-    if risk_score > 7.2:
+    if risk_score > 8.2:
         blocked_reasons.append("Riesgo operativo alto")
 
-    if market == "RESULT_HOLDS_NEXT_15" and estado in ("CAOS", "EXPLOSIVO"):
+    if signal_score < 70:
+        blocked_reasons.append("Signal score insuficiente")
+
+    if market == "RESULT_HOLDS_NEXT_15" and estado in ("CAOS", "EXPLOSIVO") and confidence < 80:
         blocked_reasons.append("Mercado hold no coherente con estado explosivo")
 
-    if market in ("NEXT_GOAL", "OVER_NEXT_15_DYNAMIC") and tactical_score < 12:
+    if market in ("NEXT_GOAL", "OVER_NEXT_15_DYNAMIC") and tactical_score < 8:
         blocked_reasons.append("Mercado ofensivo sin respaldo táctico suficiente")
 
-    if market == "UNDER_MATCH_DYNAMIC" and minute < 30:
+    if market == "UNDER_MATCH_DYNAMIC" and minute < 22:
         blocked_reasons.append("Under partido demasiado temprano")
 
     publish_ready = len(blocked_reasons) == 0
@@ -786,30 +793,30 @@ def _ranking_layer(signal: Dict[str, Any]) -> Dict[str, Any]:
     minute = _safe_int(signal.get("minute"), 0)
 
     ranking_score_base = (
-        ai_decision_score * 1.8 +
-        signal_score * 1.35 +
-        confidence * 1.2 +
-        value * 2.8 +
+        ai_decision_score * 1.75 +
+        signal_score * 1.30 +
+        confidence * 1.15 +
+        value * 2.60 +
         tactical_score * 0.70
     )
 
-    ranking_penalty = risk_score * 10
+    ranking_penalty = risk_score * 8.5
 
     if minute >= 85:
-        ranking_penalty += 10
+        ranking_penalty += 8
     elif minute >= 80:
-        ranking_penalty += 5
+        ranking_penalty += 4
 
     if market == "RESULT_HOLDS_NEXT_15":
-        ranking_penalty += 2.5
+        ranking_penalty += 1.5
 
     ranking_score = round(ranking_score_base - ranking_penalty, 2)
-    qualifies_for_top = ranking_score >= 150
+    qualifies_for_top = ranking_score >= 120
 
     publish_rank = 3
-    if ranking_score >= 340:
+    if ranking_score >= 320:
         publish_rank = 1
-    elif ranking_score >= 240:
+    elif ranking_score >= 220:
         publish_rank = 2
 
     return {
@@ -845,7 +852,7 @@ def _publicar_formato_final(partido: Dict[str, Any], signal: Dict[str, Any]) -> 
     mv = _safe_int(partido.get("marcador_visitante"), 0)
     minuto = _safe_int(partido.get("minuto"), 0)
 
-    market = _safe_text(signal.get("market"))
+    market = _safe_text(signal.get("mercado"))
     selection = _safe_text(signal.get("selection"))
     if not selection:
         selection = _safe_text(signal.get("apuesta"))
@@ -894,6 +901,11 @@ def _publicar_formato_final(partido: Dict[str, Any], signal: Dict[str, Any]) -> 
         "confianza_prediccion": round(_safe_float(signal.get("confianza_prediccion"), 0.0), 2),
         "recomendacion_final": _safe_text(signal.get("recomendacion_final"), "APOSTAR"),
         "riesgo_operativo": _safe_text(signal.get("riesgo_operativo"), "MEDIO"),
+        "xG": round(_safe_float(partido.get("xG"), 0.0), 2),
+        "shots": _safe_int(partido.get("shots"), 0),
+        "shots_on_target": _safe_int(partido.get("shots_on_target"), 0),
+        "dangerous_attacks": _safe_int(partido.get("dangerous_attacks"), 0),
+        "momentum": _safe_text(partido.get("momentum"), "MEDIO"),
     }
 
 
@@ -913,20 +925,17 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             print(f"[PIPELINE] partido fuera de ventana -> {partido.get('local')} vs {partido.get('visitante')}")
             return None
 
-        # 1. señal base desde signal_engine
         base_signal = generar_senal(partido)
         if not base_signal:
             print(f"[PIPELINE] señal base vacía -> {partido.get('local')} vs {partido.get('visitante')}")
             return None
 
-        # si el motor devuelve SIN_SEÑAL, no publicamos
         if _upper(base_signal.get("mercado")) == "SIN_SEÑAL" or _upper(base_signal.get("tier")) == "DESCARTAR":
             print(f"[PIPELINE] señal descartada por motor base -> {partido.get('local')} vs {partido.get('visitante')}")
             return None
 
         signal = _publicar_formato_final(partido, base_signal)
 
-        # 2. capas de enriquecimiento internas
         context_state = _build_context_state(partido)
         emotion_state = _build_emotion_state(partido)
         tempo_state = _build_tempo_state(partido)
@@ -939,32 +948,25 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         signal.update(player_state)
         signal.update(arbiter_state)
 
-        # 3. IA
         ai_layer = _build_ai_layer(partido, signal)
         signal.update(ai_layer)
 
-        # usa ai_confidence_final como ajuste final de confianza
         signal["adaptive_adjustment"] = "NEUTRAL"
         signal["confidence"] = round(_safe_float(ai_layer.get("ai_confidence_final"), signal.get("confidence", 0.0)), 2)
         signal["confianza"] = signal["confidence"]
 
-        # 4. score de mercado final
         market_bias = _market_bias(signal)
         signal.update(market_bias)
 
-        # 5. outcome / lectura final
         outcome_bias = _final_outcome_bias(signal)
         signal.update(outcome_bias)
 
-        # 6. filtros dinámicos
         dynamic_filters = _build_dynamic_filters(signal)
         signal.update(dynamic_filters)
 
-        # 7. capa de operación
         op_fields = _build_operation_fields(signal)
         signal.update(op_fields)
 
-        # 8. master gate
         master_gate = _master_gate(partido, signal)
         signal.update(master_gate)
 
@@ -972,7 +974,6 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             print(f"[PIPELINE] RECHAZADO MASTER GATE -> {partido.get('local')} vs {partido.get('visitante')}")
             return None
 
-        # 9. ranking
         ranking = _ranking_layer(signal)
         signal.update(ranking)
 
@@ -980,11 +981,9 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             print(f"[PIPELINE] FINAL DE RECHAZADO IA -> {partido.get('local')} vs {partido.get('visitante')}")
             return None
 
-        # 10. razones finales
         reason_fields = _build_reason_fields(partido, signal)
         signal.update(reason_fields)
 
-        # 11. campos extra de compatibilidad
         signal["signal_status"] = "OPEN"
         signal["motivo_operacion"] = "OK"
         signal["auto_balance_mode"] = "NEUTRAL"
@@ -998,7 +997,6 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         signal["chaos_reason"] = "Partido estable" if signal["chaos_detector_score"] < 6 else "Presencia de volatilidad"
         signal["publish_ready"] = True
 
-        # 12. ids / hora / meta
         signal["senal_id"] = str(partido.get("id"))
         signal["hora_generada"] = "00:00:00"
 
