@@ -9,39 +9,105 @@ def clamp(valor, minimo, maximo):
     return max(minimo, min(valor, maximo))
 
 
+def safe_float(valor, default=0.0):
+    try:
+        if valor is None or valor == "":
+            return default
+        return float(valor)
+    except Exception:
+        return default
+
+
+def safe_int(valor, default=0):
+    try:
+        if valor is None or valor == "":
+            return default
+        return int(float(valor))
+    except Exception:
+        return default
+
+
 def calcular_valor(datos):
-    prob_real = float(datos.get("prob_real", 0.75) or 0)
-    prob_implicita = float(datos.get("prob_implicita", 0.54) or 0)
+    prob_real = safe_float(datos.get("prob_real", 0.75), 0.75)
+    prob_implicita = safe_float(datos.get("prob_implicita", 0.54), 0.54)
     return round((prob_real - prob_implicita) * 100, 2)
 
 
 def calcular_confianza_base(datos):
     momentum = normalizar_texto(datos.get("momentum"))
-    xg = float(datos.get("xG", 0) or 0)
-    minuto = int(datos.get("minuto", 0) or 0)
+    xg = safe_float(datos.get("xG", 0), 0.0)
+    minuto = safe_int(datos.get("minuto", 0), 0)
+
+    shots = safe_int(datos.get("shots", 0), 0)
+    shots_on_target = safe_int(datos.get("shots_on_target", 0), 0)
+    dangerous_attacks = safe_int(datos.get("dangerous_attacks", 0), 0)
+
+    pressure_score = safe_float((datos.get("goal_pressure") or {}).get("pressure_score", 0), 0.0)
+    chaos_score = safe_float((datos.get("chaos") or {}).get("chaos_score", 0), 0.0)
+    goal5 = safe_float((datos.get("goal_predictor") or {}).get("goal_next_5_prob", 0), 0.0)
+    goal10 = safe_float((datos.get("goal_predictor") or {}).get("goal_next_10_prob", 0), 0.0)
 
     confianza = 50
 
     if momentum == "MUY ALTO":
-        confianza += 18
+        confianza += 14
     elif momentum == "ALTO":
-        confianza += 12
+        confianza += 10
     elif momentum == "MEDIO":
         confianza += 5
 
     if xg >= 2.5:
-        confianza += 18
+        confianza += 14
     elif xg >= 1.8:
-        confianza += 12
+        confianza += 10
     elif xg >= 1.2:
-        confianza += 8
+        confianza += 7
     elif xg >= 0.8:
         confianza += 4
 
-    if 15 <= minuto <= 35:
+    if shots >= 10:
+        confianza += 5
+    elif shots >= 7:
+        confianza += 3
+
+    if shots_on_target >= 5:
+        confianza += 7
+    elif shots_on_target >= 3:
         confianza += 4
+    elif shots_on_target >= 1:
+        confianza += 2
+
+    if dangerous_attacks >= 28:
+        confianza += 6
+    elif dangerous_attacks >= 18:
+        confianza += 4
+    elif dangerous_attacks >= 10:
+        confianza += 2
+
+    if pressure_score >= 8:
+        confianza += 5
+    elif pressure_score >= 5:
+        confianza += 3
+
+    if goal5 >= 0.70:
+        confianza += 6
+    elif goal5 >= 0.50:
+        confianza += 3
+
+    if goal10 >= 0.75:
+        confianza += 4
+    elif goal10 >= 0.55:
+        confianza += 2
+
+    if chaos_score >= 9:
+        confianza += 2
+    elif chaos_score >= 12:
+        confianza += 3
+
+    if 15 <= minuto <= 35:
+        confianza += 3
     elif 36 <= minuto <= 75:
-        confianza += 8
+        confianza += 6
     elif 76 <= minuto <= 88:
         confianza += 5
 
@@ -49,17 +115,21 @@ def calcular_confianza_base(datos):
 
 
 def clasificar_partido(datos):
-    xg = float(datos.get("xG", 0) or 0)
+    xg = safe_float(datos.get("xG", 0), 0.0)
     momentum = normalizar_texto(datos.get("momentum"))
-    minuto = int(datos.get("minuto", 0) or 0)
-    ml = int(datos.get("marcador_local", 0) or 0)
-    mv = int(datos.get("marcador_visitante", 0) or 0)
+    minuto = safe_int(datos.get("minuto", 0), 0)
+    ml = safe_int(datos.get("marcador_local", 0), 0)
+    mv = safe_int(datos.get("marcador_visitante", 0), 0)
     diff = abs(ml - mv)
 
-    pressure_score = float((datos.get("goal_pressure") or {}).get("pressure_score", 0) or 0)
-    chaos_score = float((datos.get("chaos") or {}).get("chaos_score", 0) or 0)
-    goal5 = float((datos.get("goal_predictor") or {}).get("goal_next_5_prob", 0) or 0)
-    goal10 = float((datos.get("goal_predictor") or {}).get("goal_next_10_prob", 0) or 0)
+    shots = safe_int(datos.get("shots", 0), 0)
+    shots_on_target = safe_int(datos.get("shots_on_target", 0), 0)
+    dangerous_attacks = safe_int(datos.get("dangerous_attacks", 0), 0)
+
+    pressure_score = safe_float((datos.get("goal_pressure") or {}).get("pressure_score", 0), 0.0)
+    chaos_score = safe_float((datos.get("chaos") or {}).get("chaos_score", 0), 0.0)
+    goal5 = safe_float((datos.get("goal_predictor") or {}).get("goal_next_5_prob", 0), 0.0)
+    goal10 = safe_float((datos.get("goal_predictor") or {}).get("goal_next_10_prob", 0), 0.0)
 
     score = 0
 
@@ -69,6 +139,29 @@ def clasificar_partido(datos):
         score += 3
     elif xg >= 1.2:
         score += 2
+    elif xg >= 0.8:
+        score += 1
+
+    if shots >= 12:
+        score += 3
+    elif shots >= 8:
+        score += 2
+    elif shots >= 5:
+        score += 1
+
+    if shots_on_target >= 5:
+        score += 4
+    elif shots_on_target >= 3:
+        score += 3
+    elif shots_on_target >= 1:
+        score += 1
+
+    if dangerous_attacks >= 28:
+        score += 4
+    elif dangerous_attacks >= 18:
+        score += 3
+    elif dangerous_attacks >= 10:
+        score += 1
 
     if momentum == "MUY ALTO":
         score += 4
@@ -77,30 +170,28 @@ def clasificar_partido(datos):
     elif momentum == "MEDIO":
         score += 1
 
-    if pressure_score >= 10:
-        score += 4
-    elif pressure_score >= 8:
+    if pressure_score >= 8:
         score += 3
     elif pressure_score >= 5:
         score += 2
 
     if chaos_score >= 12:
-        score += 4
-    elif chaos_score >= 9:
         score += 3
-    elif chaos_score >= 6:
+    elif chaos_score >= 8:
         score += 2
+    elif chaos_score >= 5:
+        score += 1
 
-    if goal5 >= 0.80:
+    if goal5 >= 0.75:
         score += 4
-    elif goal5 >= 0.65:
-        score += 3
-    elif goal5 >= 0.50:
+    elif goal5 >= 0.55:
         score += 2
+    elif goal5 >= 0.35:
+        score += 1
 
-    if goal10 >= 0.85:
+    if goal10 >= 0.80:
         score += 2
-    elif goal10 >= 0.70:
+    elif goal10 >= 0.60:
         score += 1
 
     if diff == 0:
@@ -108,28 +199,28 @@ def clasificar_partido(datos):
     elif diff == 1:
         score += 1
 
-    if chaos_score >= 14 and pressure_score >= 10:
+    if chaos_score >= 12 and pressure_score >= 8 and shots_on_target >= 4:
         return {
             "estado": "CAOS",
             "score_estado": score,
             "razon": "Partido roto con intercambio constante de ataques"
         }
 
-    if minuto >= 85 and xg < 1.0 and momentum in ("BAJO", "MEDIO"):
+    if minuto >= 85 and xg < 1.0 and momentum in ("BAJO", "MEDIO") and shots_on_target <= 1:
         return {
             "estado": "MUERTO",
             "score_estado": score,
             "razon": "Ritmo bajo y poco potencial ofensivo en tramo final"
         }
 
-    if score >= 16:
+    if score >= 18:
         return {
             "estado": "EXPLOSIVO",
             "score_estado": score,
             "razon": "Alta probabilidad de cambio fuerte en el marcador o de otro gol pronto"
         }
 
-    if score >= 11:
+    if score >= 12:
         return {
             "estado": "CALIENTE",
             "score_estado": score,
@@ -151,35 +242,41 @@ def clasificar_partido(datos):
 
 
 def detectar_gol_inminente(datos):
-    pressure_score = float((datos.get("goal_pressure") or {}).get("pressure_score", 0) or 0)
-    chaos_score = float((datos.get("chaos") or {}).get("chaos_score", 0) or 0)
-    goal5 = float((datos.get("goal_predictor") or {}).get("goal_next_5_prob", 0) or 0)
-    goal10 = float((datos.get("goal_predictor") or {}).get("goal_next_10_prob", 0) or 0)
+    pressure_score = safe_float((datos.get("goal_pressure") or {}).get("pressure_score", 0), 0.0)
+    chaos_score = safe_float((datos.get("chaos") or {}).get("chaos_score", 0), 0.0)
+    goal5 = safe_float((datos.get("goal_predictor") or {}).get("goal_next_5_prob", 0), 0.0)
+    goal10 = safe_float((datos.get("goal_predictor") or {}).get("goal_next_10_prob", 0), 0.0)
     momentum = normalizar_texto(datos.get("momentum"))
-    xg = float(datos.get("xG", 0) or 0)
+    xg = safe_float(datos.get("xG", 0), 0.0)
+    shots_on_target = safe_int(datos.get("shots_on_target", 0), 0)
+    dangerous_attacks = safe_int(datos.get("dangerous_attacks", 0), 0)
 
     score = 0
 
     if goal5 >= 0.85:
         score += 5
-    elif goal5 >= 0.75:
+    elif goal5 >= 0.70:
         score += 4
-    elif goal5 >= 0.65:
+    elif goal5 >= 0.55:
         score += 3
+    elif goal5 >= 0.40:
+        score += 2
 
     if goal10 >= 0.90:
         score += 3
-    elif goal10 >= 0.80:
+    elif goal10 >= 0.78:
+        score += 2
+    elif goal10 >= 0.60:
+        score += 1
+
+    if pressure_score >= 8:
+        score += 3
+    elif pressure_score >= 5:
         score += 2
 
-    if pressure_score >= 10:
+    if chaos_score >= 10:
         score += 3
-    elif pressure_score >= 8:
-        score += 2
-
-    if chaos_score >= 12:
-        score += 3
-    elif chaos_score >= 9:
+    elif chaos_score >= 7:
         score += 2
 
     if momentum in ("ALTO", "MUY ALTO"):
@@ -187,89 +284,100 @@ def detectar_gol_inminente(datos):
 
     if xg >= 2.2:
         score += 2
+    elif xg >= 1.4:
+        score += 1
 
-    es_gol = score >= 10
+    if shots_on_target >= 4:
+        score += 2
+    elif shots_on_target >= 2:
+        score += 1
+
+    if dangerous_attacks >= 20:
+        score += 1
+
+    es_gol = score >= 9
 
     return {
         "gol_inminente": es_gol,
         "score_gol_inminente": score,
         "label": "GOL MUY PROBABLE" if es_gol else "SIN ALERTA",
-        "razon": "Probabilidad inmediata elevada por predictor + presión + caos" if es_gol else "No se detecta gol inminente claro"
+        "razon": "Probabilidad inmediata elevada por predictor + presión + contexto" if es_gol else "No se detecta gol inminente claro"
     }
 
 
 def clasificar_tier(confianza, valor, value_categoria="SIN_VALUE"):
-
-    # 🔥 TOP (nuevo nivel agresivo)
-    if confianza >= 75 and valor >= 8:
-        return "TOP"
-
-    # 🟡 PREMIUM
     if confianza >= 88 and valor >= 10:
         return "PREMIUM"
 
-    # 🟢 FUERTE
-    if confianza >= 80 and valor >= 5:
+    if confianza >= 80 and valor >= 8:
+        return "TOP"
+
+    if confianza >= 74 and valor >= 4:
         return "FUERTE"
 
-    # 🔵 NORMAL
-    if confianza >= 70 and valor >= 2:
+    if confianza >= 68 and valor >= 1.5:
         return "NORMAL"
 
     return "DESCARTAR"
 
 
 def estimar_total_goles(datos):
-    ml = int(datos.get("marcador_local", 0) or 0)
-    mv = int(datos.get("marcador_visitante", 0) or 0)
+    ml = safe_int(datos.get("marcador_local", 0), 0)
+    mv = safe_int(datos.get("marcador_visitante", 0), 0)
     goles_actuales = ml + mv
 
-    xg = float(datos.get("xG", 0) or 0)
-    minuto = int(datos.get("minuto", 0) or 0)
+    xg = safe_float(datos.get("xG", 0), 0.0)
+    minuto = safe_int(datos.get("minuto", 0), 0)
     momentum = normalizar_texto(datos.get("momentum"))
-    pressure_score = float((datos.get("goal_pressure") or {}).get("pressure_score", 0) or 0)
-    chaos_score = float((datos.get("chaos") or {}).get("chaos_score", 0) or 0)
-    goal10 = float((datos.get("goal_predictor") or {}).get("goal_next_10_prob", 0) or 0)
+    pressure_score = safe_float((datos.get("goal_pressure") or {}).get("pressure_score", 0), 0.0)
+    chaos_score = safe_float((datos.get("chaos") or {}).get("chaos_score", 0), 0.0)
+    goal10 = safe_float((datos.get("goal_predictor") or {}).get("goal_next_10_prob", 0), 0.0)
+    shots_on_target = safe_int(datos.get("shots_on_target", 0), 0)
 
     extra = 0.0
 
     if xg >= 3.0:
-        extra += 1.4
+        extra += 1.3
     elif xg >= 2.3:
-        extra += 1.1
+        extra += 1.0
     elif xg >= 1.6:
-        extra += 0.8
+        extra += 0.75
     elif xg >= 1.0:
-        extra += 0.5
-    else:
-        extra += 0.2
-
-    if momentum == "MUY ALTO":
         extra += 0.45
-    elif momentum == "ALTO":
-        extra += 0.30
-    elif momentum == "MEDIO":
+    else:
         extra += 0.15
 
-    if pressure_score >= 10:
+    if momentum == "MUY ALTO":
         extra += 0.40
-    elif pressure_score >= 7:
-        extra += 0.25
+    elif momentum == "ALTO":
+        extra += 0.28
+    elif momentum == "MEDIO":
+        extra += 0.12
+
+    if pressure_score >= 8:
+        extra += 0.35
+    elif pressure_score >= 5:
+        extra += 0.20
 
     if chaos_score >= 10:
-        extra += 0.35
+        extra += 0.30
     elif chaos_score >= 6:
-        extra += 0.20
+        extra += 0.15
 
     if goal10 >= 0.80:
-        extra += 0.45
+        extra += 0.40
     elif goal10 >= 0.65:
-        extra += 0.25
+        extra += 0.22
 
-    if minuto >= 75:
-        extra -= 0.15
+    if shots_on_target >= 5:
+        extra += 0.30
+    elif shots_on_target >= 3:
+        extra += 0.18
+
+    if minuto >= 80:
+        extra -= 0.10
     elif minuto <= 20:
-        extra += 0.20
+        extra += 0.15
 
     total_estimado = round(max(goles_actuales, goles_actuales + extra), 2)
     return total_estimado
@@ -286,7 +394,7 @@ def predecir_linea_goles(total_estimado):
             "linea_goles_probable": "OVER_2_5",
             "over_under_probable": "OVER 2.5"
         }
-    if total_estimado >= 2.3:
+    if total_estimado >= 2.2:
         return {
             "linea_goles_probable": "UNDER_3_5",
             "over_under_probable": "UNDER 3.5"
@@ -298,12 +406,13 @@ def predecir_linea_goles(total_estimado):
 
 
 def predecir_ganador(datos):
-    ml = int(datos.get("marcador_local", 0) or 0)
-    mv = int(datos.get("marcador_visitante", 0) or 0)
+    ml = safe_int(datos.get("marcador_local", 0), 0)
+    mv = safe_int(datos.get("marcador_visitante", 0), 0)
     momentum = normalizar_texto(datos.get("momentum"))
-    xg = float(datos.get("xG", 0) or 0)
-    pressure_score = float((datos.get("goal_pressure") or {}).get("pressure_score", 0) or 0)
-    chaos_score = float((datos.get("chaos") or {}).get("chaos_score", 0) or 0)
+    xg = safe_float(datos.get("xG", 0), 0.0)
+    pressure_score = safe_float((datos.get("goal_pressure") or {}).get("pressure_score", 0), 0.0)
+    chaos_score = safe_float((datos.get("chaos") or {}).get("chaos_score", 0), 0.0)
+    shots_on_target = safe_int(datos.get("shots_on_target", 0), 0)
 
     score_local = ml * 1.2
     score_visitante = mv * 1.2
@@ -319,8 +428,13 @@ def predecir_ganador(datos):
     if pressure_score >= 8:
         score_local += 0.35
 
-    if chaos_score >= 8:
+    if shots_on_target >= 4:
+        score_local += 0.35
+    elif shots_on_target >= 2:
         score_local += 0.15
+
+    if chaos_score >= 8:
+        score_local += 0.12
         score_visitante += 0.10
 
     diff = round(score_local - score_visitante, 2)
@@ -347,8 +461,8 @@ def predecir_ganador(datos):
 
 
 def predecir_resultado_probable(datos, total_estimado, ganador_probable):
-    ml = int(datos.get("marcador_local", 0) or 0)
-    mv = int(datos.get("marcador_visitante", 0) or 0)
+    ml = safe_int(datos.get("marcador_local", 0), 0)
+    mv = safe_int(datos.get("marcador_visitante", 0), 0)
     goles_restantes = max(0, round(total_estimado - (ml + mv)))
 
     if ganador_probable == "EMPATE":
@@ -373,7 +487,7 @@ def predecir_resultado_probable(datos, total_estimado, ganador_probable):
 
 def calcular_riesgo_operativo(datos, confianza_prediccion, estado_partido):
     valor = calcular_valor(datos)
-    minuto = int(datos.get("minuto", 0) or 0)
+    minuto = safe_int(datos.get("minuto", 0), 0)
     estado = (estado_partido or {}).get("estado", "FRIO")
 
     riesgo = 0
@@ -383,14 +497,14 @@ def calcular_riesgo_operativo(datos, confianza_prediccion, estado_partido):
     elif confianza_prediccion < 80:
         riesgo += 1
 
-    if valor < 4:
+    if valor < 2:
         riesgo += 2
-    elif valor < 8:
+    elif valor < 6:
         riesgo += 1
 
-    if minuto >= 80:
+    if minuto >= 85:
         riesgo += 2
-    elif minuto >= 70:
+    elif minuto >= 75:
         riesgo += 1
 
     if estado in ("FRIO", "MUERTO"):
@@ -423,19 +537,26 @@ def enriquecer_con_value(senal):
 
 
 def generar_senales_posibles(datos):
-    minuto = int(datos.get("minuto", 0) or 0)
-    if minuto >= 88:
+    minuto = safe_int(datos.get("minuto", 0), 0)
+    if minuto >= 89:
         return []
 
-    xg = float(datos.get("xG", 0) or 0)
-    cuota = float(datos.get("cuota", 1.85) or 1.85)
+    xg = safe_float(datos.get("xG", 0), 0.0)
+    cuota = safe_float(datos.get("cuota", 1.85), 1.85)
     valor = calcular_valor(datos)
-    prob_real = float(datos.get("prob_real", 0.75) or 0.75)
-    prob_implicita = float(datos.get("prob_implicita", 0.54) or 0.54)
+    prob_real = safe_float(datos.get("prob_real", 0.75), 0.75)
+    prob_implicita = safe_float(datos.get("prob_implicita", 0.54), 0.54)
     momentum = normalizar_texto(datos.get("momentum"))
-    ml = int(datos.get("marcador_local", 0) or 0)
-    mv = int(datos.get("marcador_visitante", 0) or 0)
+    ml = safe_int(datos.get("marcador_local", 0), 0)
+    mv = safe_int(datos.get("marcador_visitante", 0), 0)
     total_goles = ml + mv
+
+    shots = safe_int(datos.get("shots", 0), 0)
+    shots_on_target = safe_int(datos.get("shots_on_target", 0), 0)
+    dangerous_attacks = safe_int(datos.get("dangerous_attacks", 0), 0)
+    pressure_score = safe_float((datos.get("goal_pressure") or {}).get("pressure_score", 0), 0.0)
+    goal5 = safe_float((datos.get("goal_predictor") or {}).get("goal_next_5_prob", 0), 0.0)
+    goal10 = safe_float((datos.get("goal_predictor") or {}).get("goal_next_10_prob", 0), 0.0)
 
     estado = clasificar_partido(datos)
     gol_inminente = detectar_gol_inminente(datos)
@@ -443,14 +564,26 @@ def generar_senales_posibles(datos):
 
     senales = []
 
+    # =====================================================
+    # NEXT GOAL
+    # =====================================================
     confianza_next_goal = base
-    if estado["estado"] in ("EXPLOSIVO", "CAOS"):
-        confianza_next_goal += 10
+    if estado["estado"] in ("EXPLOSIVO", "CAOS", "CALIENTE"):
+        confianza_next_goal += 7
     if gol_inminente["gol_inminente"]:
-        confianza_next_goal += 10
+        confianza_next_goal += 9
+    if goal5 >= 0.55:
+        confianza_next_goal += 6
+    if shots_on_target >= 3:
+        confianza_next_goal += 4
+    if dangerous_attacks >= 18:
+        confianza_next_goal += 3
+    if 25 <= minuto <= 82:
+        confianza_next_goal += 3
+
     confianza_next_goal = clamp(confianza_next_goal, 45, 95)
 
-    if confianza_next_goal >= 72 and valor > 0:
+    if confianza_next_goal >= 70 and valor >= 1:
         senal = {
             "mercado": "NEXT_GOAL",
             "apuesta": "Habrá gol (próximo)",
@@ -458,30 +591,35 @@ def generar_senales_posibles(datos):
             "confianza": confianza_next_goal,
             "valor": valor,
             "cuota": cuota,
-            "prob_real": 0.65,
+            "prob_real": max(0.62, prob_real),
             "prob_implicita": prob_implicita,
-            "razon": "Alta presión ofensiva + dinámica explosiva",
+            "razon": "Alta presión ofensiva + dinámica de gol próxima",
         }
         senal = enriquecer_con_value(senal)
         senal["tier"] = clasificar_tier(senal["confianza"], senal["valor"], senal["value_categoria"])
         if senal["tier"] != "DESCARTAR":
             senales.append(senal)
 
+    # =====================================================
+    # OVER NEXT 15
+    # =====================================================
     confianza_next15 = base
     if xg >= 1.2:
-        confianza_next15 += 7
+        confianza_next15 += 6
     if momentum in ("ALTO", "MUY ALTO"):
-        confianza_next15 += 6
-    if estado["estado"] in ("EXPLOSIVO", "CALIENTE", "CAOS"):
-        confianza_next15 += 6
-    if gol_inminente["gol_inminente"]:
-        confianza_next15 += 8
-    if 20 <= minuto <= 88:
         confianza_next15 += 5
+    if estado["estado"] in ("EXPLOSIVO", "CALIENTE", "CAOS"):
+        confianza_next15 += 5
+    if gol_inminente["gol_inminente"]:
+        confianza_next15 += 6
+    if shots_on_target >= 3:
+        confianza_next15 += 3
+    if 20 <= minuto <= 85:
+        confianza_next15 += 4
 
     confianza_next15 = clamp(confianza_next15, 45, 95)
 
-    if confianza_next15 >= 68 and valor > 0:
+    if confianza_next15 >= 69 and valor >= 1:
         linea = total_goles + 0.5
         senal = {
             "mercado": "OVER_NEXT_15_DYNAMIC",
@@ -490,28 +628,35 @@ def generar_senales_posibles(datos):
             "confianza": confianza_next15,
             "valor": valor,
             "cuota": cuota,
-            "prob_real": 0.64,
+            "prob_real": max(0.61, prob_real),
             "prob_implicita": prob_implicita,
-            "razon": "Momentum ofensivo + presión + xG",
+            "razon": "Momentum ofensivo + presión + ventana operativa",
         }
         senal = enriquecer_con_value(senal)
         senal["tier"] = clasificar_tier(senal["confianza"], senal["valor"], senal["value_categoria"])
         if senal["tier"] != "DESCARTAR":
             senales.append(senal)
 
+    # =====================================================
+    # OVER PARTIDO
+    # =====================================================
     confianza_over_match = base
     if xg >= 1.5:
-        confianza_over_match += 8
+        confianza_over_match += 7
     if estado["estado"] == "EXPLOSIVO":
         confianza_over_match += 8
     elif estado["estado"] == "CALIENTE":
         confianza_over_match += 5
-    if minuto <= 75:
-        confianza_over_match += 5
+    if goal10 >= 0.60:
+        confianza_over_match += 4
+    if total_goles <= 2:
+        confianza_over_match += 2
+    if minuto <= 78:
+        confianza_over_match += 4
 
     confianza_over_match = clamp(confianza_over_match, 45, 95)
 
-    if confianza_over_match >= 70 and valor > 0:
+    if confianza_over_match >= 71 and valor >= 1:
         linea_match = max(1.5, total_goles + 0.5)
         senal = {
             "mercado": "OVER_MATCH_DYNAMIC",
@@ -529,19 +674,67 @@ def generar_senales_posibles(datos):
         if senal["tier"] != "DESCARTAR":
             senales.append(senal)
 
+    # =====================================================
+    # UNDER PARTIDO
+    # =====================================================
+    confianza_under_match = 48
+    if momentum in ("BAJO", "MEDIO"):
+        confianza_under_match += 8
+    if xg < 1.15:
+        confianza_under_match += 10
+    elif xg < 1.5:
+        confianza_under_match += 4
+    if shots_on_target <= 2:
+        confianza_under_match += 6
+    if dangerous_attacks < 14:
+        confianza_under_match += 4
+    if estado["estado"] in ("FRIO", "CONTROLADO", "MUERTO"):
+        confianza_under_match += 7
+    if 55 <= minuto <= 85:
+        confianza_under_match += 5
+
+    confianza_under_match = clamp(confianza_under_match, 40, 95)
+
+    if confianza_under_match >= 72 and valor >= 1:
+        linea_under = max(2.5, total_goles + 0.5)
+        senal = {
+            "mercado": "UNDER_MATCH_DYNAMIC",
+            "apuesta": f"Under {linea_under} partido",
+            "linea": linea_under,
+            "confianza": confianza_under_match,
+            "valor": valor,
+            "cuota": cuota,
+            "prob_real": max(0.60, prob_real),
+            "prob_implicita": prob_implicita,
+            "razon": "Ritmo controlado + baja producción ofensiva + contexto de cierre",
+        }
+        senal = enriquecer_con_value(senal)
+        senal["tier"] = clasificar_tier(senal["confianza"], senal["valor"], senal["value_categoria"])
+        if senal["tier"] != "DESCARTAR":
+            senales.append(senal)
+
+    # =====================================================
+    # RESULT HOLDS NEXT 15
+    # =====================================================
     confianza_hold = 50
     if momentum in ("BAJO", "MEDIO"):
-        confianza_hold += 10
-    if xg < 1.2:
-        confianza_hold += 10
-    if estado["estado"] in ("FRIO", "CONTROLADO"):
+        confianza_hold += 9
+    if xg < 1.25:
         confianza_hold += 8
-    if minuto >= 70:
-        confianza_hold += 7
+    if shots_on_target <= 2:
+        confianza_hold += 5
+    if estado["estado"] in ("FRIO", "CONTROLADO", "MUERTO"):
+        confianza_hold += 8
+    if minuto >= 68:
+        confianza_hold += 8
+    if goal5 < 0.35:
+        confianza_hold += 4
+    if goal10 < 0.55:
+        confianza_hold += 3
 
     confianza_hold = clamp(confianza_hold, 40, 95)
 
-    if confianza_hold >= 72 and valor > 0:
+    if confianza_hold >= 72 and valor >= 1:
         senal = {
             "mercado": "RESULT_HOLDS_NEXT_15",
             "apuesta": "Se mantiene el resultado próximos 15 min",
@@ -549,7 +742,7 @@ def generar_senales_posibles(datos):
             "confianza": confianza_hold,
             "valor": valor,
             "cuota": cuota,
-            "prob_real": 0.62,
+            "prob_real": max(0.60, prob_real),
             "prob_implicita": prob_implicita,
             "razon": "Ritmo controlado + ventana final + menor impulso ofensivo",
         }
@@ -561,20 +754,89 @@ def generar_senales_posibles(datos):
     return senales
 
 
-def elegir_mejor_senal(senales):
+def score_mercado(senal, datos, estado, gol_inminente):
+    mercado = senal.get("mercado")
+    confianza = safe_float(senal.get("confianza", 0), 0.0)
+    valor = safe_float(senal.get("valor", 0), 0.0)
+    value_score = safe_float(senal.get("value_score", 0), 0.0)
+    minuto = safe_int(datos.get("minuto", 0), 0)
+    xg = safe_float(datos.get("xG", 0), 0.0)
+    shots_on_target = safe_int(datos.get("shots_on_target", 0), 0)
+    goal5 = safe_float((datos.get("goal_predictor") or {}).get("goal_next_5_prob", 0), 0.0)
+    goal10 = safe_float((datos.get("goal_predictor") or {}).get("goal_next_10_prob", 0), 0.0)
+
+    score = 0.0
+    score += confianza * 1.25
+    score += valor * 2.20
+    score += value_score * 1.30
+
+    if mercado == "NEXT_GOAL":
+        if gol_inminente.get("gol_inminente"):
+            score += 18
+        if estado["estado"] in ("EXPLOSIVO", "CAOS", "CALIENTE"):
+            score += 12
+        if goal5 >= 0.55:
+            score += 10
+        if shots_on_target >= 3:
+            score += 6
+        if 25 <= minuto <= 82:
+            score += 4
+
+    elif mercado == "OVER_NEXT_15_DYNAMIC":
+        if estado["estado"] in ("EXPLOSIVO", "CALIENTE", "CAOS"):
+            score += 12
+        if goal10 >= 0.60:
+            score += 8
+        if xg >= 1.4:
+            score += 6
+        if 20 <= minuto <= 85:
+            score += 5
+
+    elif mercado == "OVER_MATCH_DYNAMIC":
+        if xg >= 1.6:
+            score += 9
+        if estado["estado"] in ("EXPLOSIVO", "CALIENTE"):
+            score += 8
+        if minuto <= 78:
+            score += 5
+
+    elif mercado == "UNDER_MATCH_DYNAMIC":
+        if estado["estado"] in ("FRIO", "CONTROLADO", "MUERTO"):
+            score += 12
+        if xg < 1.2:
+            score += 10
+        if shots_on_target <= 2:
+            score += 6
+        if minuto >= 55:
+            score += 5
+
+    elif mercado == "RESULT_HOLDS_NEXT_15":
+        if estado["estado"] in ("FRIO", "CONTROLADO", "MUERTO"):
+            score += 12
+        if minuto >= 68:
+            score += 8
+        if goal5 < 0.35:
+            score += 6
+        if xg < 1.3:
+            score += 5
+
+    return round(score, 2)
+
+
+def elegir_mejor_senal(senales, datos, estado, gol_inminente):
     if not senales:
         return None
 
-    prioridad_tier = {
-        "PREMIUM": 3,
-        "FUERTE": 2,
-        "NORMAL": 1
-    }
+    enriquecidas = []
+    for s in senales:
+        s2 = dict(s)
+        s2["_market_score"] = score_mercado(s2, datos, estado, gol_inminente)
+        enriquecidas.append(s2)
 
     return sorted(
-        senales,
+        enriquecidas,
         key=lambda s: (
-            prioridad_tier.get(s.get("tier", "NORMAL"), 0),
+            float(s.get("_market_score", 0) or 0),
             float(s.get("value_score", 0) or 0),
             float(s.get("confianza", 0) or 0),
             float(s.get("valor", 0) or 0)
@@ -587,7 +849,7 @@ def generar_senal(datos):
     estado = clasificar_partido(datos)
     gol_inminente = detectar_gol_inminente(datos)
     senales = generar_senales_posibles(datos)
-    mejor = elegir_mejor_senal(senales)
+    mejor = elegir_mejor_senal(senales, datos, estado, gol_inminente)
 
     total_goles_estimado = estimar_total_goles(datos)
     pred_ganador = predecir_ganador(datos)
@@ -604,11 +866,11 @@ def generar_senal(datos):
     )
 
     predictor = datos.get("goal_predictor") or {}
-    goal_prob_5 = round(float(predictor.get("goal_next_5_prob", 0) or 0) * 100, 2)
-    goal_prob_10 = round(float(predictor.get("goal_next_10_prob", 0) or 0) * 100, 2)
+    goal_prob_5 = round(safe_float(predictor.get("goal_next_5_prob", 0), 0.0) * 100, 2)
+    goal_prob_10 = round(safe_float(predictor.get("goal_next_10_prob", 0), 0.0) * 100, 2)
 
-    pressure_score = float((datos.get("goal_pressure") or {}).get("pressure_score", 0) or 0)
-    chaos_score = float((datos.get("chaos") or {}).get("chaos_score", 0) or 0)
+    pressure_score = safe_float((datos.get("goal_pressure") or {}).get("pressure_score", 0), 0.0)
+    chaos_score = safe_float((datos.get("chaos") or {}).get("chaos_score", 0), 0.0)
     goal_prob_15 = round(
         clamp((goal_prob_10 / 100) + 0.08 + (pressure_score * 0.01) + (chaos_score * 0.005), 0, 0.97) * 100,
         2
@@ -617,13 +879,13 @@ def generar_senal(datos):
     if mejor is None:
         return {
             "id": datos.get("id", ""),
-            "minuto": int(datos.get("minuto", 0) or 0),
+            "minuto": safe_int(datos.get("minuto", 0), 0),
             "mercado": "SIN_SEÑAL",
             "apuesta": "Sin oportunidad clara",
-            "cuota": float(datos.get("cuota", 1.85) or 1.85),
+            "cuota": safe_float(datos.get("cuota", 1.85), 1.85),
             "confianza": calcular_confianza_base(datos),
             "valor": calcular_valor(datos),
-            "prob_real": float(datos.get("prob_real", 0.75) or 0.75),
+            "prob_real": safe_float(datos.get("prob_real", 0.75), 0.75),
             "razon": "No se detectó ventaja suficiente en este momento",
             "tier": "DESCARTAR",
             "estado_partido": estado,
@@ -652,8 +914,10 @@ def generar_senal(datos):
         }
 
     resultado = dict(mejor)
+    resultado.pop("_market_score", None)
+
     resultado["id"] = datos.get("id", "")
-    resultado["minuto"] = int(datos.get("minuto", 0) or 0)
+    resultado["minuto"] = safe_int(datos.get("minuto", 0), 0)
     resultado["estado_partido"] = estado
     resultado["gol_inminente"] = gol_inminente
     resultado["signal_status"] = "OPEN"
