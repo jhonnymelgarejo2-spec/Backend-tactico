@@ -121,6 +121,13 @@ def _es_ventana_secundaria(minuto: int) -> bool:
     return (15 <= minuto <= 24) or (46 <= minuto <= 59) or (86 <= minuto <= 88)
 
 
+def goal_safe(prob=0.0, alt=0.0):
+    try:
+        return float(prob)
+    except Exception:
+        return float(alt)
+
+
 # =========================================================
 # BASE DEL PARTIDO
 # =========================================================
@@ -298,13 +305,6 @@ def _build_context_state(partido: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def goal_safe(prob=0.0, alt=0.0):
-    try:
-        return float(prob)
-    except Exception:
-        return float(alt)
-
-
 def _build_emotion_state(partido: Dict[str, Any]) -> Dict[str, Any]:
     minuto = _safe_int(partido.get("minuto"), 0)
     ml = _safe_int(partido.get("marcador_local"), 0)
@@ -450,22 +450,7 @@ def _market_bias(signal: Dict[str, Any]) -> Dict[str, Any]:
     final_score = 0.0
     final_reason = "Sin lectura extra"
 
-    if market == "NEXT_GOAL":
-        final_score += goal_prob_5 * 0.60
-        final_score += goal_prob_10 * 0.25
-        final_score += xg * 12
-        final_score += shots_on_target * 4
-        final_score += dangerous_attacks * 0.40
-
-        if estado in ("EXPLOSIVO", "CALIENTE", "CAOS"):
-            final_score += 25
-
-        if 25 <= minuto <= 84:
-            final_score += 8
-
-        final_reason = "Ventana ofensiva real para próximo gol"
-
-    elif market == "OVER_NEXT_15_DYNAMIC":
+    if market == "OVER_NEXT_15_DYNAMIC":
         final_score += goal_prob_10 * 0.45
         final_score += xg * 10
         final_score += shots_on_target * 3.5
@@ -529,29 +514,26 @@ def _final_outcome_bias(signal: Dict[str, Any]) -> Dict[str, Any]:
     final_selection_recommended = signal.get("selection")
     final_outcome_state = "SIN_VENTAJA"
     final_outcome_reason = "Sin producción real"
-    next_goal_score = 0.0
     over_final_score = 0.0
     under_final_score = 0.0
-
-    if market == "NEXT_GOAL":
-        next_goal_score = 78.0
-        final_outcome_state = "VENTANA_DE_GOL"
-        final_outcome_reason = "Alta probabilidad de otro gol cercano"
 
     if market == "OVER_MATCH_DYNAMIC":
         over_final_score = 74.0
         final_outcome_state = "SESGO_OVER"
         final_outcome_reason = "El modelo favorece más goles"
 
-    if market == "UNDER_MATCH_DYNAMIC":
+    elif market == "OVER_NEXT_15_DYNAMIC":
+        over_final_score = 71.0
+        final_outcome_state = "SESGO_OVER"
+        final_outcome_reason = "El modelo favorece gol en la siguiente ventana"
+
+    elif market == "UNDER_MATCH_DYNAMIC":
         under_final_score = 64.0
         final_outcome_state = "SESGO_UNDER"
         final_outcome_reason = "El modelo favorece cierre de marcador"
 
     if final_selection_recommended in (None, "", "None"):
-        if market == "NEXT_GOAL":
-            final_selection_recommended = "Habrá gol (próximo)"
-        elif market == "OVER_MATCH_DYNAMIC":
+        if market == "OVER_MATCH_DYNAMIC":
             final_selection_recommended = "Over partido"
         elif market == "UNDER_MATCH_DYNAMIC":
             final_selection_recommended = "Under partido"
@@ -562,7 +544,6 @@ def _final_outcome_bias(signal: Dict[str, Any]) -> Dict[str, Any]:
         "final_selection_recommended": final_selection_recommended,
         "final_outcome_state": final_outcome_state,
         "final_outcome_reason": final_outcome_reason,
-        "next_goal_score": round(next_goal_score, 2),
         "over_final_score": round(over_final_score, 2),
         "under_final_score": round(under_final_score, 2),
         "resultado_probable": resultado_probable,
@@ -591,11 +572,11 @@ def _build_ai_layer(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str
     ai_confidence_adjustment = 0.0
     ai_recommendation = "APOSTAR"
 
-    if market in ("NEXT_GOAL", "OVER_NEXT_15_DYNAMIC") and xg >= 1.4 and shots_on_target >= 2:
+    if market in ("OVER_NEXT_15_DYNAMIC", "OVER_MATCH_DYNAMIC") and xg >= 1.4 and shots_on_target >= 2:
         ai_score += 18
         ai_state = "CONTROL_REAL"
         ai_fit = "ALINEADA"
-        ai_fit_reason = "Ventana alta de gol inminente"
+        ai_fit_reason = "Ventana ofensiva respaldada por producción real"
         ai_reason = "Presión ofensiva respaldada por producción real"
         ai_confidence_adjustment += 7
 
@@ -677,7 +658,10 @@ def _build_dynamic_filters(signal: Dict[str, Any]) -> Dict[str, Any]:
     if value < 0.50:
         value_filter_ok = False
 
-    if market in ("NEXT_GOAL", "OVER_NEXT_15_DYNAMIC") and tactical_score < 8:
+    if market not in ("OVER_NEXT_15_DYNAMIC", "OVER_MATCH_DYNAMIC", "UNDER_MATCH_DYNAMIC"):
+        context_ok = False
+
+    if market in ("OVER_NEXT_15_DYNAMIC", "OVER_MATCH_DYNAMIC") and tactical_score < 8:
         context_ok = False
 
     if signal_score < 55:
@@ -750,7 +734,7 @@ def _build_operation_fields(signal: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-    def _master_gate(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str, Any]:
+def _master_gate(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str, Any]:
     minute = _safe_int(partido.get("minuto"), 0)
     confidence = _safe_float(signal.get("confidence"), 0.0)
     value = _safe_float(signal.get("value"), 0.0)
@@ -1007,7 +991,7 @@ def _calcular_scores_core(signal: Dict[str, Any], partido: Dict[str, Any]) -> Di
         (goal_prob_15 * 0.20)
     )
 
-    if market in ("NEXT_GOAL", "OVER_NEXT_15_DYNAMIC"):
+    if market in ("OVER_NEXT_15_DYNAMIC",):
         goal_inminente_score += 8
 
     risk_score = 5.0
@@ -1088,6 +1072,14 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             return None
 
         signal = _publicar_formato_final(partido, base_signal)
+
+        if _upper(signal.get("market")) not in {
+            "OVER_NEXT_15_DYNAMIC",
+            "OVER_MATCH_DYNAMIC",
+            "UNDER_MATCH_DYNAMIC",
+        }:
+            print(f"[PIPELINE] mercado no permitido -> {signal.get('market')}")
+            return None
 
         context_state = _build_context_state(partido)
         emotion_state = _build_emotion_state(partido)
