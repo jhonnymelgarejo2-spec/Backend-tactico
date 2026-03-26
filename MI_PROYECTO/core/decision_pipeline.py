@@ -121,6 +121,9 @@ def _es_ventana_secundaria(minuto: int) -> bool:
     return (15 <= minuto <= 24) or (46 <= minuto <= 59) or (86 <= minuto <= 88)
 
 
+# =========================================================
+# BASE DEL PARTIDO
+# =========================================================
 def _calcular_probabilidades_base(partido: Dict[str, Any]) -> Dict[str, float]:
     xg = _safe_float(partido.get("xG"), 0.0)
     shots = _safe_int(partido.get("shots"), 0)
@@ -128,6 +131,7 @@ def _calcular_probabilidades_base(partido: Dict[str, Any]) -> Dict[str, float]:
     dangerous_attacks = _safe_int(partido.get("dangerous_attacks"), 0)
     minuto = _safe_int(partido.get("minuto"), 0)
     pressure_score = _safe_float((partido.get("goal_pressure") or {}).get("pressure_score"), 0.0)
+
     predictor = partido.get("goal_predictor") or {}
     goal5 = _safe_float(predictor.get("goal_next_5_prob"), 0.0)
     goal10 = _safe_float(predictor.get("goal_next_10_prob"), 0.0)
@@ -176,19 +180,16 @@ def _calcular_probabilidades_base(partido: Dict[str, Any]) -> Dict[str, float]:
         prob_real += 0.02
 
     prob_real = _clamp(prob_real, 0.50, 0.92)
-    prob_implicita = 0.5405
-    cuota = 1.85
 
     return {
         "prob_real": round(prob_real, 4),
-        "prob_implicita": round(prob_implicita, 4),
-        "cuota": round(cuota, 2),
+        "prob_implicita": 0.5405,
+        "cuota": 1.85,
     }
 
 
 def _asegurar_base_partido(partido: Dict[str, Any]) -> Dict[str, Any]:
     p = dict(partido or {})
-
     base_probs = _calcular_probabilidades_base(p)
 
     p.setdefault("id", "")
@@ -220,6 +221,9 @@ def _asegurar_base_partido(partido: Dict[str, Any]) -> Dict[str, Any]:
     return p
 
 
+# =========================================================
+# CAPAS DE CONTEXTO
+# =========================================================
 def _build_context_state(partido: Dict[str, Any]) -> Dict[str, Any]:
     minuto = _safe_int(partido.get("minuto"), 0)
     ml = _safe_int(partido.get("marcador_local"), 0)
@@ -289,7 +293,7 @@ def _build_context_state(partido: Dict[str, Any]) -> Dict[str, Any]:
         "context_supports_hold": context_supports_hold,
         "context_supports_next_goal": context_supports_next_goal,
         "context_supports_over": context_supports_over,
-        "context_reason": "Contexto calculado por marcador, minuto, xG, tiros y presión"
+        "context_reason": "Contexto calculado por marcador, minuto, xG, tiros y presión",
     }
 
 
@@ -422,6 +426,9 @@ def _build_arbiter_state(partido: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+# =========================================================
+# SCORING DE MERCADO
+# =========================================================
 def _market_bias(signal: Dict[str, Any]) -> Dict[str, Any]:
     market = _upper(signal.get("market"))
     estado = _estado_partido_texto(signal.get("estado_partido"))
@@ -575,6 +582,9 @@ def _final_outcome_bias(signal: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+# =========================================================
+# IA
+# =========================================================
 def _build_ai_layer(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str, Any]:
     minute = _safe_int(partido.get("minuto"), 0)
     xg = _safe_float(partido.get("xG"), 0.0)
@@ -639,6 +649,9 @@ def _build_ai_layer(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str
     }
 
 
+# =========================================================
+# FILTROS
+# =========================================================
 def _build_dynamic_filters(signal: Dict[str, Any]) -> Dict[str, Any]:
     minute = _safe_int(signal.get("minute"), 0)
     market = _upper(signal.get("market"))
@@ -675,7 +688,7 @@ def _build_dynamic_filters(signal: Dict[str, Any]) -> Dict[str, Any]:
     if market in ("NEXT_GOAL", "OVER_NEXT_15_DYNAMIC") and tactical_score < 8:
         context_ok = False
 
-    if signal_score < 70:
+    if signal_score < 55:
         context_ok = False
 
     if risk_score > 8.2:
@@ -719,9 +732,6 @@ def _build_operation_fields(signal: Dict[str, Any]) -> Dict[str, Any]:
     elif confidence >= 71:
         stake_pct = 3.2
         stake_label = "MEDIO"
-    else:
-        stake_pct = 2.0
-        stake_label = "NORMAL"
 
     stake_amount = round(stake_pct * 10, 1)
 
@@ -762,7 +772,7 @@ def _master_gate(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str, A
     if risk_score > 8.2:
         blocked_reasons.append("Riesgo operativo alto")
 
-    if signal_score < 70:
+    if signal_score < 55:
         blocked_reasons.append("Signal score insuficiente")
 
     if market == "RESULT_HOLDS_NEXT_15" and estado in ("CAOS", "EXPLOSIVO") and confidence < 80:
@@ -782,6 +792,9 @@ def _master_gate(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str, A
     }
 
 
+# =========================================================
+# RANKING
+# =========================================================
 def _ranking_layer(signal: Dict[str, Any]) -> Dict[str, Any]:
     confidence = _safe_float(signal.get("confidence"), 0.0)
     value = _safe_float(signal.get("value"), 0.0)
@@ -828,6 +841,9 @@ def _ranking_layer(signal: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+# =========================================================
+# RAZONES
+# =========================================================
 def _build_reason_fields(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str, Any]:
     local = _safe_text(partido.get("local"), "Local")
     visitante = _safe_text(partido.get("visitante"), "Visitante")
@@ -843,6 +859,9 @@ def _build_reason_fields(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dic
     }
 
 
+# =========================================================
+# FORMATO PUBLICO
+# =========================================================
 def _publicar_formato_final(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str, Any]:
     local = _safe_text(partido.get("local"), "Local")
     visitante = _safe_text(partido.get("visitante"), "Visitante")
@@ -910,6 +929,112 @@ def _publicar_formato_final(partido: Dict[str, Any], signal: Dict[str, Any]) -> 
 
 
 # =========================================================
+# CALCULO DE SCORES BASE
+# =========================================================
+def _calcular_scores_core(signal: Dict[str, Any], partido: Dict[str, Any]) -> Dict[str, Any]:
+    confidence = _safe_float(signal.get("confidence"), 0.0)
+    value = _safe_float(signal.get("value"), 0.0)
+    minute = _safe_int(signal.get("minute"), _safe_int(partido.get("minuto"), 0))
+    market = _upper(signal.get("market"))
+
+    xg = _safe_float(partido.get("xG"), 0.0)
+    shots = _safe_int(partido.get("shots"), 0)
+    shots_on_target = _safe_int(partido.get("shots_on_target"), 0)
+    dangerous_attacks = _safe_int(partido.get("dangerous_attacks"), 0)
+    momentum = _upper(partido.get("momentum"))
+    pressure_score = _safe_float((partido.get("goal_pressure") or {}).get("pressure_score"), 0.0)
+    predictor_score = _safe_float((partido.get("goal_predictor") or {}).get("predictor_score"), 0.0)
+    goal_prob_5 = _safe_float(signal.get("goal_prob_5"), 0.0)
+    goal_prob_10 = _safe_float(signal.get("goal_prob_10"), 0.0)
+    goal_prob_15 = _safe_float(signal.get("goal_prob_15"), 0.0)
+    chaos_score = _safe_float((partido.get("chaos") or {}).get("chaos_score"), 0.0)
+
+    tactical_score = 0.0
+    tactical_score += xg * 12.0
+    tactical_score += shots * 0.50
+    tactical_score += shots_on_target * 3.0
+    tactical_score += dangerous_attacks * 0.18
+    tactical_score += pressure_score * 1.8
+    tactical_score += predictor_score * 1.4
+    tactical_score -= chaos_score * 0.35
+
+    if momentum == "MUY ALTO":
+        tactical_score += 10
+    elif momentum == "ALTO":
+        tactical_score += 7
+    elif momentum == "MEDIO":
+        tactical_score += 3
+
+    if _es_ventana_premium(minute):
+        tactical_score += 8
+    elif _es_ventana_secundaria(minute):
+        tactical_score += 4
+
+    goal_inminente_score = (
+        (goal_prob_5 * 0.48) +
+        (goal_prob_10 * 0.32) +
+        (goal_prob_15 * 0.20)
+    )
+
+    if market in ("NEXT_GOAL", "OVER_NEXT_15_DYNAMIC"):
+        goal_inminente_score += 8
+
+    risk_score = 5.0
+
+    if confidence >= 85:
+        risk_score -= 1.4
+    elif confidence >= 75:
+        risk_score -= 0.9
+    elif confidence < 62:
+        risk_score += 1.2
+
+    if value >= 10:
+        risk_score -= 1.0
+    elif value < 2:
+        risk_score += 1.0
+
+    if minute >= 86:
+        risk_score += 1.3
+    elif minute >= 80:
+        risk_score += 0.7
+
+    if market == "RESULT_HOLDS_NEXT_15" and (goal_prob_5 >= 35 or xg >= 1.8 or shots_on_target >= 4):
+        risk_score += 2.2
+
+    if market == "UNDER_MATCH_DYNAMIC" and (goal_prob_10 >= 55 or momentum in ("ALTO", "MUY ALTO")):
+        risk_score += 1.4
+
+    signal_score = 0.0
+    signal_score += confidence * 1.20
+    signal_score += value * 2.10
+    signal_score += tactical_score * 0.85
+    signal_score += goal_inminente_score * 0.70
+    signal_score -= risk_score * 4.20
+
+    tactical_score = round(_clamp(tactical_score, 0.0, 200.0), 2)
+    goal_inminente_score = round(_clamp(goal_inminente_score, 0.0, 100.0), 2)
+    risk_score = round(_clamp(risk_score, 1.0, 10.0), 2)
+    signal_score = round(signal_score, 2)
+
+    if signal_score >= 230:
+        signal_rank = "ELITE"
+    elif signal_score >= 170:
+        signal_rank = "TOP"
+    elif signal_score >= 110:
+        signal_rank = "ALTA"
+    else:
+        signal_rank = "NORMAL"
+
+    return {
+        "tactical_score": tactical_score,
+        "goal_inminente_score": goal_inminente_score,
+        "risk_score": risk_score,
+        "signal_score": signal_score,
+        "signal_rank": signal_rank,
+    }
+
+
+# =========================================================
 # PIPELINE CENTRAL
 # =========================================================
 def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -961,6 +1086,9 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         outcome_bias = _final_outcome_bias(signal)
         signal.update(outcome_bias)
 
+        core_scores = _calcular_scores_core(signal, partido)
+        signal.update(core_scores)
+
         dynamic_filters = _build_dynamic_filters(signal)
         signal.update(dynamic_filters)
 
@@ -972,6 +1100,7 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
         if not signal.get("publish_ready", False):
             print(f"[PIPELINE] RECHAZADO MASTER GATE -> {partido.get('local')} vs {partido.get('visitante')}")
+            print(f"[PIPELINE] BLOQUEOS -> {signal.get('publish_blocked_reasons', [])}")
             return None
 
         ranking = _ranking_layer(signal)
@@ -993,8 +1122,16 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         signal["chaos_block_signal"] = False
         signal["chaos_confidence_penalty"] = 0.0
         signal["chaos_detector_score"] = round(_safe_float((partido.get("chaos") or {}).get("chaos_score"), 0.0), 2)
-        signal["chaos_level"] = "ALTO" if signal["chaos_detector_score"] >= 10 else "MEDIO" if signal["chaos_detector_score"] >= 6 else "BAJO"
-        signal["chaos_reason"] = "Partido estable" if signal["chaos_detector_score"] < 6 else "Presencia de volatilidad"
+        signal["chaos_level"] = (
+            "ALTO" if signal["chaos_detector_score"] >= 10
+            else "MEDIO" if signal["chaos_detector_score"] >= 6
+            else "BAJO"
+        )
+        signal["chaos_reason"] = (
+            "Partido estable"
+            if signal["chaos_detector_score"] < 6
+            else "Presencia de volatilidad"
+        )
         signal["publish_ready"] = True
 
         signal["senal_id"] = str(partido.get("id"))
