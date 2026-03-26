@@ -707,8 +707,7 @@ def procesar_partidos(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             s = _decorate_signal(s)
 
             if not s.get("qualifies_for_top", False):
-                print(f"[SCAN] señal descartada por ranking mínimo -> {p.get('id')}")
-                continue
+                print(f"[SCAN] señal débil pero conservada para ranking -> {p.get('id')}")
 
             senales.append(s)
             print(f"[SCAN] señal agregada -> {p.get('id')}")
@@ -735,13 +734,22 @@ def procesar_partidos(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         reverse=True
     )
 
-    top_signals = senales[:10]
+    publicables = [
+        s for s in senales
+        if (
+            _safe_float(s.get("confidence"), 0.0) >= 62 and
+            _safe_float(s.get("value"), 0.0) >= 0.5 and
+            _safe_float(s.get("risk_score"), 10.0) <= 7.5 and
+            _safe_float(s.get("ranking_score"), 0.0) >= 105
+        )
+    ]
+
+    top_signals = publicables[:10]
 
     print(f"[SCAN] total señales generadas -> {len(top_signals)}")
     print(f"[SCAN] ESTADO señales -> {top_signals}")
 
     return top_signals
-
 
 def detectar_hot_matches(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     hot = []
@@ -778,13 +786,23 @@ def _signals_from_storage() -> List[Dict[str, Any]]:
             return []
 
         decoradas = [_decorate_signal(s) for s in data]
-        decoradas = [s for s in decoradas if s.get("qualifies_for_top", False)]
         decoradas = _dedupe_signals(decoradas)
         decoradas.sort(
             key=lambda x: _safe_float(x.get("ranking_score"), 0.0),
             reverse=True
         )
-        return decoradas[:10]
+
+        publicables = [
+            s for s in decoradas
+            if (
+                _safe_float(s.get("confidence"), 0.0) >= 62 and
+                _safe_float(s.get("value"), 0.0) >= 0.5 and
+                _safe_float(s.get("risk_score"), 10.0) <= 7.5 and
+                _safe_float(s.get("ranking_score"), 0.0) >= 105
+            )
+        ]
+
+        return publicables[:10]
     except Exception as e:
         print(f"[SIGNALS] ERROR storage -> {e}")
         return []
