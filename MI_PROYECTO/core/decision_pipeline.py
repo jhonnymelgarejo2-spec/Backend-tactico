@@ -750,7 +750,7 @@ def _build_operation_fields(signal: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _master_gate(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str, Any]:
+    def _master_gate(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str, Any]:
     minute = _safe_int(partido.get("minuto"), 0)
     confidence = _safe_float(signal.get("confidence"), 0.0)
     value = _safe_float(signal.get("value"), 0.0)
@@ -758,46 +758,51 @@ def _master_gate(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str, A
     tactical_score = _safe_float(signal.get("tactical_score"), 0.0)
     signal_score = _safe_float(signal.get("signal_score"), 0.0)
     market = _upper(signal.get("market"))
-    estado = _estado_partido_texto(signal.get("estado_partido"))
-
-    goal_prob_10 = _safe_float(signal.get("goal_prob_10"), 0.0)
+    xg = _safe_float(signal.get("xG"), 0.0)
     shots_on_target = _safe_int(signal.get("shots_on_target"), 0)
     dangerous_attacks = _safe_int(signal.get("dangerous_attacks"), 0)
-    xg = _safe_float(signal.get("xG"), 0.0)
+    goal_prob_10 = _safe_float(signal.get("goal_prob_10"), 0.0)
 
     blocked_reasons: List[str] = []
+
+    mercados_permitidos = {
+        "OVER_NEXT_15_DYNAMIC",
+        "OVER_MATCH_DYNAMIC",
+        "UNDER_MATCH_DYNAMIC",
+    }
+
+    if market not in mercados_permitidos:
+        blocked_reasons.append("Mercado no permitido por estrategia actual")
 
     if not _es_minuto_operable(minute):
         blocked_reasons.append("Fuera de ventana operable")
 
-    if confidence < 64:
+    if confidence < 68:
         blocked_reasons.append("Confianza por debajo del mínimo")
 
-    if value < 0.50:
+    if value < 1.0:
         blocked_reasons.append("Value insuficiente")
 
-    if risk_score > 8.2:
+    if risk_score > 7.2:
         blocked_reasons.append("Riesgo operativo alto")
 
-    if signal_score < 55:
+    if signal_score < 110:
         blocked_reasons.append("Signal score insuficiente")
 
-    if market in ("NEXT_GOAL", "OVER_NEXT_15_DYNAMIC") and tactical_score < 8:
-        blocked_reasons.append("Mercado ofensivo sin respaldo táctico suficiente")
+    if market in ("OVER_NEXT_15_DYNAMIC", "OVER_MATCH_DYNAMIC") and tactical_score < 12:
+        blocked_reasons.append("Over sin respaldo táctico suficiente")
 
     if market == "UNDER_MATCH_DYNAMIC":
-        if minute < 55:
-            blocked_reasons.append("Under partido demasiado temprano")
-        if xg >= 1.6:
-            blocked_reasons.append("Under no coherente con xG alto")
+        if minute < 60:
+            blocked_reasons.append("Under demasiado temprano")
+        if xg >= 1.35:
+            blocked_reasons.append("Under incoherente con xG alto")
         if shots_on_target >= 3:
-            blocked_reasons.append("Under no coherente con tiros al arco")
-        if dangerous_attacks >= 18:
-            blocked_reasons.append("Under no coherente con ataques peligrosos")
-        if goal_prob_10 >= 45:
-            blocked_reasons.append("Under no coherente con probabilidad de gol")
-        if estado in ("CAOS", "EXPLOSIVO") and confidence < 80:
-            blocked_reasons.append("Under no coherente con estado explosivo")
+            blocked_reasons.append("Under incoherente con tiros al arco")
+        if dangerous_attacks >= 16:
+            blocked_reasons.append("Under incoherente con ataques peligrosos")
+        if goal_prob_10 >= 40:
+            blocked_reasons.append("Under incoherente con probabilidad de gol")
 
     publish_ready = len(blocked_reasons) == 0
 
@@ -819,21 +824,20 @@ def _ranking_layer(signal: Dict[str, Any]) -> Dict[str, Any]:
     risk_score = _safe_float(signal.get("risk_score"), 0.0)
     market = _upper(signal.get("market"))
     minute = _safe_int(signal.get("minute"), 0)
-
-    goal_prob_10 = _safe_float(signal.get("goal_prob_10"), 0.0)
+    xg = _safe_float(signal.get("xG"), 0.0)
     shots_on_target = _safe_int(signal.get("shots_on_target"), 0)
     dangerous_attacks = _safe_int(signal.get("dangerous_attacks"), 0)
-    xg = _safe_float(signal.get("xG"), 0.0)
+    goal_prob_10 = _safe_float(signal.get("goal_prob_10"), 0.0)
 
     ranking_score_base = (
-        ai_decision_score * 1.75 +
-        signal_score * 1.30 +
-        confidence * 1.15 +
-        value * 2.60 +
-        tactical_score * 0.70
+        ai_decision_score * 1.70 +
+        signal_score * 1.35 +
+        confidence * 1.10 +
+        value * 2.00 +
+        tactical_score * 0.75
     )
 
-    ranking_penalty = risk_score * 8.5
+    ranking_penalty = risk_score * 9.0
 
     if minute >= 85:
         ranking_penalty += 8
@@ -841,22 +845,22 @@ def _ranking_layer(signal: Dict[str, Any]) -> Dict[str, Any]:
         ranking_penalty += 4
 
     if market == "UNDER_MATCH_DYNAMIC":
-        if xg >= 1.5:
-            ranking_penalty += 14
+        if xg >= 1.30:
+            ranking_penalty += 18
         if shots_on_target >= 3:
-            ranking_penalty += 10
-        if dangerous_attacks >= 18:
-            ranking_penalty += 10
-        if goal_prob_10 >= 45:
-            ranking_penalty += 10
+            ranking_penalty += 12
+        if dangerous_attacks >= 16:
+            ranking_penalty += 12
+        if goal_prob_10 >= 40:
+            ranking_penalty += 12
 
     ranking_score = round(ranking_score_base - ranking_penalty, 2)
-    qualifies_for_top = ranking_score >= 120
+    qualifies_for_top = ranking_score >= 140
 
     publish_rank = 3
-    if ranking_score >= 320:
+    if ranking_score >= 340:
         publish_rank = 1
-    elif ranking_score >= 220:
+    elif ranking_score >= 240:
         publish_rank = 2
 
     return {
