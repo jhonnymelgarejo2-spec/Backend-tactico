@@ -694,10 +694,14 @@ def generar_senales_posibles(datos):
         confianza_next15 += 3
     if 20 <= minuto <= 86:
         confianza_next15 += 4
+    if xg >= 1.8:
+        confianza_next15 += 4
+    if goal10 >= 0.65:
+        confianza_next15 += 4
 
     confianza_next15 = clamp(confianza_next15, 45, 95)
 
-    if confianza_next15 >= 74 and valor >= 1.5:
+    if confianza_next15 >= 69 and valor >= 1:
         linea = total_goles + 0.5
         senal = {
             "mercado": "OVER_NEXT_15_DYNAMIC",
@@ -734,7 +738,7 @@ def generar_senales_posibles(datos):
 
     confianza_over_match = clamp(confianza_over_match, 45, 95)
 
-    if confianza_over_match >= 76 and valor >= 2:
+    if confianza_over_match >= 71 and valor >= 1:
         linea_match = max(1.5, total_goles + 0.5)
         senal = {
             "mercado": "OVER_MATCH_DYNAMIC",
@@ -783,10 +787,12 @@ def generar_senales_posibles(datos):
         confianza_under_match -= 5
     if xg >= 1.6:
         confianza_under_match -= 6
+    if momentum in ("ALTO", "MUY ALTO"):
+        confianza_under_match -= 4
 
     confianza_under_match = clamp(confianza_under_match, 35, 95)
 
-    if confianza_under_match >= 80 and valor >= 3:
+    if confianza_under_match >= 76 and valor >= 2:
         linea_under = max(2.5, total_goles + 0.5)
         senal = {
             "mercado": "UNDER_MATCH_DYNAMIC",
@@ -859,11 +865,9 @@ def score_mercado(senal, datos, estado, gol_inminente):
         if goal10 >= 0.45:
             score -= 10
         if shots_on_target >= 3:
-            score -= 10
-        if dangerous_attacks >= 18:
             score -= 8
-        if xg >= 1.6:
-            score -= 10
+        if dangerous_attacks >= 16:
+            score -= 8
 
     return round(score, 2)
 
@@ -873,9 +877,9 @@ def aplicar_balance_mercados(senales_ordenadas):
         return []
 
     max_por_mercado = {
-        "OVER_NEXT_15_DYNAMIC": 3,
+        "OVER_NEXT_15_DYNAMIC": 2,
         "OVER_MATCH_DYNAMIC": 3,
-        "UNDER_MATCH_DYNAMIC": 3,
+        "UNDER_MATCH_DYNAMIC": 2,
     }
 
     usados = {}
@@ -885,10 +889,7 @@ def aplicar_balance_mercados(senales_ordenadas):
         mercado = senal.get("mercado", "")
         usados.setdefault(mercado, 0)
 
-        limite = max_por_mercado.get(mercado, 0)
-        if limite == 0:
-            continue
-
+        limite = max_por_mercado.get(mercado, 1)
         if usados[mercado] >= limite:
             continue
 
