@@ -678,50 +678,6 @@ def generar_senales_posibles(datos):
 
     senales = []
 
-    # NEXT GOAL
-    confianza_next_goal = base
-    if estado["estado"] in ("EXPLOSIVO", "CAOS", "CALIENTE"):
-        confianza_next_goal += 10
-    if gol_inminente["gol_inminente"]:
-        confianza_next_goal += 12
-    if goal5 >= 0.55:
-        confianza_next_goal += 8
-    if goal10 >= 0.65:
-        confianza_next_goal += 5
-    if shots_on_target >= 3:
-        confianza_next_goal += 5
-    if dangerous_attacks >= 18:
-        confianza_next_goal += 4
-    if pressure_score >= 5:
-        confianza_next_goal += 4
-    if 25 <= minuto <= 84:
-        confianza_next_goal += 3
-    if xg >= 1.8:
-        confianza_next_goal += 4
-    if goal5 >= 0.65:
-        confianza_next_goal += 4
-    if 60 <= minuto <= 82 and diff_partido(datos) <= 1:
-        confianza_next_goal += 3
-
-    confianza_next_goal = clamp(confianza_next_goal, 45, 95)
-
-    if confianza_next_goal >= 70 and valor >= 1:
-        senal = {
-            "mercado": "NEXT_GOAL",
-            "apuesta": "Habrá gol (próximo)",
-            "linea": None,
-            "confianza": confianza_next_goal,
-            "valor": valor,
-            "cuota": cuota,
-            "prob_real": max(0.63, prob_real),
-            "prob_implicita": prob_implicita,
-            "razon": "Presión ofensiva real + ventana clara de gol",
-        }
-        senal = enriquecer_con_value(senal)
-        senal["tier"] = clasificar_tier(senal["confianza"], senal["valor"], senal["value_categoria"])
-        if senal["tier"] != "DESCARTAR":
-            senales.append(senal)
-
     # OVER NEXT 15
     confianza_next15 = base
     if xg >= 1.2:
@@ -741,7 +697,7 @@ def generar_senales_posibles(datos):
 
     confianza_next15 = clamp(confianza_next15, 45, 95)
 
-    if confianza_next15 >= 69 and valor >= 1:
+    if confianza_next15 >= 74 and valor >= 1.5:
         linea = total_goles + 0.5
         senal = {
             "mercado": "OVER_NEXT_15_DYNAMIC",
@@ -778,7 +734,7 @@ def generar_senales_posibles(datos):
 
     confianza_over_match = clamp(confianza_over_match, 45, 95)
 
-    if confianza_over_match >= 71 and valor >= 1:
+    if confianza_over_match >= 76 and valor >= 2:
         linea_match = max(1.5, total_goles + 0.5)
         senal = {
             "mercado": "OVER_MATCH_DYNAMIC",
@@ -830,7 +786,7 @@ def generar_senales_posibles(datos):
 
     confianza_under_match = clamp(confianza_under_match, 35, 95)
 
-    if confianza_under_match >= 76 and valor >= 2:
+    if confianza_under_match >= 80 and valor >= 3:
         linea_under = max(2.5, total_goles + 0.5)
         senal = {
             "mercado": "UNDER_MATCH_DYNAMIC",
@@ -860,7 +816,6 @@ def score_mercado(senal, datos, estado, gol_inminente):
     xg = safe_float(datos.get("xG", 0), 0.0)
     shots_on_target = safe_int(datos.get("shots_on_target", 0), 0)
     dangerous_attacks = safe_int(datos.get("dangerous_attacks", 0), 0)
-    goal5 = safe_float((datos.get("goal_predictor") or {}).get("goal_next_5_prob", 0), 0.0)
     goal10 = safe_float((datos.get("goal_predictor") or {}).get("goal_next_10_prob", 0), 0.0)
 
     score = 0.0
@@ -868,23 +823,7 @@ def score_mercado(senal, datos, estado, gol_inminente):
     score += valor * 2.20
     score += value_score * 1.30
 
-    if mercado == "NEXT_GOAL":
-        if gol_inminente.get("gol_inminente"):
-            score += 24
-        if estado["estado"] in ("EXPLOSIVO", "CAOS", "CALIENTE"):
-            score += 15
-        if goal5 >= 0.55:
-            score += 12
-        if goal10 >= 0.65:
-            score += 7
-        if shots_on_target >= 3:
-            score += 7
-        if dangerous_attacks >= 18:
-            score += 5
-        if 25 <= minuto <= 84:
-            score += 4
-
-    elif mercado == "OVER_NEXT_15_DYNAMIC":
+    if mercado == "OVER_NEXT_15_DYNAMIC":
         if estado["estado"] in ("EXPLOSIVO", "CALIENTE", "CAOS"):
             score += 15
         if gol_inminente.get("gol_inminente"):
@@ -915,8 +854,16 @@ def score_mercado(senal, datos, estado, gol_inminente):
             score += 10
         if shots_on_target <= 2:
             score += 6
-        if minuto >= 55:
+        if minuto >= 60:
             score += 5
+        if goal10 >= 0.45:
+            score -= 10
+        if shots_on_target >= 3:
+            score -= 10
+        if dangerous_attacks >= 18:
+            score -= 8
+        if xg >= 1.6:
+            score -= 10
 
     return round(score, 2)
 
@@ -926,7 +873,6 @@ def aplicar_balance_mercados(senales_ordenadas):
         return []
 
     max_por_mercado = {
-        "NEXT_GOAL": 3,
         "OVER_NEXT_15_DYNAMIC": 3,
         "OVER_MATCH_DYNAMIC": 3,
         "UNDER_MATCH_DYNAMIC": 3,
@@ -939,14 +885,17 @@ def aplicar_balance_mercados(senales_ordenadas):
         mercado = senal.get("mercado", "")
         usados.setdefault(mercado, 0)
 
-        limite = max_por_mercado.get(mercado, 2)
+        limite = max_por_mercado.get(mercado, 0)
+        if limite == 0:
+            continue
+
         if usados[mercado] >= limite:
             continue
 
         resultado.append(senal)
         usados[mercado] += 1
 
-        if len(resultado) >= 10:
+        if len(resultado) >= 6:
             break
 
     return resultado
