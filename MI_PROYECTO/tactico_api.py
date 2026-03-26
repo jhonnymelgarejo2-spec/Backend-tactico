@@ -522,11 +522,20 @@ def _ranking_penalty(signal: Dict[str, Any]) -> float:
     if signal_score < 80:
         penalty += 8
 
-    if market == "RESULT_HOLDS_NEXT_15" and tactical_score < 18:
-        penalty += 10
+    if market == "UNDER_MATCH_DYNAMIC":
+        xg = _safe_float(signal.get("xG"), 0.0)
+        shots_on_target = _safe_int(signal.get("shots_on_target"), 0)
+        dangerous_attacks = _safe_int(signal.get("dangerous_attacks"), 0)
+        goal_prob_10 = _safe_float(signal.get("goal_prob_10"), 0.0)
 
-    if market == "RESULT_HOLDS_NEXT_15" and confidence < 72:
-        penalty += 8
+        if xg >= 1.30:
+            penalty += 12
+        if shots_on_target >= 3:
+            penalty += 10
+        if dangerous_attacks >= 16:
+            penalty += 10
+        if goal_prob_10 >= 40:
+            penalty += 10
 
     return round(penalty, 2)
 
@@ -549,19 +558,42 @@ def _qualifies_for_top(signal: Dict[str, Any]) -> bool:
     risk_score = _safe_float(signal.get("risk_score"), 10.0)
     tactical_score = _safe_float(signal.get("tactical_score"), 0.0)
     signal_score = _safe_float(signal.get("signal_score"), 0.0)
+    market = _safe_upper(signal.get("market"))
+
+    if market not in {
+        "OVER_NEXT_15_DYNAMIC",
+        "OVER_MATCH_DYNAMIC",
+        "UNDER_MATCH_DYNAMIC",
+    }:
+        return False
 
     if minute >= 89:
         return False
-    if confidence < 62:
+    if confidence < 68:
         return False
-    if value < 0.5:
+    if value < 1.0:
         return False
-    if risk_score > 7.5:
+    if risk_score > 7.2:
         return False
-    if tactical_score < 8:
+    if tactical_score < 12 and market != "UNDER_MATCH_DYNAMIC":
         return False
-    if signal_score < 55:
+    if signal_score < 110:
         return False
+
+    if market == "UNDER_MATCH_DYNAMIC":
+        xg = _safe_float(signal.get("xG"), 0.0)
+        shots_on_target = _safe_int(signal.get("shots_on_target"), 0)
+        dangerous_attacks = _safe_int(signal.get("dangerous_attacks"), 0)
+        goal_prob_10 = _safe_float(signal.get("goal_prob_10"), 0.0)
+
+        if xg >= 1.35:
+            return False
+        if shots_on_target >= 3:
+            return False
+        if dangerous_attacks >= 16:
+            return False
+        if goal_prob_10 >= 40:
+            return False
 
     return True
 
@@ -680,6 +712,7 @@ def obtener_partidos_para_scan() -> List[Dict[str, Any]]:
     print("[SCAN] usando partidos demo")
     return _demo_partidos()
 
+
 # =========================================================
 # PROCESAMIENTO
 # =========================================================
@@ -737,19 +770,36 @@ def procesar_partidos(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     publicables = [
         s for s in senales
         if (
-            _safe_float(s.get("confidence"), 0.0) >= 62 and
-            _safe_float(s.get("value"), 0.0) >= 0.5 and
-            _safe_float(s.get("risk_score"), 10.0) <= 7.5 and
-            _safe_float(s.get("ranking_score"), 0.0) >= 105
+            _safe_upper(s.get("market")) in {
+                "OVER_NEXT_15_DYNAMIC",
+                "OVER_MATCH_DYNAMIC",
+                "UNDER_MATCH_DYNAMIC",
+            }
+            and _safe_float(s.get("confidence"), 0.0) >= 68
+            and _safe_float(s.get("value"), 0.0) >= 1.0
+            and _safe_float(s.get("risk_score"), 10.0) <= 7.2
+            and _safe_float(s.get("ranking_score"), 0.0) >= 140
         )
     ]
 
-    top_signals = publicables[:10]
+    overs = [s for s in publicables if "OVER" in _safe_upper(s.get("market"))][:3]
+    unders = [s for s in publicables if _safe_upper(s.get("market")) == "UNDER_MATCH_DYNAMIC"][:3]
+
+    top_signals = sorted(
+        overs + unders,
+        key=lambda x: (
+            _safe_float(x.get("ranking_score"), 0.0),
+            _safe_float(x.get("signal_score"), 0.0),
+            _safe_float(x.get("confidence"), 0.0),
+        ),
+        reverse=True
+    )[:6]
 
     print(f"[SCAN] total señales generadas -> {len(top_signals)}")
     print(f"[SCAN] ESTADO señales -> {top_signals}")
 
     return top_signals
+
 
 def detectar_hot_matches(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     hot = []
@@ -795,17 +845,30 @@ def _signals_from_storage() -> List[Dict[str, Any]]:
         publicables = [
             s for s in decoradas
             if (
-                _safe_float(s.get("confidence"), 0.0) >= 62 and
-                _safe_float(s.get("value"), 0.0) >= 0.5 and
-                _safe_float(s.get("risk_score"), 10.0) <= 7.5 and
-                _safe_float(s.get("ranking_score"), 0.0) >= 105
+                _safe_upper(s.get("market")) in {
+                    "OVER_NEXT_15_DYNAMIC",
+                    "OVER_MATCH_DYNAMIC",
+                    "UNDER_MATCH_DYNAMIC",
+                }
+                and _safe_float(s.get("confidence"), 0.0) >= 68
+                and _safe_float(s.get("value"), 0.0) >= 1.0
+                and _safe_float(s.get("risk_score"), 10.0) <= 7.2
+                and _safe_float(s.get("ranking_score"), 0.0) >= 140
             )
         ]
 
-        return publicables[:10]
+        overs = [s for s in publicables if "OVER" in _safe_upper(s.get("market"))][:3]
+        unders = [s for s in publicables if _safe_upper(s.get("market")) == "UNDER_MATCH_DYNAMIC"][:3]
+
+        return sorted(
+            overs + unders,
+            key=lambda x: _safe_float(x.get("ranking_score"), 0.0),
+            reverse=True
+        )[:6]
     except Exception as e:
         print(f"[SIGNALS] ERROR storage -> {e}")
         return []
+
 
 # =========================================================
 # ENDPOINTS HTML
@@ -818,6 +881,7 @@ def home():
 @app.route("/dashboard")
 def dashboard():
     return render_template("dashboard.html")
+
 
 # =========================================================
 # ENDPOINTS BASE
@@ -833,6 +897,7 @@ def status():
 @app.route("/health")
 def health():
     return jsonify({"status": "ok"})
+
 
 # =========================================================
 # SCAN
@@ -861,6 +926,7 @@ def scan():
         "total_senales": len(senales),
     })
 
+
 # =========================================================
 # SEÑALES
 # =========================================================
@@ -872,15 +938,15 @@ def signals():
             [_decorate_signal(s) for s in current_signals],
             key=lambda x: _safe_float(x.get("ranking_score"), 0.0),
             reverse=True
-        )[:10]
+        )[:6]
         print(f"[SIGNALS] desde memoria -> {len(current_sorted)}")
         return jsonify({"signals": current_sorted})
 
     fallback = _signals_from_storage()
     if fallback:
         print(f"[SIGNALS] obtenidas desde archivo -> {len(fallback)}")
-        STATE["signals"] = fallback[:10]
-        return jsonify({"signals": fallback[:10]})
+        STATE["signals"] = fallback[:6]
+        return jsonify({"signals": fallback[:6]})
 
     print("[SIGNALS] memoria vacía y archivo vacío -> ejecutando rescan")
     partidos = obtener_partidos_para_scan()
@@ -892,7 +958,8 @@ def signals():
     STATE["last_total_matches"] = len(partidos)
     STATE["stats"] = _build_stats_from_signals(senales)
 
-    return jsonify({"signals": senales[:10]})
+    return jsonify({"signals": senales[:6]})
+
 
 # =========================================================
 # HOT MATCHES
@@ -903,12 +970,14 @@ def hot_matches():
         "hot_matches": STATE["hot_matches"]
     })
 
+
 # =========================================================
 # LEARNING STATS
 # =========================================================
 @app.route("/learning-stats")
 def learning_stats():
     return jsonify(STATE["stats"])
+
 
 # =========================================================
 # HISTORIAL
@@ -925,12 +994,14 @@ def history():
 
     return jsonify(STATE["history"])
 
+
 # =========================================================
 # LIGAS
 # =========================================================
 @app.route("/api/leagues")
 def leagues():
     return jsonify(STATE["leagues"])
+
 
 # =========================================================
 # DASHBOARD DATA
@@ -948,9 +1019,10 @@ def dashboard_data():
         "total_signals": len(signals),
         "total_hot_matches": len(STATE.get("hot_matches", [])),
         "total_matches": STATE.get("last_total_matches", 0),
-        "signals": signals[:10],
+        "signals": signals[:6],
         "stats": STATE.get("stats", {}),
     })
+
 
 # =========================================================
 # TEST PIPELINE
@@ -974,6 +1046,7 @@ def test_pipeline():
             "type": type(e).__name__
         }), 500
 
+
 # =========================================================
 # API MATCH DETAIL
 # =========================================================
@@ -991,6 +1064,7 @@ def match_detail(match_id):
             return jsonify(s)
 
     return jsonify({"error": "match no encontrado"}), 404
+
 
 # =========================================================
 # MAIN LOCAL
