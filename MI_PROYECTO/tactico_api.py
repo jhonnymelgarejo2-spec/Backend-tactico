@@ -60,6 +60,12 @@ STATE = {
     "last_total_matches": 0,
 }
 
+MERCADOS_PERMITIDOS = {
+    "OVER_NEXT_15_DYNAMIC",
+    "OVER_MATCH_DYNAMIC",
+    "UNDER_MATCH_DYNAMIC",
+}
+
 # =========================================================
 # HELPERS BASE
 # =========================================================
@@ -106,7 +112,6 @@ def _clamp(value: float, low: float, high: float) -> float:
 
 # =========================================================
 # HELPERS TACTICOS EXPORTABLES
-# ESTOS SON LOS QUE IMPORTA decision_pipeline.py
 # =========================================================
 def calcular_tactical_score(partido: Dict[str, Any]) -> float:
     xg = _safe_float(partido.get("xG"), 0.0)
@@ -269,7 +274,7 @@ def evaluar_value(prob_real: float, cuota: float) -> Dict[str, Any]:
             "value_score": 0.0,
             "value_categoria": "SIN_VALUE",
             "recomendacion_value": "NO_APOSTAR",
-            "razon_value": "Cuota inválida",
+            "razon_value": "Cuota invalida",
         }
 
     prob_implicita = round(1.0 / cuota, 4)
@@ -280,7 +285,7 @@ def evaluar_value(prob_real: float, cuota: float) -> Dict[str, Any]:
     if edge_pct >= 12:
         categoria = "VALUE_ELITE"
         recomendacion = "APOSTAR_FUERTE"
-        razon = "Value muy alto respecto a la probabilidad implícita"
+        razon = "Value muy alto respecto a la probabilidad implicita"
     elif edge_pct >= 8:
         categoria = "VALUE_ALTO"
         recomendacion = "APOSTAR"
@@ -296,7 +301,7 @@ def evaluar_value(prob_real: float, cuota: float) -> Dict[str, Any]:
     else:
         categoria = "SIN_VALUE"
         recomendacion = "NO_APOSTAR"
-        razon = "No hay ventaja estadística suficiente"
+        razon = "No hay ventaja estadistica suficiente"
 
     return {
         "prob_implicita": prob_implicita,
@@ -353,7 +358,7 @@ def enriquecer_senal(senal: Dict[str, Any], partido: Dict[str, Any]) -> Dict[str
     senal["signal_score"] = signal_score
     senal["signal_rank"] = signal_rank
 
-    senal.setdefault("ai_reason", "Lectura IA sin anomalías extremas")
+    senal.setdefault("ai_reason", "Lectura IA sin anomalias extremas")
     senal.setdefault("motivo_operacion", "OK")
     senal.setdefault("permitido_operar", True)
     senal.setdefault("stake_pct", 0.0)
@@ -362,107 +367,6 @@ def enriquecer_senal(senal: Dict[str, Any], partido: Dict[str, Any]) -> Dict[str
     senal.setdefault("bankroll_mode", "FLAT")
 
     return senal
-
-
-def filtro_antifake_partido(partido: Dict[str, Any], senal: Dict[str, Any]) -> bool:
-    minuto = _safe_int(partido.get("minuto"), 0)
-    xg = _safe_float(partido.get("xG"), 0.0)
-    shots = _safe_int(partido.get("shots"), 0)
-    shots_on_target = _safe_int(partido.get("shots_on_target"), 0)
-    dangerous_attacks = _safe_int(partido.get("dangerous_attacks"), 0)
-    momentum = _safe_upper(partido.get("momentum"))
-    market = _safe_upper(senal.get("market"))
-    confidence = _safe_float(senal.get("confidence"), 0.0)
-    value = _safe_float(senal.get("value"), 0.0)
-
-    if minuto < 8:
-        return False
-
-    if confidence < 55:
-        return False
-
-    if value < 0:
-        return False
-
-    sin_stats = (
-        xg == 0 and
-        shots == 0 and
-        shots_on_target == 0 and
-        dangerous_attacks == 0
-    )
-
-    if sin_stats:
-        return confidence >= 72
-
-    if "OVER" in market or "GOAL" in market:
-        if xg < 0.25 and shots_on_target < 1 and dangerous_attacks < 8 and confidence < 75:
-            return False
-
-    if "RESULT" in market:
-        if minuto < 20 and xg > 2.0 and shots_on_target >= 4 and confidence < 78:
-            return False
-
-    if momentum == "BAJO" and dangerous_attacks < 6 and shots_on_target == 0 and confidence < 72:
-        return False
-
-    return True
-
-
-def filtrar_value_bets_reales(senal: Dict[str, Any]) -> bool:
-    league = _safe_lower(senal.get("league"))
-    market = _safe_upper(senal.get("market"))
-    value = _safe_float(senal.get("value"), 0.0)
-    confidence = _safe_float(senal.get("confidence"), 0.0)
-    tactical_score = _safe_float(senal.get("tactical_score"), 0.0)
-    signal_score = _safe_float(senal.get("signal_score"), 0.0)
-    risk_score = _safe_float(senal.get("risk_score"), 10.0)
-    odd = _safe_float(senal.get("odd"), 0.0)
-    minute = _safe_int(senal.get("minute"), 0)
-
-    ligas_top = {
-        "premier league",
-        "la liga",
-        "serie a",
-        "bundesliga",
-        "ligue 1",
-        "champions league",
-        "uefa champions league",
-        "europa league",
-        "uefa europa league",
-        "libertadores",
-        "sudamericana",
-    }
-
-    if minute >= 89:
-        return False
-
-    if 0 < odd < 1.20:
-        return False
-
-    if league in ligas_top:
-        if value < 2:
-            return False
-        if confidence < 60:
-            return False
-    else:
-        if value < 0.5:
-            return False
-        if confidence < 56:
-            return False
-
-    if tactical_score < 6:
-        return False
-
-    if signal_score < 45:
-        return False
-
-    if risk_score > 8.5:
-        return False
-
-    if "RESULT" in market and confidence < 60:
-        return False
-
-    return True
 
 
 # =========================================================
@@ -503,24 +407,26 @@ def _ranking_penalty(signal: Dict[str, Any]) -> float:
     elif minute >= 80:
         penalty += 8
 
-    if confidence < 66:
-        penalty += 8
-    elif confidence < 72:
-        penalty += 3
+    if confidence < 64:
+        penalty += 6
+    elif confidence < 70:
+        penalty += 2
 
-    if value < 2:
+    if value < 0.5:
         penalty += 10
+    elif value < 1.0:
+        penalty += 5
 
-    if risk_score >= 7:
-        penalty += 12
-    elif risk_score >= 6:
+    if risk_score >= 7.8:
+        penalty += 10
+    elif risk_score >= 6.8:
+        penalty += 4
+
+    if tactical_score < 9 and market != "UNDER_MATCH_DYNAMIC":
         penalty += 6
 
-    if tactical_score < 10:
-        penalty += 8
-
-    if signal_score < 80:
-        penalty += 8
+    if signal_score < 95:
+        penalty += 6
 
     if market == "UNDER_MATCH_DYNAMIC":
         xg = _safe_float(signal.get("xG"), 0.0)
@@ -528,14 +434,14 @@ def _ranking_penalty(signal: Dict[str, Any]) -> float:
         dangerous_attacks = _safe_int(signal.get("dangerous_attacks"), 0)
         goal_prob_10 = _safe_float(signal.get("goal_prob_10"), 0.0)
 
-        if xg >= 1.30:
-            penalty += 12
-        if shots_on_target >= 3:
-            penalty += 10
-        if dangerous_attacks >= 16:
-            penalty += 10
-        if goal_prob_10 >= 40:
-            penalty += 10
+        if xg >= 1.45:
+            penalty += 8
+        if shots_on_target >= 4:
+            penalty += 6
+        if dangerous_attacks >= 18:
+            penalty += 6
+        if goal_prob_10 >= 45:
+            penalty += 6
 
     return round(penalty, 2)
 
@@ -560,24 +466,20 @@ def _qualifies_for_top(signal: Dict[str, Any]) -> bool:
     signal_score = _safe_float(signal.get("signal_score"), 0.0)
     market = _safe_upper(signal.get("market"))
 
-    if market not in {
-        "OVER_NEXT_15_DYNAMIC",
-        "OVER_MATCH_DYNAMIC",
-        "UNDER_MATCH_DYNAMIC",
-    }:
+    if market not in MERCADOS_PERMITIDOS:
         return False
 
     if minute >= 89:
         return False
-    if confidence < 68:
+    if confidence < 64:
         return False
-    if value < 1.0:
+    if value < 0.5:
         return False
-    if risk_score > 7.2:
+    if risk_score > 7.8:
         return False
-    if tactical_score < 12 and market != "UNDER_MATCH_DYNAMIC":
+    if tactical_score < 9 and market != "UNDER_MATCH_DYNAMIC":
         return False
-    if signal_score < 110:
+    if signal_score < 95:
         return False
 
     if market == "UNDER_MATCH_DYNAMIC":
@@ -586,13 +488,13 @@ def _qualifies_for_top(signal: Dict[str, Any]) -> bool:
         dangerous_attacks = _safe_int(signal.get("dangerous_attacks"), 0)
         goal_prob_10 = _safe_float(signal.get("goal_prob_10"), 0.0)
 
-        if xg >= 1.35:
+        if xg >= 1.55:
             return False
-        if shots_on_target >= 3:
+        if shots_on_target >= 4:
             return False
-        if dangerous_attacks >= 16:
+        if dangerous_attacks >= 18:
             return False
-        if goal_prob_10 >= 40:
+        if goal_prob_10 >= 48:
             return False
 
     return True
@@ -703,14 +605,43 @@ def obtener_partidos_para_scan() -> List[Dict[str, Any]]:
         try:
             partidos = obtener_partidos_en_vivo()
             if isinstance(partidos, list) and partidos:
-                print(f"[SCAN] fetcher principal devolvió -> {len(partidos)} partidos")
+                print(f"[SCAN] fetcher principal devolvio -> {len(partidos)} partidos")
                 return partidos
-            print("[SCAN] fetcher principal devolvió vacío, usando demo")
+            print("[SCAN] fetcher principal devolvio vacio, usando demo")
         except Exception as e:
             print(f"[SCAN] ERROR fetcher principal -> {e}")
 
     print("[SCAN] usando partidos demo")
     return _demo_partidos()
+
+
+def _filtrar_publicables(signals: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    publicables = [
+        s for s in signals
+        if (
+            _safe_upper(s.get("market")) in MERCADOS_PERMITIDOS
+            and bool(s.get("publish_ready", True))
+            and _safe_float(s.get("confidence"), 0.0) >= 64
+            and _safe_float(s.get("value"), 0.0) >= 0.5
+            and _safe_float(s.get("risk_score"), 10.0) <= 7.8
+            and _safe_float(s.get("ranking_score"), 0.0) >= 110
+        )
+    ]
+
+    overs = [s for s in publicables if "OVER" in _safe_upper(s.get("market"))][:3]
+    unders = [s for s in publicables if _safe_upper(s.get("market")) == "UNDER_MATCH_DYNAMIC"][:3]
+
+    resultado = sorted(
+        overs + unders,
+        key=lambda x: (
+            _safe_float(x.get("ranking_score"), 0.0),
+            _safe_float(x.get("signal_score"), 0.0),
+            _safe_float(x.get("confidence"), 0.0),
+        ),
+        reverse=True
+    )[:6]
+
+    return resultado
 
 
 # =========================================================
@@ -734,21 +665,17 @@ def procesar_partidos(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             print(f"[SCAN] resultado pipeline -> {s}")
 
             if not s:
-                print(f"[SCAN] señal vacía -> {p.get('id')}")
+                print(f"[SCAN] senal vacia -> {p.get('id')}")
                 continue
 
             s = _decorate_signal(s)
-
-            if not s.get("qualifies_for_top", False):
-                print(f"[SCAN] señal débil pero conservada para ranking -> {p.get('id')}")
-
             senales.append(s)
-            print(f"[SCAN] señal agregada -> {p.get('id')}")
+            print(f"[SCAN] senal agregada -> {p.get('id')}")
 
             if guardar_senal:
                 try:
                     guardar_senal(s)
-                    print(f"[ALMACENAMIENTO] señal guardada -> {p.get('id')}")
+                    print(f"[ALMACENAMIENTO] senal guardada -> {p.get('id')}")
                 except Exception as e:
                     print(f"[ALMACENAMIENTO] ERROR guardar_senal -> {e}")
 
@@ -767,36 +694,10 @@ def procesar_partidos(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         reverse=True
     )
 
-    publicables = [
-        s for s in senales
-        if (
-            _safe_upper(s.get("market")) in {
-                "OVER_NEXT_15_DYNAMIC",
-                "OVER_MATCH_DYNAMIC",
-                "UNDER_MATCH_DYNAMIC",
-            }
-            and _safe_float(s.get("confidence"), 0.0) >= 68
-            and _safe_float(s.get("value"), 0.0) >= 1.0
-            and _safe_float(s.get("risk_score"), 10.0) <= 7.2
-            and _safe_float(s.get("ranking_score"), 0.0) >= 140
-        )
-    ]
+    top_signals = _filtrar_publicables(senales)
 
-    overs = [s for s in publicables if "OVER" in _safe_upper(s.get("market"))][:3]
-    unders = [s for s in publicables if _safe_upper(s.get("market")) == "UNDER_MATCH_DYNAMIC"][:3]
-
-    top_signals = sorted(
-        overs + unders,
-        key=lambda x: (
-            _safe_float(x.get("ranking_score"), 0.0),
-            _safe_float(x.get("signal_score"), 0.0),
-            _safe_float(x.get("confidence"), 0.0),
-        ),
-        reverse=True
-    )[:6]
-
-    print(f"[SCAN] total señales generadas -> {len(top_signals)}")
-    print(f"[SCAN] ESTADO señales -> {top_signals}")
+    print(f"[SCAN] total senales generadas -> {len(top_signals)}")
+    print(f"[SCAN] ESTADO senales -> {top_signals}")
 
     return top_signals
 
@@ -842,29 +743,7 @@ def _signals_from_storage() -> List[Dict[str, Any]]:
             reverse=True
         )
 
-        publicables = [
-            s for s in decoradas
-            if (
-                _safe_upper(s.get("market")) in {
-                    "OVER_NEXT_15_DYNAMIC",
-                    "OVER_MATCH_DYNAMIC",
-                    "UNDER_MATCH_DYNAMIC",
-                }
-                and _safe_float(s.get("confidence"), 0.0) >= 68
-                and _safe_float(s.get("value"), 0.0) >= 1.0
-                and _safe_float(s.get("risk_score"), 10.0) <= 7.2
-                and _safe_float(s.get("ranking_score"), 0.0) >= 140
-            )
-        ]
-
-        overs = [s for s in publicables if "OVER" in _safe_upper(s.get("market"))][:3]
-        unders = [s for s in publicables if _safe_upper(s.get("market")) == "UNDER_MATCH_DYNAMIC"][:3]
-
-        return sorted(
-            overs + unders,
-            key=lambda x: _safe_float(x.get("ranking_score"), 0.0),
-            reverse=True
-        )[:6]
+        return _filtrar_publicables(decoradas)
     except Exception as e:
         print(f"[SIGNALS] ERROR storage -> {e}")
         return []
@@ -928,7 +807,7 @@ def scan():
 
 
 # =========================================================
-# SEÑALES
+# SENALES
 # =========================================================
 @app.route("/signals")
 def signals():
@@ -939,8 +818,9 @@ def signals():
             key=lambda x: _safe_float(x.get("ranking_score"), 0.0),
             reverse=True
         )[:6]
+        current_sorted = _filtrar_publicables(current_sorted) or current_sorted[:6]
         print(f"[SIGNALS] desde memoria -> {len(current_sorted)}")
-        return jsonify({"signals": current_sorted})
+        return jsonify({"signals": current_sorted[:6]})
 
     fallback = _signals_from_storage()
     if fallback:
@@ -948,7 +828,7 @@ def signals():
         STATE["signals"] = fallback[:6]
         return jsonify({"signals": fallback[:6]})
 
-    print("[SIGNALS] memoria vacía y archivo vacío -> ejecutando rescan")
+    print("[SIGNALS] memoria vacia y archivo vacio -> ejecutando rescan")
     partidos = obtener_partidos_para_scan()
     senales = procesar_partidos(partidos)
 
@@ -1008,18 +888,18 @@ def leagues():
 # =========================================================
 @app.route("/dashboard-data")
 def dashboard_data():
-    signals = STATE.get("signals", [])
-    if not signals:
-        signals = _signals_from_storage()
+    signals_data = STATE.get("signals", [])
+    if not signals_data:
+        signals_data = _signals_from_storage()
 
     return jsonify({
         "status": "ok",
         "service": "jhonny_elite_v16",
         "last_scan": STATE.get("last_scan", 0),
-        "total_signals": len(signals),
+        "total_signals": len(signals_data),
         "total_hot_matches": len(STATE.get("hot_matches", [])),
         "total_matches": STATE.get("last_total_matches", 0),
-        "signals": signals[:6],
+        "signals": signals_data[:6],
         "stats": STATE.get("stats", {}),
     })
 
