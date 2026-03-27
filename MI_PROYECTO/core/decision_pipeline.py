@@ -60,6 +60,26 @@ except Exception:
 
 
 # =========================================================
+# IMPORTS NUEVOS - THE ODDS API
+# =========================================================
+try:
+    from core.odds_market_fetcher import obtener_odds_partido
+except Exception:
+    try:
+        from odds_market_fetcher import obtener_odds_partido
+    except Exception:
+        obtener_odds_partido = None
+
+try:
+    from core.market_validation_engine import validar_mercado_con_odds
+except Exception:
+    try:
+        from market_validation_engine import validar_mercado_con_odds
+    except Exception:
+        validar_mercado_con_odds = None
+
+
+# =========================================================
 # HELPERS
 # =========================================================
 def _safe_float(value: Any, default: float = 0.0) -> float:
@@ -121,7 +141,7 @@ def _es_ventana_secundaria(minuto: int) -> bool:
     return (15 <= minuto <= 24) or (46 <= minuto <= 59) or (86 <= minuto <= 88)
 
 
-def goal_safe(prob=0.0, alt=0.0):
+def goal_safe(prob: Any = 0.0, alt: float = 0.0) -> float:
     try:
         return float(prob)
     except Exception:
@@ -247,31 +267,29 @@ def _build_context_state(partido: Dict[str, Any]) -> Dict[str, Any]:
     context_score = 50.0
     context_state = "NEUTRO"
     context_risk = "MEDIO"
+    context_supports_next_goal = False
     context_supports_over = False
     context_supports_under = False
-    context_supports_next_goal = False
 
     if diff == 0 and minuto >= 65:
-        context_score += 8
+        context_score += 10
         context_state = "EMPATE_ABIERTO"
 
     if diff == 1 and minuto >= 70:
-        context_score += 10
+        context_score += 12
         context_state = "CIERRE_DE_RESULTADO"
 
-    if xg >= 1.45 or shots_on_target >= 3 or dangerous_attacks >= 17:
+    if xg >= 1.6 or shots_on_target >= 3 or dangerous_attacks >= 18:
         context_score += 10
-        context_supports_over = True
         context_supports_next_goal = True
+        context_supports_over = True
 
     if momentum in ("ALTO", "MUY ALTO"):
-        context_score += 6
-        context_supports_over = True
+        context_score += 7
         context_supports_next_goal = True
 
     if pressure_score >= 6:
-        context_score += 5
-        context_supports_over = True
+        context_score += 6
         context_supports_next_goal = True
 
     if chaos_score >= 8:
@@ -279,10 +297,10 @@ def _build_context_state(partido: Dict[str, Any]) -> Dict[str, Any]:
         context_supports_over = True
 
     if (
-        minuto >= 60 and
-        xg < 1.30 and
+        minuto >= 62 and
+        xg < 1.20 and
         shots_on_target <= 2 and
-        dangerous_attacks < 17 and
+        dangerous_attacks < 16 and
         goal_safe(prob=pressure_score, alt=0) >= 0
     ):
         context_supports_under = True
@@ -291,7 +309,7 @@ def _build_context_state(partido: Dict[str, Any]) -> Dict[str, Any]:
 
     if context_supports_under and not context_supports_next_goal:
         context_risk = "BAJO"
-    elif context_supports_over and xg >= 1.8:
+    elif context_supports_next_goal and xg >= 1.8:
         context_risk = "MEDIO"
     elif chaos_score >= 10:
         context_risk = "ALTO"
@@ -300,9 +318,9 @@ def _build_context_state(partido: Dict[str, Any]) -> Dict[str, Any]:
         "context_score": round(context_score, 2),
         "context_state": context_state,
         "context_risk": context_risk,
+        "context_supports_next_goal": context_supports_next_goal,
         "context_supports_over": context_supports_over,
         "context_supports_under": context_supports_under,
-        "context_supports_next_goal": context_supports_next_goal,
         "context_reason": "Contexto calculado por marcador, minuto, xG, tiros y presión",
     }
 
@@ -446,6 +464,7 @@ def _market_bias(signal: Dict[str, Any]) -> Dict[str, Any]:
     xg = _safe_float(signal.get("xG"), 0.0)
     shots_on_target = _safe_int(signal.get("shots_on_target"), 0)
     dangerous_attacks = _safe_int(signal.get("dangerous_attacks"), 0)
+    goal_prob_5 = _safe_float(signal.get("goal_prob_5"), 0.0)
     goal_prob_10 = _safe_float(signal.get("goal_prob_10"), 0.0)
 
     final_score = 0.0
@@ -479,25 +498,23 @@ def _market_bias(signal: Dict[str, Any]) -> Dict[str, Any]:
         final_reason = "Proyección de más goles en el resto del partido"
 
     elif market == "UNDER_MATCH_DYNAMIC":
-        final_score += 44
-        final_score -= xg * 11
+        final_score += 46
+        final_score -= xg * 12
         final_score -= shots_on_target * 4
-        final_score -= dangerous_attacks * 0.32
-        final_score -= goal_prob_10 * 0.32
+        final_score -= dangerous_attacks * 0.35
+        final_score -= goal_prob_10 * 0.35
 
         if estado in ("FRIO", "CONTROLADO", "MUERTO"):
-            final_score += 16
+            final_score += 18
 
         if minuto >= 60:
             final_score += 8
 
-        if goal_prob_10 >= 48:
+        if goal_prob_10 >= 45:
             final_score -= 10
-        if shots_on_target >= 4:
+        if shots_on_target >= 3:
             final_score -= 8
-        if dangerous_attacks >= 20:
-            final_score -= 8
-        if xg >= 1.55:
+        if dangerous_attacks >= 18:
             final_score -= 8
 
         final_reason = "El contexto final favorece cierre defensivo"
@@ -575,22 +592,22 @@ def _build_ai_layer(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str
     ai_confidence_adjustment = 0.0
     ai_recommendation = "APOSTAR"
 
-    if market in ("OVER_NEXT_15_DYNAMIC", "OVER_MATCH_DYNAMIC") and xg >= 1.35 and shots_on_target >= 2:
-        ai_score += 16
+    if market in ("OVER_NEXT_15_DYNAMIC", "OVER_MATCH_DYNAMIC") and xg >= 1.4 and shots_on_target >= 2:
+        ai_score += 18
         ai_state = "CONTROL_REAL"
         ai_fit = "ALINEADA"
         ai_fit_reason = "Ventana ofensiva respaldada por producción real"
         ai_reason = "Presión ofensiva respaldada por producción real"
-        ai_confidence_adjustment += 6
+        ai_confidence_adjustment += 7
 
     if (
         market == "UNDER_MATCH_DYNAMIC"
-        and minute >= 70
-        and xg < 1.20
+        and minute >= 72
+        and xg < 1.15
         and shots_on_target <= 2
-        and dangerous_attacks < 17
+        and dangerous_attacks < 16
     ):
-        ai_score += 9
+        ai_score += 10
         ai_state = "CONTROL_REAL"
         ai_fit = "ALINEADA"
         ai_fit_reason = "Cierre táctico con poca producción real"
@@ -598,11 +615,11 @@ def _build_ai_layer(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str
         ai_confidence_adjustment += 4
 
     if estado in ("CAOS", "EXPLOSIVO") and market == "UNDER_MATCH_DYNAMIC":
-        ai_score -= 14
+        ai_score -= 16
         ai_fit = "CONFLICTIVA"
         ai_reason = "Mercado poco alineado con el estado explosivo"
 
-    if confidence < 64:
+    if confidence < 66:
         ai_score -= 6
 
     ai_confidence_final = _clamp(confidence + ai_confidence_adjustment, 50.0, 95.0)
@@ -667,23 +684,23 @@ def _build_dynamic_filters(signal: Dict[str, Any]) -> Dict[str, Any]:
     if market in ("OVER_NEXT_15_DYNAMIC", "OVER_MATCH_DYNAMIC") and tactical_score < 8:
         context_ok = False
 
-    if signal_score < 52:
+    if signal_score < 55:
         context_ok = False
 
-    if risk_score > 8.0:
+    if risk_score > 8.2:
         antifake_ok = False
 
     if estado == "CAOS" and confidence < dynamic_chaos_confidence_block and market == "UNDER_MATCH_DYNAMIC":
         chaos_ok = False
 
     if market == "UNDER_MATCH_DYNAMIC":
-        if xg >= 1.75:
+        if xg >= 1.60:
             context_ok = False
-        if shots_on_target >= 4:
+        if shots_on_target >= 3:
             context_ok = False
-        if dangerous_attacks >= 20:
+        if dangerous_attacks >= 18:
             context_ok = False
-        if goal_prob_10 >= 50:
+        if goal_prob_10 >= 45:
             context_ok = False
 
     publish_ready = all([antifake_ok, value_filter_ok, context_ok, chaos_ok, confianza_ok])
@@ -749,7 +766,6 @@ def _master_gate(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str, A
     shots_on_target = _safe_int(signal.get("shots_on_target"), 0)
     dangerous_attacks = _safe_int(signal.get("dangerous_attacks"), 0)
     goal_prob_10 = _safe_float(signal.get("goal_prob_10"), 0.0)
-    odd = _safe_float(signal.get("odd"), 0.0)
 
     blocked_reasons: List[str] = []
 
@@ -765,34 +781,31 @@ def _master_gate(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str, A
     if not _es_minuto_operable(minute):
         blocked_reasons.append("Fuera de ventana operable")
 
-    if confidence < 64:
+    if confidence < 68:
         blocked_reasons.append("Confianza por debajo del mínimo")
 
-    if value < 0.5:
+    if value < 1.0:
         blocked_reasons.append("Value insuficiente")
 
-    if risk_score > 7.8:
+    if risk_score > 7.2:
         blocked_reasons.append("Riesgo operativo alto")
 
-    if signal_score < 95:
+    if signal_score < 110:
         blocked_reasons.append("Signal score insuficiente")
 
-    if odd and (odd < 1.50 or odd > 2.10):
-        blocked_reasons.append("Cuota fuera del rango objetivo")
-
-    if market in ("OVER_NEXT_15_DYNAMIC", "OVER_MATCH_DYNAMIC") and tactical_score < 10:
+    if market in ("OVER_NEXT_15_DYNAMIC", "OVER_MATCH_DYNAMIC") and tactical_score < 12:
         blocked_reasons.append("Over sin respaldo táctico suficiente")
 
     if market == "UNDER_MATCH_DYNAMIC":
-        if minute < 58:
+        if minute < 60:
             blocked_reasons.append("Under demasiado temprano")
-        if xg >= 1.50:
+        if xg >= 1.35:
             blocked_reasons.append("Under incoherente con xG alto")
-        if shots_on_target >= 4:
+        if shots_on_target >= 3:
             blocked_reasons.append("Under incoherente con tiros al arco")
-        if dangerous_attacks >= 18:
+        if dangerous_attacks >= 16:
             blocked_reasons.append("Under incoherente con ataques peligrosos")
-        if goal_prob_10 >= 45:
+        if goal_prob_10 >= 40:
             blocked_reasons.append("Under incoherente con probabilidad de gol")
 
     publish_ready = len(blocked_reasons) == 0
@@ -828,7 +841,7 @@ def _ranking_layer(signal: Dict[str, Any]) -> Dict[str, Any]:
         tactical_score * 0.75
     )
 
-    ranking_penalty = risk_score * 8.7
+    ranking_penalty = risk_score * 9.0
 
     if minute >= 85:
         ranking_penalty += 8
@@ -836,17 +849,17 @@ def _ranking_layer(signal: Dict[str, Any]) -> Dict[str, Any]:
         ranking_penalty += 4
 
     if market == "UNDER_MATCH_DYNAMIC":
-        if xg >= 1.45:
-            ranking_penalty += 12
+        if xg >= 1.30:
+            ranking_penalty += 18
         if shots_on_target >= 3:
-            ranking_penalty += 8
-        if dangerous_attacks >= 17:
-            ranking_penalty += 8
-        if goal_prob_10 >= 45:
-            ranking_penalty += 8
+            ranking_penalty += 12
+        if dangerous_attacks >= 16:
+            ranking_penalty += 12
+        if goal_prob_10 >= 40:
+            ranking_penalty += 12
 
     ranking_score = round(ranking_score_base - ranking_penalty, 2)
-    qualifies_for_top = ranking_score >= 115
+    qualifies_for_top = ranking_score >= 140
 
     publish_rank = 3
     if ranking_score >= 340:
@@ -998,7 +1011,7 @@ def _calcular_scores_core(signal: Dict[str, Any], partido: Dict[str, Any]) -> Di
         (goal_prob_15 * 0.20)
     )
 
-    if market == "OVER_NEXT_15_DYNAMIC":
+    if market in ("OVER_NEXT_15_DYNAMIC",):
         goal_inminente_score += 8
 
     risk_score = 5.0
@@ -1088,6 +1101,18 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             print(f"[PIPELINE] mercado no permitido -> {signal.get('market')}")
             return None
 
+        # =========================================================
+        # CAMPOS DEFAULT DE VALIDACION EXTERNA
+        # =========================================================
+        signal["odds_data_available"] = False
+        signal["odds_validation_ok"] = False
+        signal["market_validation_reason"] = "Sin validación externa"
+        signal["odds_selected_bookmaker"] = ""
+        signal["odds_selected_line"] = 0.0
+        signal["odds_selected_price"] = 0.0
+        signal["odds_implied_probability"] = 0.0
+        signal["market_edge_with_odds"] = 0.0
+
         context_state = _build_context_state(partido)
         emotion_state = _build_emotion_state(partido)
         tempo_state = _build_tempo_state(partido)
@@ -1124,6 +1149,27 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
         master_gate = _master_gate(partido, signal)
         signal.update(master_gate)
+
+        # =========================================================
+        # VALIDACION EXTERNA CON THE ODDS API
+        # =========================================================
+        if obtener_odds_partido and validar_mercado_con_odds:
+            odds_payload = obtener_odds_partido(
+                local=_safe_text(partido.get("local")),
+                visitante=_safe_text(partido.get("visitante")),
+            )
+            odds_validation = validar_mercado_con_odds(signal, odds_payload)
+            signal.update(odds_validation)
+
+            if signal.get("odds_data_available", False) and not signal.get("odds_validation_ok", False):
+                signal["publish_ready"] = False
+                blocked = signal.get("publish_blocked_reasons", [])
+                if not isinstance(blocked, list):
+                    blocked = []
+                blocked.append(
+                    f"Validación The Odds API fallida: {signal.get('market_validation_reason', '')}"
+                )
+                signal["publish_blocked_reasons"] = blocked
 
         if not signal.get("publish_ready", False):
             print(f"[PIPELINE] RECHAZADO MASTER GATE -> {partido.get('local')} vs {partido.get('visitante')}")
