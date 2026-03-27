@@ -39,7 +39,7 @@ def total_goles_actuales(datos):
     return ml + mv
 
 
-def cuota_en_rango(cuota, minimo=1.45, maximo=2.10):
+def cuota_en_rango(cuota, minimo=1.45, maximo=2.20):
     cuota = safe_float(cuota, 0.0)
     return minimo <= cuota <= maximo
 
@@ -331,13 +331,13 @@ def detectar_gol_inminente(datos):
 
 
 def clasificar_tier(confianza, valor, value_categoria="SIN_VALUE"):
-    if confianza >= 86 and valor >= 6:
+    if confianza >= 88 and valor >= 8:
         return "PREMIUM"
-    if confianza >= 79 and valor >= 4:
+    if confianza >= 81 and valor >= 5:
         return "TOP"
-    if confianza >= 72 and valor >= 2.0:
+    if confianza >= 74 and valor >= 2.5:
         return "FUERTE"
-    if confianza >= 64 and valor >= 0.8:
+    if confianza >= 67 and valor >= 1.0:
         return "NORMAL"
     return "DESCARTAR"
 
@@ -675,7 +675,7 @@ def generar_senales_posibles(datos):
         return []
 
     cuota = safe_float(datos.get("cuota", 1.85), 1.85)
-    if not cuota_en_rango(cuota, 1.45, 2.10):
+    if not cuota_en_rango(cuota, 1.45, 2.20):
         return []
 
     xg = safe_float(datos.get("xG", 0), 0.0)
@@ -696,6 +696,7 @@ def generar_senales_posibles(datos):
 
     senales = []
 
+    # OVER NEXT 15
     confianza_next15 = base
     if xg >= 1.2:
         confianza_next15 += 7
@@ -714,7 +715,7 @@ def generar_senales_posibles(datos):
 
     confianza_next15 = clamp(confianza_next15, 45, 95)
 
-    if confianza_next15 >= 66 and valor >= 0.8:
+    if confianza_next15 >= 72 and valor >= 1.2:
         linea = total_goles + 0.5
         senal = {
             "mercado": "OVER_NEXT_15_DYNAMIC",
@@ -732,6 +733,7 @@ def generar_senales_posibles(datos):
         if senal["tier"] != "DESCARTAR":
             senales.append(senal)
 
+    # OVER MATCH
     confianza_over_match = base
     if xg >= 1.5:
         confianza_over_match += 8
@@ -750,7 +752,7 @@ def generar_senales_posibles(datos):
 
     confianza_over_match = clamp(confianza_over_match, 45, 95)
 
-    if confianza_over_match >= 68 and valor >= 0.8:
+    if confianza_over_match >= 74 and valor >= 1.2:
         linea_match = max(1.5, total_goles + 0.5)
         senal = {
             "mercado": "OVER_MATCH_DYNAMIC",
@@ -768,6 +770,7 @@ def generar_senales_posibles(datos):
         if senal["tier"] != "DESCARTAR":
             senales.append(senal)
 
+    # UNDER MATCH
     confianza_under_match = 44
 
     if momentum in ("BAJO", "MEDIO"):
@@ -812,19 +815,19 @@ def generar_senales_posibles(datos):
         confianza_under_match -= 4
 
     if under_es_fragil(total_goles, linea_under):
-        confianza_under_match -= 10
-
-    if total_goles >= 3 and linea_under <= 3.5:
         confianza_under_match -= 12
 
+    if total_goles >= 3 and linea_under <= 3.5:
+        confianza_under_match -= 15
+
     if total_goles >= 2 and linea_under <= 2.5:
-        confianza_under_match -= 14
+        confianza_under_match -= 16
 
     confianza_under_match = clamp(confianza_under_match, 35, 95)
 
     if (
-        confianza_under_match >= 72 and
-        valor >= 0.8 and
+        confianza_under_match >= 76 and
+        valor >= 1.5 and
         minuto >= 65 and
         xg < 1.35 and
         shots_on_target <= 2 and
@@ -903,17 +906,17 @@ def score_mercado(senal, datos, estado, gol_inminente):
             score += 5
 
         if goal10 >= 0.42:
-            score -= 10
+            score -= 12
         if xg >= 1.35:
-            score -= 10
+            score -= 12
         if shots_on_target >= 3:
-            score -= 8
+            score -= 10
         if dangerous_attacks >= 16:
-            score -= 8
+            score -= 10
         if gol_inminente.get("gol_inminente"):
             score -= 12
         if under_es_fragil(total_goles, linea):
-            score -= 12
+            score -= 15
 
     return round(score, 2)
 
@@ -978,17 +981,6 @@ def generar_senal(datos):
         ),
         reverse=True
     )
-
-    print(f"[SIGNAL_ENGINE] partido={datos.get('id')} senales_generadas={len(senales_ordenadas)}")
-    if senales_ordenadas:
-        for s in senales_ordenadas[:3]:
-            print(
-                f"[SIGNAL_ENGINE] mercado={s.get('mercado')} "
-                f"conf={s.get('confianza')} valor={s.get('valor')} "
-                f"tier={s.get('tier')} market_score={s.get('_market_score')}"
-            )
-    else:
-        print(f"[SIGNAL_ENGINE] sin señales viables -> {datos.get('id')}")
 
     mejor = senales_ordenadas[0] if senales_ordenadas else None
 
