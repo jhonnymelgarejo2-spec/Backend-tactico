@@ -20,7 +20,8 @@ try:
 except Exception:
     try:
         from engines.risk_engine import evaluar_riesgo
-    except Exception:
+    except Exception as e:
+        print(f"[PIPELINE] ERROR import evaluar_riesgo -> {e}")
         evaluar_riesgo = None
 
 try:
@@ -28,19 +29,21 @@ try:
 except Exception:
     try:
         from engines.ai_brain import decision_final_ia
-    except Exception:
+    except Exception as e:
+        print(f"[PIPELINE] ERROR import decision_final_ia -> {e}")
         decision_final_ia = None
 
 
 # =========================================================
-# IMPORTS NUEVOS - THE ODDS API
+# IMPORTS THE ODDS API
 # =========================================================
 try:
     from core.odds_market_fetcher import obtener_odds_partido
 except Exception:
     try:
         from odds_market_fetcher import obtener_odds_partido
-    except Exception:
+    except Exception as e:
+        print(f"[PIPELINE] ERROR import obtener_odds_partido -> {e}")
         obtener_odds_partido = None
 
 try:
@@ -48,7 +51,8 @@ try:
 except Exception:
     try:
         from market_validation_engine import validar_mercado_con_odds
-    except Exception:
+    except Exception as e:
+        print(f"[PIPELINE] ERROR import validar_mercado_con_odds -> {e}")
         validar_mercado_con_odds = None
 
 
@@ -262,12 +266,7 @@ def _build_context_state(partido: Dict[str, Any]) -> Dict[str, Any]:
         context_score += 4
         context_supports_over = True
 
-    if (
-        minuto >= 62 and
-        xg < 1.20 and
-        shots_on_target <= 2 and
-        dangerous_attacks < 16
-    ):
+    if minuto >= 62 and xg < 1.20 and shots_on_target <= 2 and dangerous_attacks < 16:
         context_supports_under = True
         if context_state == "NEUTRO":
             context_state = "PARTIDO_CERRADO"
@@ -859,7 +858,7 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             print(f"[PIPELINE] mercado no permitido -> {signal.get('market')}")
             return None
 
-        # Defaults de validación externa
+        # Defaults odds
         signal["odds_data_available"] = False
         signal["odds_validation_ok"] = False
         signal["market_validation_reason"] = "Sin validación externa"
@@ -868,6 +867,8 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         signal["odds_selected_price"] = 0.0
         signal["odds_implied_probability"] = 0.0
         signal["market_edge_with_odds"] = 0.0
+        signal["odds_side"] = ""
+        signal["market_validation_codes"] = []
 
         # Contexto auxiliar
         signal.update(_build_context_state(partido))
@@ -876,11 +877,11 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         signal.update(_build_player_state(partido))
         signal.update(_build_arbiter_state(partido))
 
-        # Sesgos de mercado / outcome
+        # Sesgos
         signal.update(_market_bias(signal))
         signal.update(_final_outcome_bias(signal))
 
-        # Scores base (sin riesgo oficial)
+        # Scores base
         signal.update(_calcular_scores_core(signal, partido))
 
         # Riesgo oficial
@@ -920,23 +921,29 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         signal.setdefault("ai_decision_score", 0.0)
         signal.setdefault("ai_recommendation", "OBSERVAR")
 
-        # Signal score final recalculado con riesgo e IA oficiales
+        # Signal score final
         signal.update(_recalcular_signal_score(signal))
 
         # Operación
         signal.update(_build_operation_fields(signal))
         signal["decision_ia"] = _upper(signal.get("ai_recommendation", "OBSERVAR"))
 
-        # Validación externa con odds
+        # =========================================================
+        # VALIDACION CON THE ODDS API
+        # =========================================================
         if obtener_odds_partido and validar_mercado_con_odds:
             try:
                 odds_payload = obtener_odds_partido(
                     local=_safe_text(partido.get("local")),
                     visitante=_safe_text(partido.get("visitante")),
+                    league=_safe_text(partido.get("liga")),
+                    country=_safe_text(partido.get("pais")),
                 )
+
                 odds_validation = validar_mercado_con_odds(signal, odds_payload)
                 if isinstance(odds_validation, dict):
                     signal.update(odds_validation)
+
             except Exception as e:
                 print(f"[PIPELINE] ERROR validación odds -> {e}")
 
@@ -948,7 +955,7 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             print(f"[PIPELINE] BLOQUEOS -> {signal.get('publish_blocked_reasons', [])}")
             return None
 
-        # Ranking final
+        # Ranking
         signal.update(_ranking_layer(signal))
 
         if not signal.get("qualifies_for_top", False):
