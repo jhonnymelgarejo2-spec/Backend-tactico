@@ -405,6 +405,10 @@ def _publicar_formato_final(partido: Dict[str, Any], signal: Dict[str, Any]) -> 
     if not selection:
         selection = _safe_text(signal.get("apuesta"))
 
+    cuota_base = round(_safe_float(signal.get("cuota"), 1.85), 2)
+    prob_implicita_base = round(_safe_float(signal.get("prob_implicita"), 0.0), 4)
+    value_base = round(_safe_float(signal.get("valor"), 0.0), 2)
+
     return {
         "match_id": partido.get("id"),
         "home": local,
@@ -417,13 +421,15 @@ def _publicar_formato_final(partido: Dict[str, Any], signal: Dict[str, Any]) -> 
         "market": market,
         "selection": selection,
         "line": signal.get("linea"),
-        "odd": round(_safe_float(signal.get("cuota"), 1.85), 2),
+        "odd": cuota_base,
+        "cuota": cuota_base,
         "prob": round(_safe_float(signal.get("prob_real"), 0.0), 4),
         "prob_real": round(_safe_float(signal.get("prob_real"), 0.0), 4),
         "prob_real_pct": round(_safe_float(signal.get("prob_real"), 0.0) * 100, 2),
-        "prob_implicita": round(_safe_float(signal.get("prob_implicita"), 0.0), 4),
+        "prob_implicita": prob_implicita_base,
         "confidence": round(_safe_float(signal.get("confianza"), 0.0), 2),
-        "value": round(_safe_float(signal.get("valor"), 0.0), 2),
+        "value": value_base,
+        "valor": value_base,
         "reason": _safe_text(signal.get("razon")),
         "tier": _safe_text(signal.get("tier")),
         "goal_prob_5": round(_safe_float(signal.get("goal_prob_5"), 0.0), 2),
@@ -921,7 +927,7 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         signal.setdefault("ai_decision_score", 0.0)
         signal.setdefault("ai_recommendation", "OBSERVAR")
 
-        # Signal score final
+        # Signal score final antes de odds
         signal.update(_recalcular_signal_score(signal))
 
         # Operación
@@ -943,6 +949,29 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
                 odds_validation = validar_mercado_con_odds(signal, odds_payload)
                 if isinstance(odds_validation, dict):
                     signal.update(odds_validation)
+
+                # =====================================================
+                # SI EXISTEN ODDS REALES, REEMPLAZAR CUOTA FIJA 1.85
+                # =====================================================
+                if signal.get("odds_data_available", False):
+                    real_price = _safe_float(signal.get("odds_selected_price"), 0.0)
+                    real_imp = _safe_float(signal.get("odds_implied_probability"), 0.0)
+                    real_edge = _safe_float(signal.get("market_edge_with_odds"), 0.0)
+
+                    if real_price > 0:
+                        signal["odd"] = round(real_price, 2)
+                        signal["cuota"] = round(real_price, 2)
+
+                    if real_imp > 0:
+                        signal["prob_implicita"] = round(real_imp, 4)
+
+                    # usar edge real de mercado como value mostrado
+                    if real_edge != 0:
+                        signal["value"] = round(real_edge, 2)
+                        signal["valor"] = round(real_edge, 2)
+
+                    # recalcular signal score con value real si aplica
+                    signal.update(_recalcular_signal_score(signal))
 
             except Exception as e:
                 print(f"[PIPELINE] ERROR validación odds -> {e}")
