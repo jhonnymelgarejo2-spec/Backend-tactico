@@ -3,666 +3,144 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JHONNY ELITE V16 PRO - Match Detail</title>
+  <title>Match Detail · JHONNY ELITE V16 PRO</title>
   <style>
-    :root {
-      --bg: #07111f;
-      --bg-2: #0c1728;
-      --panel: rgba(13, 24, 41, 0.92);
-      --panel-2: rgba(18, 32, 54, 0.95);
-      --border: rgba(79, 140, 255, 0.22);
-      --text: #eaf2ff;
-      --muted: #8da3c7;
-      --accent: #31c3ff;
-      --accent-2: #00ffa3;
-      --green: #28d17c;
-      --yellow: #ffcc66;
-      --red: #ff6b6b;
-      --blue-bar: #36a2ff;
-      --red-bar: #ff5f7a;
-      --shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
-      --radius: 18px;
-      --radius-sm: 12px;
-      --maxw: 1450px;
+    :root{
+      --bg:#07111f; --bg2:#0c1728; --panel:rgba(13,24,41,.92); --panel2:rgba(18,32,54,.96);
+      --border:rgba(79,140,255,.18); --text:#edf4ff; --muted:#8ea4c7; --accent:#31c3ff;
+      --green:#28d17c; --yellow:#ffcc66; --red:#ff6b6b; --shadow:0 14px 40px rgba(0,0,0,.35);
+      --radius:18px; --maxw:1450px;
     }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+    *{box-sizing:border-box}
+    body{
+      margin:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);
       background:
-        radial-gradient(circle at top left, rgba(0, 120, 255, 0.14), transparent 30%),
-        radial-gradient(circle at top right, rgba(0, 255, 163, 0.08), transparent 22%),
-        linear-gradient(180deg, #06101c 0%, #07111f 45%, #040b15 100%);
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    .page {
-      max-width: var(--maxw);
-      margin: 0 auto;
-      padding: 22px 18px 40px;
-    }
-
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-
-    .brand {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .brand .title {
-      font-size: 30px;
-      font-weight: 900;
-      letter-spacing: 0.5px;
-    }
-
-    .brand .title span {
-      color: #ffb326;
-    }
-
-    .brand .subtitle {
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .toolbar {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      border: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(28, 47, 75, 0.95), rgba(14, 24, 41, 0.95));
-      color: var(--text);
-      padding: 10px 14px;
-      border-radius: 12px;
-      cursor: pointer;
-      font-weight: 700;
-      text-decoration: none;
-      transition: 0.2s ease;
-    }
-
-    .btn:hover {
-      transform: translateY(-1px);
-      border-color: rgba(49, 195, 255, 0.5);
-    }
-
-    .btn-primary {
-      background: linear-gradient(180deg, rgba(0, 221, 136, 0.95), rgba(0, 171, 112, 0.95));
-      color: #041017;
-      border: none;
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: 1.65fr 0.95fr;
-      gap: 18px;
-    }
-
-    .card {
-      background: linear-gradient(180deg, var(--panel), var(--panel-2));
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-
-    .card-inner {
-      padding: 18px;
-    }
-
-    .section-title {
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
-      color: var(--accent);
-      margin-bottom: 12px;
-      font-weight: 800;
-    }
-
-    .match-header {
-      display: grid;
-      grid-template-columns: 1.2fr auto 1.2fr;
-      gap: 14px;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-
-    .team-box {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .team-name {
-      font-size: 30px;
-      font-weight: 900;
-      line-height: 1.05;
-    }
-
-    .team-side {
-      color: var(--muted);
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .score-center {
-      text-align: center;
-      min-width: 180px;
-    }
-
-    .score {
-      font-size: 52px;
-      font-weight: 900;
-      line-height: 1;
-      margin-bottom: 8px;
-    }
-
-    .meta-line {
-      color: var(--muted);
-      font-size: 14px;
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .decision-strip {
-      display: grid;
-      grid-template-columns: 1.5fr repeat(4, minmax(120px, 1fr)) 180px;
-      gap: 12px;
-      margin-top: 8px;
-    }
-
-    .decision-main,
-    .decision-mini,
-    .decision-action {
-      background: rgba(7, 18, 33, 0.7);
-      border: 1px solid rgba(85, 128, 200, 0.18);
-      border-radius: 16px;
-      padding: 14px;
-    }
-
-    .decision-main .market {
-      color: var(--accent);
-      font-size: 12px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-    }
-
-    .decision-main .selection {
-      font-size: 30px;
-      font-weight: 900;
-      line-height: 1.05;
-      margin-bottom: 8px;
-    }
-
-    .decision-main .line2 {
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .label {
-      color: var(--muted);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-      font-weight: 700;
-    }
-
-    .value-big {
-      font-size: 34px;
-      font-weight: 900;
-      line-height: 1;
-    }
-
-    .value-sub {
-      margin-top: 6px;
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    .decision-action {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .action-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 10px 12px;
-      border-radius: 12px;
-      font-weight: 900;
-      font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      min-height: 44px;
-    }
-
-    .action-apostar {
-      background: linear-gradient(180deg, rgba(49, 209, 124, 0.95), rgba(27, 172, 97, 0.95));
-      color: #041017;
-    }
-
-    .action-observar {
-      background: linear-gradient(180deg, rgba(255, 204, 102, 0.95), rgba(224, 166, 48, 0.95));
-      color: #171106;
-    }
-
-    .action-bloqueada {
-      background: linear-gradient(180deg, rgba(255, 107, 107, 0.95), rgba(212, 70, 70, 0.95));
-      color: #fff;
-    }
-
-    .rank-pill {
-      display: inline-block;
-      padding: 8px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: 1px;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(255,255,255,0.05);
-      color: #fff;
-      text-transform: uppercase;
-    }
-
-    .grid-6 {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 12px;
-      margin-top: 16px;
-    }
-
-    .metric {
-      background: rgba(7, 18, 33, 0.72);
-      border: 1px solid rgba(85, 128, 200, 0.14);
-      border-radius: 14px;
-      padding: 14px;
-      min-height: 92px;
-    }
-
-    .metric .name {
-      color: var(--muted);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-      font-weight: 700;
-    }
-
-    .metric .num {
-      font-size: 28px;
-      font-weight: 900;
-      line-height: 1;
-    }
-
-    .metric .small {
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .two-col {
-      display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
-      gap: 16px;
-      margin-top: 16px;
-    }
-
-    .reason-list,
-    .validation-list,
-    .prob-list {
-      display: grid;
-      gap: 10px;
-    }
-
-    .reason-row,
-    .validation-row,
-    .prob-row {
-      display: grid;
-      grid-template-columns: 165px 1fr;
-      gap: 10px;
-      align-items: start;
-      padding: 10px 12px;
-      border-radius: 12px;
-      background: rgba(7, 18, 33, 0.55);
-      border: 1px solid rgba(85, 128, 200, 0.14);
-    }
-
-    .reason-key,
-    .validation-key,
-    .prob-key {
-      color: var(--muted);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-weight: 800;
-    }
-
-    .reason-value,
-    .validation-value,
-    .prob-value {
-      font-size: 14px;
-      line-height: 1.4;
-      font-weight: 600;
-    }
-
-    .momentum-card {
-      margin-top: 16px;
-    }
-
-    .momentum-wrap {
-      display: grid;
-      gap: 16px;
-    }
-
-    .bar-legend {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .bar-label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-    }
-
-    .dot-blue { background: var(--blue-bar); }
-    .dot-red { background: var(--red-bar); }
-
-    .mini-stats {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-    }
-
-    .mini-stat {
-      background: rgba(7, 18, 33, 0.55);
-      border: 1px solid rgba(85, 128, 200, 0.14);
-      border-radius: 12px;
-      padding: 12px;
-    }
-
-    .mini-stat .k {
-      color: var(--muted);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 6px;
-    }
-
-    .mini-stat .v {
-      font-size: 22px;
-      font-weight: 900;
-    }
-
-    .sidebar-stack {
-      display: grid;
-      gap: 18px;
-    }
-
-    .compact-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-    }
-
-    .status-box {
-      background: rgba(7, 18, 33, 0.72);
-      border: 1px solid rgba(85, 128, 200, 0.14);
-      border-radius: 14px;
-      padding: 14px;
-      min-height: 92px;
-    }
-
-    .status-box .k {
-      color: var(--muted);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-      font-weight: 700;
-    }
-
-    .status-box .v {
-      font-size: 26px;
-      font-weight: 900;
-      line-height: 1.1;
-    }
-
-    .top-signals-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-
-    .top-signals-table th,
-    .top-signals-table td {
-      padding: 12px 10px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      text-align: left;
-      font-size: 14px;
-    }
-
-    .top-signals-table th {
-      color: var(--muted);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-weight: 800;
-    }
-
-    .table-action {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 96px;
-      padding: 8px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 900;
-      text-transform: uppercase;
-    }
-
-    .table-apostar {
-      background: rgba(40, 209, 124, 0.18);
-      color: #8dffd0;
-      border: 1px solid rgba(40, 209, 124, 0.3);
-    }
-
-    .table-observar {
-      background: rgba(255, 204, 102, 0.15);
-      color: #ffd78a;
-      border: 1px solid rgba(255, 204, 102, 0.26);
-    }
-
-    .rank-elite,
-    .rank-top,
-    .rank-normal {
-      display: inline-block;
-      min-width: 74px;
-      padding: 8px 10px;
-      border-radius: 999px;
-      text-align: center;
-      font-size: 12px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .rank-elite {
-      background: rgba(49, 195, 255, 0.12);
-      color: #b8ecff;
-      border: 1px solid rgba(49, 195, 255, 0.3);
-    }
-
-    .rank-top {
-      background: rgba(49, 209, 124, 0.12);
-      color: #baffdc;
-      border: 1px solid rgba(49, 209, 124, 0.3);
-    }
-
-    .rank-normal {
-      background: rgba(255,255,255,0.06);
-      color: #d8e7ff;
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .green { color: var(--green); }
-    .yellow { color: var(--yellow); }
-    .red { color: var(--red); }
-    .muted { color: var(--muted); }
-
-    .loader,
-    .empty-state {
-      padding: 30px 18px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 16px;
-    }
-
-    canvas {
-      width: 100% !important;
-      height: 230px !important;
-      display: block;
-    }
-
-    @media (max-width: 1200px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
-
-      .decision-strip {
-        grid-template-columns: 1fr 1fr 1fr;
-      }
-
-      .decision-main {
-        grid-column: 1 / -1;
-      }
-
-      .decision-action {
-        grid-column: 1 / -1;
-      }
-
-      .grid-6 {
-        grid-template-columns: repeat(3, 1fr);
-      }
-
-      .two-col {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 760px) {
-      .brand .title {
-        font-size: 24px;
-      }
-
-      .match-header {
-        grid-template-columns: 1fr;
-        text-align: center;
-      }
-
-      .team-name {
-        font-size: 24px;
-      }
-
-      .score {
-        font-size: 42px;
-      }
-
-      .decision-strip {
-        grid-template-columns: 1fr;
-      }
-
-      .grid-6 {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .mini-stats,
-      .compact-grid {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .reason-row,
-      .validation-row,
-      .prob-row {
-        grid-template-columns: 1fr;
-      }
-
-      .top-signals-table {
-        display: block;
-        overflow-x: auto;
-      }
+        radial-gradient(circle at top left, rgba(0,120,255,.12), transparent 28%),
+        radial-gradient(circle at top right, rgba(0,255,163,.08), transparent 22%),
+        linear-gradient(180deg,#06101c 0%,#07111f 45%,#040b15 100%);
+      min-height:100vh;
+    }
+    .page{max-width:var(--maxw);margin:0 auto;padding:22px 18px 36px}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+    .title{font-size:30px;font-weight:900}
+    .title span{color:#ffb326}
+    .sub{color:var(--muted);font-size:14px;margin-top:4px}
+    .btn{
+      border:1px solid var(--border);
+      background:linear-gradient(180deg,rgba(31,49,77,.95),rgba(14,24,41,.95));
+      color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:800;text-decoration:none;
+    }
+    .layout{display:grid;grid-template-columns:1.65fr .95fr;gap:18px}
+    .card{
+      background:linear-gradient(180deg,var(--panel),var(--panel2));
+      border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);
+    }
+    .inner{padding:18px}
+    .section{color:var(--accent);font-size:13px;text-transform:uppercase;letter-spacing:1.2px;font-weight:900;margin-bottom:12px}
+    .header{
+      display:grid;grid-template-columns:1.2fr auto 1.2fr;gap:14px;align-items:center;margin-bottom:16px;
+    }
+    .team-name{font-size:30px;font-weight:900;line-height:1.05}
+    .team-side{color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:1px}
+    .score{text-align:center}
+    .score-num{font-size:52px;font-weight:900;line-height:1;margin-bottom:8px}
+    .meta{color:var(--muted);font-size:14px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+
+    .decision{
+      display:grid;grid-template-columns:1.5fr repeat(4,minmax(120px,1fr)) 180px;gap:12px;
+    }
+    .box{
+      background:rgba(7,18,33,.7);border:1px solid rgba(85,128,200,.18);border-radius:16px;padding:14px;
+    }
+    .market{color:var(--accent);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+    .selection{font-size:30px;font-weight:900;line-height:1.05;margin-bottom:8px}
+    .label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:700}
+    .big{font-size:34px;font-weight:900;line-height:1}
+    .subv{margin-top:6px;font-size:13px;color:var(--muted)}
+    .action{
+      display:flex;flex-direction:column;justify-content:space-between;gap:12px;
+    }
+    .pill{
+      display:inline-block;padding:8px 10px;border-radius:999px;font-size:12px;font-weight:900;
+      letter-spacing:1px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);text-transform:uppercase;
+    }
+    .badge{
+      display:inline-flex;align-items:center;justify-content:center;padding:10px 12px;border-radius:12px;
+      font-weight:900;font-size:14px;text-transform:uppercase;letter-spacing:.8px;min-height:44px;
+    }
+    .ap{background:linear-gradient(180deg,rgba(49,209,124,.95),rgba(27,172,97,.95));color:#041017}
+    .ob{background:linear-gradient(180deg,rgba(255,204,102,.95),rgba(224,166,48,.95));color:#171106}
+    .no{background:linear-gradient(180deg,rgba(255,107,107,.95),rgba(212,70,70,.95));color:#fff}
+
+    .grid6{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-top:16px}
+    .metric{background:rgba(7,18,33,.72);border:1px solid rgba(85,128,200,.14);border-radius:14px;padding:14px}
+    .metric .name{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:700}
+    .metric .num{font-size:28px;font-weight:900;line-height:1}
+    .two{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-top:16px}
+    .list{display:grid;gap:10px}
+    .row{
+      display:grid;grid-template-columns:165px 1fr;gap:10px;align-items:start;
+      padding:10px 12px;border-radius:12px;background:rgba(7,18,33,.55);border:1px solid rgba(85,128,200,.14);
+    }
+    .k{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1px;font-weight:800}
+    .v{font-size:14px;line-height:1.4;font-weight:600}
+    .sidebar{display:grid;gap:18px}
+    .compact{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .status{background:rgba(7,18,33,.72);border:1px solid rgba(85,128,200,.14);border-radius:14px;padding:14px}
+    .status .v{font-size:26px;font-weight:900;line-height:1.1}
+    .empty{padding:30px 18px;text-align:center;color:var(--muted);font-size:16px}
+
+    @media (max-width:1200px){
+      .layout{grid-template-columns:1fr}
+      .decision{grid-template-columns:1fr 1fr 1fr}
+      .decision .main{grid-column:1/-1}
+      .decision .action{grid-column:1/-1}
+      .grid6{grid-template-columns:repeat(3,1fr)}
+      .two{grid-template-columns:1fr}
+    }
+    @media (max-width:760px){
+      .header{grid-template-columns:1fr;text-align:center}
+      .team-name{font-size:24px}
+      .score-num{font-size:42px}
+      .decision{grid-template-columns:1fr}
+      .grid6{grid-template-columns:repeat(2,1fr)}
+      .compact{grid-template-columns:1fr 1fr}
+      .row{grid-template-columns:1fr}
     }
   </style>
 </head>
 <body>
   <div class="page">
     <div class="topbar">
-      <div class="brand">
+      <div>
         <div class="title">JHONNY ELITE <span>V16 PRO</span></div>
-        <div class="subtitle">Panel táctico limpio · análisis vivo · decisión operativa</div>
+        <div class="sub">Detalle limpio · mercado real · decisión operativa</div>
       </div>
-
-      <div class="toolbar">
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
         <a class="btn" href="/dashboard">Volver al dashboard</a>
-        <button class="btn" onclick="reloadMatch()">Actualizar</button>
-        <button class="btn btn-primary" id="mainActionTop">Apostar</button>
+        <button class="btn" onclick="loadMatch()">Actualizar</button>
       </div>
     </div>
 
-    <div id="loading" class="loader">Cargando detalle del partido...</div>
-    <div id="error" class="empty-state" style="display:none;">No se pudo cargar el partido.</div>
+    <div id="loading" class="empty">Cargando detalle del partido...</div>
+    <div id="error" class="empty" style="display:none;">No se pudo cargar el partido.</div>
 
     <div id="content" style="display:none;">
       <div class="layout">
-        <!-- LEFT -->
         <div>
           <div class="card">
-            <div class="card-inner">
-              <div class="section-title">Detalle del partido</div>
+            <div class="inner">
+              <div class="section">Detalle del partido</div>
 
-              <div class="match-header">
-                <div class="team-box">
+              <div class="header">
+                <div>
                   <div class="team-side">Local</div>
                   <div class="team-name" id="homeName">-</div>
                 </div>
 
-                <div class="score-center">
-                  <div class="score" id="scoreLine">0 - 0</div>
-                  <div class="meta-line">
+                <div class="score">
+                  <div class="score-num" id="scoreLine">0 - 0</div>
+                  <div class="meta">
                     <span id="minuteLine">0'</span>
                     <span>•</span>
                     <span id="leagueLine">Liga</span>
@@ -671,168 +149,79 @@
                   </div>
                 </div>
 
-                <div class="team-box" style="text-align:right;">
+                <div style="text-align:right">
                   <div class="team-side">Visitante</div>
                   <div class="team-name" id="awayName">-</div>
                 </div>
               </div>
 
-              <div class="decision-strip">
-                <div class="decision-main">
+              <div class="decision">
+                <div class="box main">
                   <div class="market" id="marketName">Mercado</div>
                   <div class="selection" id="selectionName">Selección</div>
-                  <div class="line2">
-                    <span id="recomendacionFinal">OBSERVAR</span>
-                    <span class="muted"> · </span>
-                    <span id="bookmakerLine">Sin bookmaker</span>
-                  </div>
+                  <div class="subv"><span id="recomendacionFinal">OBSERVAR</span> · <span id="bookmakerLine">Sin bookmaker</span></div>
                 </div>
 
-                <div class="decision-mini">
+                <div class="box">
                   <div class="label">Cuota real</div>
-                  <div class="value-big" id="realOdd">0.00</div>
-                  <div class="value-sub">Mercado validado</div>
+                  <div class="big" id="realOdd">0.00</div>
+                  <div class="subv">Mercado validado</div>
                 </div>
 
-                <div class="decision-mini">
+                <div class="box">
                   <div class="label">Fair odds</div>
-                  <div class="value-big" id="fairOdd">0.00</div>
-                  <div class="value-sub">Modelo interno</div>
+                  <div class="big" id="fairOdd">0.00</div>
+                  <div class="subv">Modelo interno</div>
                 </div>
 
-                <div class="decision-mini">
+                <div class="box">
                   <div class="label">Value</div>
-                  <div class="value-big" id="valueLine">0.00</div>
-                  <div class="value-sub">Edge operativo</div>
+                  <div class="big" id="valueLine">0.00</div>
+                  <div class="subv">Edge operativo</div>
                 </div>
 
-                <div class="decision-mini">
+                <div class="box">
                   <div class="label">Riesgo</div>
-                  <div class="value-big" id="riskLine">0.0</div>
-                  <div class="value-sub">Risk score</div>
+                  <div class="big" id="riskLine">0.0</div>
+                  <div class="subv">Risk score</div>
                 </div>
 
-                <div class="decision-action">
-                  <div class="rank-pill" id="rankPill">NORMAL</div>
-                  <div class="action-badge action-observar" id="actionBadge">OBSERVAR</div>
-                </div>
-              </div>
-
-              <div class="grid-6">
-                <div class="metric">
-                  <div class="name">Confidence</div>
-                  <div class="num" id="confidenceNum">0%</div>
-                  <div class="small">Confianza operativa</div>
-                </div>
-
-                <div class="metric">
-                  <div class="name">AI Score</div>
-                  <div class="num" id="aiScoreNum">0</div>
-                  <div class="small">Score de decisión</div>
-                </div>
-
-                <div class="metric">
-                  <div class="name">Signal Score</div>
-                  <div class="num" id="signalScoreNum">0</div>
-                  <div class="small">Score final</div>
-                </div>
-
-                <div class="metric">
-                  <div class="name">Goal Score</div>
-                  <div class="num" id="goalScoreNum">0</div>
-                  <div class="small">Ventana de gol</div>
-                </div>
-
-                <div class="metric">
-                  <div class="name">xG</div>
-                  <div class="num" id="xgNum">0</div>
-                  <div class="small">Producción ofensiva</div>
-                </div>
-
-                <div class="metric">
-                  <div class="name">Prob real</div>
-                  <div class="num" id="probRealNum">0%</div>
-                  <div class="small">Estimación del modelo</div>
+                <div class="box action">
+                  <div class="pill" id="rankPill">NORMAL</div>
+                  <div class="badge ob" id="actionBadge">OBSERVAR</div>
                 </div>
               </div>
 
-              <div class="two-col">
-                <div class="card" style="background:rgba(8,18,31,0.45); box-shadow:none;">
-                  <div class="card-inner">
-                    <div class="section-title">Motivos</div>
-                    <div class="reason-list">
-                      <div class="reason-row">
-                        <div class="reason-key">Motivo táctico</div>
-                        <div class="reason-value" id="reasonTactica">-</div>
-                      </div>
-                      <div class="reason-row">
-                        <div class="reason-key">Motivo IA</div>
-                        <div class="reason-value" id="reasonIA">-</div>
-                      </div>
-                      <div class="reason-row">
-                        <div class="reason-key">Motivo context</div>
-                        <div class="reason-value" id="reasonContexto">-</div>
-                      </div>
-                      <div class="reason-row">
-                        <div class="reason-key">Motivo mercado</div>
-                        <div class="reason-value" id="reasonMarket">-</div>
-                      </div>
+              <div class="grid6">
+                <div class="metric"><div class="name">Confidence</div><div class="num" id="confidenceNum">0%</div></div>
+                <div class="metric"><div class="name">AI Score</div><div class="num" id="aiScoreNum">0</div></div>
+                <div class="metric"><div class="name">Signal Score</div><div class="num" id="signalScoreNum">0</div></div>
+                <div class="metric"><div class="name">Goal Score</div><div class="num" id="goalScoreNum">0</div></div>
+                <div class="metric"><div class="name">xG</div><div class="num" id="xgNum">0</div></div>
+                <div class="metric"><div class="name">Prob real</div><div class="num" id="probRealNum">0%</div></div>
+              </div>
+
+              <div class="two">
+                <div class="card" style="background:rgba(8,18,31,.45);box-shadow:none">
+                  <div class="inner">
+                    <div class="section">Motivos</div>
+                    <div class="list">
+                      <div class="row"><div class="k">Motivo táctico</div><div class="v" id="reasonTactica">-</div></div>
+                      <div class="row"><div class="k">Motivo IA</div><div class="v" id="reasonIA">-</div></div>
+                      <div class="row"><div class="k">Motivo contexto</div><div class="v" id="reasonContexto">-</div></div>
+                      <div class="row"><div class="k">Motivo mercado</div><div class="v" id="reasonMarket">-</div></div>
                     </div>
                   </div>
                 </div>
 
-                <div class="card" style="background:rgba(8,18,31,0.45); box-shadow:none;">
-                  <div class="card-inner">
-                    <div class="section-title">Validación de mercado</div>
-                    <div class="validation-list">
-                      <div class="validation-row">
-                        <div class="validation-key">Bookmaker</div>
-                        <div class="validation-value" id="validationBookmaker">-</div>
-                      </div>
-                      <div class="validation-row">
-                        <div class="validation-key">Línea validada</div>
-                        <div class="validation-value" id="validationLine">-</div>
-                      </div>
-                      <div class="validation-row">
-                        <div class="validation-key">Cuota seleccionada</div>
-                        <div class="validation-value" id="validationPrice">-</div>
-                      </div>
-                      <div class="validation-row">
-                        <div class="validation-key">Estado odds</div>
-                        <div class="validation-value" id="validationStatus">-</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="card momentum-card" style="background:rgba(8,18,31,0.45); box-shadow:none;">
-                <div class="card-inner momentum-wrap">
-                  <div class="section-title">Momentum / actividad del partido</div>
-
-                  <div class="bar-legend">
-                    <div class="bar-label"><span class="dot dot-blue"></span><span id="legendHome">Local</span></div>
-                    <div class="bar-label"><span class="dot dot-red"></span><span id="legendAway">Visitante</span></div>
-                  </div>
-
-                  <canvas id="momentumChart"></canvas>
-
-                  <div class="mini-stats">
-                    <div class="mini-stat">
-                      <div class="k">Shots</div>
-                      <div class="v" id="shotsNum">0</div>
-                    </div>
-                    <div class="mini-stat">
-                      <div class="k">Shots on target</div>
-                      <div class="v" id="shotsTargetNum">0</div>
-                    </div>
-                    <div class="mini-stat">
-                      <div class="k">Dangerous attacks</div>
-                      <div class="v" id="dangerNum">0</div>
-                    </div>
-                    <div class="mini-stat">
-                      <div class="k">Momentum</div>
-                      <div class="v" id="momentumNum">-</div>
+                <div class="card" style="background:rgba(8,18,31,.45);box-shadow:none">
+                  <div class="inner">
+                    <div class="section">Validación de mercado</div>
+                    <div class="list">
+                      <div class="row"><div class="k">Bookmaker</div><div class="v" id="validationBookmaker">-</div></div>
+                      <div class="row"><div class="k">Línea validada</div><div class="v" id="validationLine">-</div></div>
+                      <div class="row"><div class="k">Cuota seleccionada</div><div class="v" id="validationPrice">-</div></div>
+                      <div class="row"><div class="k">Estado odds</div><div class="v" id="validationStatus">-</div></div>
                     </div>
                   </div>
                 </div>
@@ -842,457 +231,181 @@
           </div>
         </div>
 
-        <!-- RIGHT -->
-        <div class="sidebar-stack">
+        <div class="sidebar">
           <div class="card">
-            <div class="card-inner">
-              <div class="section-title">Probabilidades</div>
-              <div class="prob-list">
-                <div class="prob-row">
-                  <div class="prob-key">Prob gol 5 min</div>
-                  <div class="prob-value" id="prob5">0%</div>
-                </div>
-                <div class="prob-row">
-                  <div class="prob-key">Prob gol 10 min</div>
-                  <div class="prob-value" id="prob10">0%</div>
-                </div>
-                <div class="prob-row">
-                  <div class="prob-key">Prob gol 15 min</div>
-                  <div class="prob-value" id="prob15">0%</div>
-                </div>
-                <div class="prob-row">
-                  <div class="prob-key">Prob implícita</div>
-                  <div class="prob-value" id="probImp">0%</div>
-                </div>
+            <div class="inner">
+              <div class="section">Probabilidades</div>
+              <div class="list">
+                <div class="row"><div class="k">Prob gol 5 min</div><div class="v" id="prob5">0%</div></div>
+                <div class="row"><div class="k">Prob gol 10 min</div><div class="v" id="prob10">0%</div></div>
+                <div class="row"><div class="k">Prob gol 15 min</div><div class="v" id="prob15">0%</div></div>
+                <div class="row"><div class="k">Prob implícita</div><div class="v" id="probImp">0%</div></div>
               </div>
             </div>
           </div>
 
           <div class="card">
-            <div class="card-inner">
-              <div class="section-title">Estado técnico</div>
-              <div class="compact-grid">
-                <div class="status-box">
-                  <div class="k">AI Fit</div>
-                  <div class="v" id="aiFitBox">-</div>
-                </div>
-                <div class="status-box">
-                  <div class="k">AI Recommendation</div>
-                  <div class="v" id="aiRecBox">-</div>
-                </div>
-                <div class="status-box">
-                  <div class="k">Publish Ready</div>
-                  <div class="v" id="publishReadyBox">-</div>
-                </div>
-                <div class="status-box">
-                  <div class="k">Stake</div>
-                  <div class="v" id="stakeBox">-</div>
-                </div>
+            <div class="inner">
+              <div class="section">Estado técnico</div>
+              <div class="compact">
+                <div class="status"><div class="k">AI Fit</div><div class="v" id="aiFitBox">-</div></div>
+                <div class="status"><div class="k">AI Recommendation</div><div class="v" id="aiRecBox">-</div></div>
+                <div class="status"><div class="k">Publish Ready</div><div class="v" id="publishReadyBox">-</div></div>
+                <div class="status"><div class="k">Stake</div><div class="v" id="stakeBox">-</div></div>
               </div>
             </div>
           </div>
 
           <div class="card">
-            <div class="card-inner">
-              <div class="section-title">Resumen operativo</div>
-              <div class="validation-list">
-                <div class="validation-row">
-                  <div class="validation-key">Resultado probable</div>
-                  <div class="validation-value" id="resultadoProbableBox">-</div>
-                </div>
-                <div class="validation-row">
-                  <div class="validation-key">Ganador probable</div>
-                  <div class="validation-value" id="ganadorProbableBox">-</div>
-                </div>
-                <div class="validation-row">
-                  <div class="validation-key">Línea probable</div>
-                  <div class="validation-value" id="lineaProbableBox">-</div>
-                </div>
-                <div class="validation-row">
-                  <div class="validation-key">Over/Under probable</div>
-                  <div class="validation-value" id="overUnderProbableBox">-</div>
-                </div>
+            <div class="inner">
+              <div class="section">Resumen operativo</div>
+              <div class="list">
+                <div class="row"><div class="k">Resultado probable</div><div class="v" id="resultadoProbableBox">-</div></div>
+                <div class="row"><div class="k">Ganador probable</div><div class="v" id="ganadorProbableBox">-</div></div>
+                <div class="row"><div class="k">Línea probable</div><div class="v" id="lineaProbableBox">-</div></div>
+                <div class="row"><div class="k">Over/Under probable</div><div class="v" id="overUnderProbableBox">-</div></div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      <div class="card" style="margin-top:18px;">
-        <div class="card-inner">
-          <div class="section-title">Top señales del momento</div>
-          <div style="overflow-x:auto;">
-            <table class="top-signals-table">
-              <thead>
-                <tr>
-                  <th>Partido</th>
-                  <th>Min</th>
-                  <th>Mercado</th>
-                  <th>Selección</th>
-                  <th>Cuota</th>
-                  <th>Fair</th>
-                  <th>Value</th>
-                  <th>Risk</th>
-                  <th>Rank</th>
-                  <th>Acción</th>
-                </tr>
-              </thead>
-              <tbody id="topSignalsBody">
-                <tr>
-                  <td colspan="10" class="muted">Cargando señales...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
     </div>
-  </div>
 
-  <script>
-    let momentumChart = null;
-
-    function getQueryParam(name) {
-      const params = new URLSearchParams(window.location.search);
-      return params.get(name);
-    }
-
-    function safeNumber(value, fallback = 0) {
-      const n = Number(value);
-      return Number.isFinite(n) ? n : fallback;
-    }
-
-    function safeText(value, fallback = "-") {
-      if (value === null || value === undefined) return fallback;
-      const t = String(value).trim();
-      return t ? t : fallback;
-    }
-
-    function pct(value, fallback = 0) {
-      const n = safeNumber(value, fallback);
-      return `${n.toFixed(2)}%`;
-    }
-
-    function fmt(value, digits = 2) {
-      return safeNumber(value, 0).toFixed(digits);
-    }
-
-    function getFairOdds(probReal) {
-      const p = safeNumber(probReal, 0);
-      if (p <= 0) return 0;
-      return 1 / p;
-    }
-
-    function buildActionClass(text) {
-      const t = safeText(text, "").toUpperCase();
-      if (t.includes("APOSTAR")) return "action-apostar";
-      if (t.includes("BLOQ") || t.includes("NO_APOSTAR")) return "action-bloqueada";
-      return "action-observar";
-    }
-
-    function buildTableActionClass(text) {
-      const t = safeText(text, "").toUpperCase();
-      if (t.includes("APOSTAR")) return "table-apostar";
-      return "table-observar";
-    }
-
-    function buildRankClass(rank) {
-      const r = safeText(rank, "").toUpperCase();
-      if (r === "ELITE") return "rank-elite";
-      if (r === "TOP" || r === "ALTA") return "rank-top";
-      return "rank-normal";
-    }
-
-    function setText(id, value) {
-      const el = document.getElementById(id);
-      if (el) el.textContent = value;
-    }
-
-    function setHtml(id, value) {
-      const el = document.getElementById(id);
-      if (el) el.innerHTML = value;
-    }
-
-    function colorizeNumber(value, invert = false) {
-      const n = safeNumber(value, 0);
-      if (!invert) {
-        if (n >= 75) return "red";
-        if (n >= 50) return "yellow";
-        return "green";
-      } else {
-        if (n <= 3.5) return "green";
-        if (n <= 6.5) return "yellow";
-        return "red";
-      }
-    }
-
-    function renderMomentumChart(signal) {
-      const canvas = document.getElementById("momentumChart");
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d");
-
-      const shots = safeNumber(signal.shots, 0);
-      const shotsOnTarget = safeNumber(signal.shots_on_target, 0);
-      const dangerous = safeNumber(signal.dangerous_attacks, 0);
-      const xg = safeNumber(signal.xG, 0);
-      const goal5 = safeNumber(signal.goal_prob_5, 0);
-      const goal10 = safeNumber(signal.goal_prob_10, 0);
-
-      const localSeries = [
-        Math.max(1, Math.round(shots * 0.35)),
-        Math.max(1, Math.round(shotsOnTarget * 1.6)),
-        Math.max(1, Math.round(dangerous * 0.35)),
-        Math.max(1, Math.round(xg * 12)),
-        Math.max(1, Math.round(goal5 * 0.25)),
-        Math.max(1, Math.round(goal10 * 0.18))
-      ];
-
-      const awaySeries = [
-        Math.max(1, Math.round(shots * 0.25)),
-        Math.max(1, Math.round(shotsOnTarget * 1.1)),
-        Math.max(1, Math.round(dangerous * 0.25)),
-        Math.max(1, Math.round(xg * 7)),
-        Math.max(1, Math.round(goal5 * 0.16)),
-        Math.max(1, Math.round(goal10 * 0.12))
-      ];
-
-      if (momentumChart) {
-        momentumChart.destroy();
+    <script>
+      function getQueryParam(name) {
+        const params = new URLSearchParams(window.location.search);
+        return params.get(name);
       }
 
-      momentumChart = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: ["Shots", "On target", "Danger", "xG", "Goal 5", "Goal 10"],
-          datasets: [
-            {
-              label: safeText(signal.home, "Local"),
-              data: localSeries,
-              backgroundColor: "rgba(54, 162, 255, 0.85)",
-              borderColor: "rgba(54, 162, 255, 1)",
-              borderWidth: 1.5,
-              borderRadius: 6
-            },
-            {
-              label: safeText(signal.away, "Visitante"),
-              data: awaySeries,
-              backgroundColor: "rgba(255, 95, 122, 0.85)",
-              borderColor: "rgba(255, 95, 122, 1)",
-              borderWidth: 1.5,
-              borderRadius: 6
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              labels: {
-                color: "#dce8ff",
-                font: { weight: "700" }
-              }
-            },
-            tooltip: {
-              mode: "index",
-              intersect: false
-            }
-          },
-          scales: {
-            x: {
-              ticks: { color: "#9cb2d5" },
-              grid: { color: "rgba(255,255,255,0.05)" }
-            },
-            y: {
-              ticks: { color: "#9cb2d5" },
-              grid: { color: "rgba(255,255,255,0.05)" }
-            }
-          }
-        }
-      });
-    }
+      function safeNumber(value, fallback = 0) {
+        const n = Number(value);
+        return Number.isFinite(n) ? n : fallback;
+      }
 
-    async function fetchJSON(url) {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
-    }
+      function safeText(value, fallback = "-") {
+        if (value === null || value === undefined) return fallback;
+        const t = String(value).trim();
+        return t ? t : fallback;
+      }
 
-    async function loadTopSignals(currentMatchId) {
-      const tbody = document.getElementById("topSignalsBody");
-      try {
-        const data = await fetchJSON("/signals");
-        const signals = Array.isArray(data.signals) ? data.signals : [];
+      function fmt(value, digits = 2) {
+        return safeNumber(value, 0).toFixed(digits);
+      }
 
-        if (!signals.length) {
-          tbody.innerHTML = `<tr><td colspan="10" class="muted">No hay señales disponibles.</td></tr>`;
+      function setText(id, value) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+      }
+
+      function getFairOdds(probReal) {
+        const p = safeNumber(probReal, 0);
+        if (p <= 0) return 0;
+        return 1 / p;
+      }
+
+      function buildActionClass(text) {
+        const t = safeText(text, "").toUpperCase();
+        if (t.includes("APOSTAR")) return "ap";
+        if (t.includes("NO_APOSTAR")) return "no";
+        return "ob";
+      }
+
+      async function fetchJSON(url) {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+      }
+
+      async function loadMatch() {
+        const loading = document.getElementById("loading");
+        const error = document.getElementById("error");
+        const content = document.getElementById("content");
+        const matchId = getQueryParam("match_id");
+
+        if (!matchId) {
+          loading.style.display = "none";
+          error.style.display = "block";
+          error.textContent = "Falta el parámetro match_id en la URL.";
           return;
         }
 
-        const rows = signals.slice(0, 8).map(s => {
-          const probReal = safeNumber(s.prob_real ?? s.prob, 0);
-          const fair = probReal > 0 ? getFairOdds(probReal) : 0;
-          const action = safeText(s.recomendacion_final || s.ai_recommendation || "OBSERVAR");
-          const rank = safeText(s.signal_rank, "NORMAL");
-          const isCurrent = String(s.match_id) === String(currentMatchId);
+        try {
+          const signal = await fetchJSON(`/api/match/${matchId}`);
 
-          return `
-            <tr style="${isCurrent ? 'background:rgba(49,195,255,0.06);' : ''}">
-              <td>${safeText(s.partido || `${s.home} vs ${s.away}`)}</td>
-              <td>${safeText(s.minute, "-")}</td>
-              <td>${safeText(s.market)}</td>
-              <td>${safeText(s.selection)}</td>
-              <td>${fmt(s.odd ?? s.cuota, 2)}</td>
-              <td>${fair > 0 ? fmt(fair, 2) : "-"}</td>
-              <td>${fmt(s.value ?? s.valor, 2)}</td>
-              <td>${fmt(s.risk_score, 2)}</td>
-              <td><span class="${buildRankClass(rank)}">${rank}</span></td>
-              <td><span class="table-action ${buildTableActionClass(action)}">${action}</span></td>
-            </tr>
-          `;
-        }).join("");
+          const probReal = safeNumber(signal.prob_real ?? signal.prob, 0);
+          const fairOdds = probReal > 0 ? getFairOdds(probReal) : 0;
+          const action = safeText(signal.recomendacion_final || signal.ai_recommendation || "OBSERVAR");
+          const rank = safeText(signal.signal_rank, "NORMAL");
+          const validationOk = Boolean(signal.odds_validation_ok);
+          const oddsAvailable = Boolean(signal.odds_data_available);
 
-        tbody.innerHTML = rows;
-      } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="10" class="muted">No se pudieron cargar las señales.</td></tr>`;
-      }
-    }
+          setText("homeName", safeText(signal.home));
+          setText("awayName", safeText(signal.away));
+          setText("scoreLine", safeText(signal.score));
+          setText("minuteLine", `${safeText(signal.minute, 0)}'`);
+          setText("leagueLine", safeText(signal.league));
+          setText("countryLine", safeText(signal.country));
 
-    function renderSignal(signal) {
-      const probReal = safeNumber(signal.prob_real ?? signal.prob, 0);
-      const fairOdds = probReal > 0 ? getFairOdds(probReal) : 0;
-      const action = safeText(signal.recomendacion_final || signal.ai_recommendation || "OBSERVAR");
-      const rank = safeText(signal.signal_rank, "NORMAL");
-      const validationOk = Boolean(signal.odds_validation_ok);
-      const oddsAvailable = Boolean(signal.odds_data_available);
+          setText("marketName", safeText(signal.market));
+          setText("selectionName", safeText(signal.selection));
+          setText("recomendacionFinal", action);
+          setText("bookmakerLine", safeText(signal.odds_selected_bookmaker || "Sin bookmaker"));
 
-      setText("homeName", safeText(signal.home));
-      setText("awayName", safeText(signal.away));
-      setText("scoreLine", safeText(signal.score));
-      setText("minuteLine", `${safeText(signal.minute, 0)}'`);
-      setText("leagueLine", safeText(signal.league));
-      setText("countryLine", safeText(signal.country));
+          setText("realOdd", fmt(signal.odd ?? signal.cuota, 2));
+          setText("fairOdd", fairOdds > 0 ? fmt(fairOdds, 2) : "0.00");
+          setText("valueLine", fmt(signal.value ?? signal.valor, 2));
+          setText("riskLine", fmt(signal.risk_score, 2));
 
-      setText("marketName", safeText(signal.market));
-      setText("selectionName", safeText(signal.selection));
-      setText("recomendacionFinal", action);
-      setText("bookmakerLine", safeText(signal.odds_selected_bookmaker || "Sin bookmaker"));
+          setText("confidenceNum", `${fmt(signal.confidence, 0)}%`);
+          setText("aiScoreNum", fmt(signal.ai_decision_score ?? signal.ai_score, 2));
+          setText("signalScoreNum", fmt(signal.signal_score, 2));
+          setText("goalScoreNum", fmt(signal.goal_inminente_score, 2));
+          setText("xgNum", fmt(signal.xG, 2));
+          setText("probRealNum", `${fmt(probReal * 100, 2)}%`);
 
-      setText("realOdd", fmt(signal.odd ?? signal.cuota, 2));
-      setText("fairOdd", fairOdds > 0 ? fmt(fairOdds, 2) : "0.00");
-      setText("valueLine", fmt(signal.value ?? signal.valor, 2));
-      setText("riskLine", fmt(signal.risk_score, 2));
+          setText("reasonTactica", safeText(signal.razon_tactica || signal.reason));
+          setText("reasonIA", safeText(signal.razon_ia || signal.ai_reason));
+          setText("reasonContexto", safeText(signal.razon_contexto || signal.context_reason));
+          setText("reasonMarket", safeText(signal.market_validation_reason || signal.final_market_reason || "Sin validación adicional"));
 
-      setText("confidenceNum", `${fmt(signal.confidence, 0)}%`);
-      setText("aiScoreNum", fmt(signal.ai_decision_score ?? signal.ai_score, 2));
-      setText("signalScoreNum", fmt(signal.signal_score, 2));
-      setText("goalScoreNum", fmt(signal.goal_inminente_score, 2));
-      setText("xgNum", fmt(signal.xG, 2));
-      setText("probRealNum", `${fmt(probReal * 100, 2)}%`);
+          setText("validationBookmaker", safeText(signal.odds_selected_bookmaker || "Sin bookmaker"));
+          setText("validationLine", signal.odds_selected_line ? fmt(signal.odds_selected_line, 2) : "-");
+          setText("validationPrice", signal.odds_selected_price ? fmt(signal.odds_selected_price, 2) : "-");
+          setText("validationStatus", validationOk ? "VALIDADA" : (oddsAvailable ? "ODDS DISPONIBLES / NO VALIDADA" : "SIN VALIDACIÓN"));
 
-      setText("reasonTactica", safeText(signal.razon_tactica || signal.reason));
-      setText("reasonIA", safeText(signal.razon_ia || signal.ai_reason));
-      setText("reasonContexto", safeText(signal.razon_contexto || signal.context_reason));
-      setText("reasonMarket", safeText(signal.market_validation_reason || signal.final_market_reason || "Sin validación adicional"));
+          setText("prob5", `${fmt(signal.goal_prob_5, 2)}%`);
+          setText("prob10", `${fmt(signal.goal_prob_10, 2)}%`);
+          setText("prob15", `${fmt(signal.goal_prob_15, 2)}%`);
+          setText("probImp", `${fmt((signal.prob_implicita || 0) * 100, 2)}%`);
 
-      setText("validationBookmaker", safeText(signal.odds_selected_bookmaker || "Sin bookmaker"));
-      setText("validationLine", signal.odds_selected_line ? fmt(signal.odds_selected_line, 2) : "-");
-      setText("validationPrice", signal.odds_selected_price ? fmt(signal.odds_selected_price, 2) : "-");
-      setText(
-        "validationStatus",
-        validationOk ? "VALIDADA" : (oddsAvailable ? "ODDS DISPONIBLES / NO VALIDADA" : "SIN VALIDACIÓN")
-      );
+          setText("aiFitBox", safeText(signal.ai_fit || "NEUTRO"));
+          setText("aiRecBox", safeText(signal.ai_recommendation || action));
+          setText("publishReadyBox", signal.publish_ready ? "SÍ" : "NO");
+          setText("stakeBox", `${fmt(signal.stake_pct || 0, 1)}% · ${safeText(signal.stake_label || "N/A")}`);
 
-      setText("prob5", `${fmt(signal.goal_prob_5, 2)}%`);
-      setText("prob10", `${fmt(signal.goal_prob_10, 2)}%`);
-      setText("prob15", `${fmt(signal.goal_prob_15, 2)}%`);
-      setText("probImp", `${fmt((signal.prob_implicita || 0) * 100, 2)}%`);
+          setText("resultadoProbableBox", safeText(signal.resultado_probable));
+          setText("ganadorProbableBox", safeText(signal.ganador_probable));
+          setText("lineaProbableBox", safeText(signal.linea_goles_probable));
+          setText("overUnderProbableBox", safeText(signal.over_under_probable));
 
-      setText("aiFitBox", safeText(signal.ai_fit || "NEUTRO"));
-      setText("aiRecBox", safeText(signal.ai_recommendation || action));
-      setText("publishReadyBox", signal.publish_ready ? "SÍ" : "NO");
-      setText("stakeBox", `${fmt(signal.stake_pct || 0, 1)}% · ${safeText(signal.stake_label || "N/A")}`);
+          document.getElementById("rankPill").textContent = rank;
+          const actionBadge = document.getElementById("actionBadge");
+          actionBadge.textContent = action;
+          actionBadge.className = `badge ${buildActionClass(action)}`;
 
-      setText("resultadoProbableBox", safeText(signal.resultado_probable));
-      setText("ganadorProbableBox", safeText(signal.ganador_probable));
-      setText("lineaProbableBox", safeText(signal.linea_goles_probable));
-      setText("overUnderProbableBox", safeText(signal.over_under_probable));
-
-      setText("shotsNum", safeText(signal.shots, "0"));
-      setText("shotsTargetNum", safeText(signal.shots_on_target, "0"));
-      setText("dangerNum", safeText(signal.dangerous_attacks, "0"));
-      setText("momentumNum", safeText(signal.momentum, "-"));
-
-      setText("legendHome", safeText(signal.home, "Local"));
-      setText("legendAway", safeText(signal.away, "Visitante"));
-
-      const rankPill = document.getElementById("rankPill");
-      rankPill.textContent = rank;
-      rankPill.className = `rank-pill ${buildRankClass(rank)}`;
-
-      const actionBadge = document.getElementById("actionBadge");
-      actionBadge.textContent = action;
-      actionBadge.className = `action-badge ${buildActionClass(action)}`;
-
-      const topAction = document.getElementById("mainActionTop");
-      topAction.textContent = action;
-
-      renderMomentumChart(signal);
-    }
-
-    async function loadMatch() {
-      const loading = document.getElementById("loading");
-      const error = document.getElementById("error");
-      const content = document.getElementById("content");
-
-      const matchId = getQueryParam("match_id");
-
-      if (!matchId) {
-        loading.style.display = "none";
-        error.style.display = "block";
-        error.textContent = "Falta el parámetro match_id en la URL.";
-        return;
+          loading.style.display = "none";
+          error.style.display = "none";
+          content.style.display = "block";
+        } catch (err) {
+          loading.style.display = "none";
+          content.style.display = "none";
+          error.style.display = "block";
+          error.textContent = "No se pudo cargar el detalle del partido.";
+          console.error(err);
+        }
       }
 
-      try {
-        const signal = await fetchJSON(`/api/match/${matchId}`);
-        renderSignal(signal);
-        await loadTopSignals(matchId);
-
-        loading.style.display = "none";
-        error.style.display = "none";
-        content.style.display = "block";
-      } catch (err) {
-        loading.style.display = "none";
-        content.style.display = "none";
-        error.style.display = "block";
-        error.textContent = "No se pudo cargar el detalle del partido.";
-        console.error(err);
-      }
-    }
-
-    function reloadMatch() {
       loadMatch();
-    }
-
-    // Cargar Chart.js si no existe
-    (function loadChartLibrary() {
-      if (window.Chart) {
-        loadMatch();
-        return;
-      }
-
-      const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/chart.js";
-      script.onload = loadMatch;
-      script.onerror = () => {
-        document.getElementById("loading").style.display = "none";
-        document.getElementById("error").style.display = "block";
-        document.getElementById("error").textContent = "No se pudo cargar la librería de gráficos.";
-      };
-      document.body.appendChild(script);
-    })();
-  </script>
+    </script>
 </body>
   </html>
