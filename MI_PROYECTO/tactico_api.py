@@ -3,6 +3,7 @@
 from flask import Flask, jsonify, render_template
 from typing import Dict, Any, List
 import time
+import os
 
 # =========================================================
 # IMPORT PIPELINE OFICIAL
@@ -69,6 +70,12 @@ except Exception as e:
 app = Flask(__name__)
 
 # =========================================================
+# CONFIG
+# =========================================================
+MAX_SCAN_MATCHES = int(os.getenv("MAX_SCAN_MATCHES", "12"))
+MAX_SIGNALS_VISIBLE = int(os.getenv("MAX_SIGNALS_VISIBLE", "6"))
+
+# =========================================================
 # ESTADO GLOBAL
 # =========================================================
 STATE = {
@@ -88,6 +95,7 @@ STATE = {
     },
     "leagues": [],
     "last_total_matches": 0,
+    "last_scan_error": "",
 }
 
 MERCADOS_PERMITIDOS = {
@@ -168,6 +176,52 @@ def _signal_sort_key(signal: Dict[str, Any]):
     )
 
 
+def _score_partido_para_scan(partido: Dict[str, Any]) -> float:
+    minuto = _safe_int(partido.get("minuto"), 0)
+    xg = _safe_float(partido.get("xG"), 0.0)
+    shots = _safe_int(partido.get("shots"), 0)
+    shots_on_target = _safe_int(partido.get("shots_on_target"), 0)
+    dangerous_attacks = _safe_int(partido.get("dangerous_attacks"), 0)
+    pressure_score = _safe_float((partido.get("goal_pressure") or {}).get("pressure_score"), 0.0)
+    predictor_score = _safe_float((partido.get("goal_predictor") or {}).get("predictor_score"), 0.0)
+
+    score = 0.0
+
+    if 15 <= minuto <= 85:
+        score += 20
+    elif 10 <= minuto <= 88:
+        score += 10
+    else:
+        score -= 20
+
+    score += xg * 10.0
+    score += shots * 0.5
+    score += shots_on_target * 2.5
+    score += dangerous_attacks * 0.18
+    score += pressure_score * 1.8
+    score += predictor_score * 1.5
+
+    return round(score, 2)
+
+
+def _seleccionar_partidos_para_scan(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    candidatos = []
+
+    for p in partidos:
+        try:
+            if _esta_finalizado(p):
+                continue
+            candidatos.append(p)
+        except Exception:
+            continue
+
+    candidatos.sort(key=_score_partido_para_scan, reverse=True)
+
+    seleccionados = candidatos[:MAX_SCAN_MATCHES]
+    print(f"[SCAN] partidos seleccionados para procesamiento -> {len(seleccionados)} de {len(partidos)}")
+    return seleccionados
+
+
 def _dedupe_signals(signals: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     seen = {}
 
@@ -205,7 +259,7 @@ def _filtrar_publicables(signals: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     ]
 
     publicables.sort(key=_signal_sort_key, reverse=True)
-    return publicables[:6]
+    return publicables[:MAX_SIGNALS_VISIBLE]
 
 
 def _build_stats_from_signals(signals: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -316,6 +370,7 @@ def detectar_hot_matches(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]
         ):
             hot.append(p)
 
+    hot.sort(key=_score_partido_para_scan, reverse=True)
     return hot[:10]
 
 
@@ -348,6 +403,8 @@ def _signals_from_storage() -> List[Dict[str, Any]]:
 def procesar_partidos(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     if not isinstance(partidos, list):
         return []
+
+    partidos = _seleccionar_partidos_para_scan(partidos)
 
     if generar_senales:
         try:
@@ -420,6 +477,11 @@ def dashboard():
     return render_template("dashboard.html")
 
 
+@app.route("/match_detail.html")
+def match_detail_html():
+    return render_template("match_detail.html")
+
+
 # =========================================================
 # ENDPOINTS BASE
 # =========================================================
@@ -441,27 +503,42 @@ def health():
 # =========================================================
 @app.route("/scan")
 def scan():
-    partidos = obtener_partidos_para_scan()
-    senales = procesar_partidos(partidos)
-    hot = detectar_hot_matches(partidos)
+    try:
+        partidos = obtener_partidos_para_scan()
+        senales = procesar_partidos(partidos)
+        hot = detectar_hot_matches(partidos)
 
-    STATE["signals"] = senales
-    STATE["hot_matches"] = hot
-    STATE["last_scan"] = int(time.time())
-    STATE["last_total_matches"] = len(partidos)
+        STATE["signals"] = senales
+        STATE["hot_matches"] = hot
+        STATE["last_scan"] = int(time.time())
+        STATE["last_total_matches"] = len(partidos)
+        STATE["last_scan_error"] = ""
 
-    ligas = sorted(list({
-        f"{_safe_text(p.get('pais'))} - {_safe_text(p.get('liga'))}"
-        for p in partidos
-    }))
-    STATE["leagues"] = ligas
-    STATE["stats"] = _build_stats_from_signals(senales)
+        ligas = sorted(list({
+            f"{_safe_text(p.get('pais'))} - {_safe_text(p.get('liga'))}"
+            for p in partidos
+        }))
+        STATE["leagues"] = ligas
+        STATE["stats"] = _build_stats_from_signals(senales)
 
-    return jsonify({
-        "ultimo_scan": STATE["last_scan"],
-        "total_partidos": len(partidos),
-        "total_senales": len(senales),
-    })
+        return jsonify({
+            "ok": True,
+            "ultimo_scan": STATE["last_scan"],
+            "total_partidos": len(partidos),
+            "total_senales": len(senales),
+            "procesados": min(len(partidos), MAX_SCAN_MATCHES),
+        })
+    except Exception as e:
+        STATE["last_scan_error"] = str(e)
+        print(f"[SCAN] ERROR GLOBAL -> {e}")
+
+        return jsonify({
+            "ok": False,
+            "error": str(e),
+            "ultimo_scan": STATE.get("last_scan", 0),
+            "total_partidos": STATE.get("last_total_matches", 0),
+            "total_senales": len(STATE.get("signals", [])),
+        }), 200
 
 
 # =========================================================
@@ -472,27 +549,18 @@ def signals():
     current_signals = STATE.get("signals", [])
     if current_signals:
         current_sorted = sorted(current_signals, key=_signal_sort_key, reverse=True)
-        current_sorted = _filtrar_publicables(current_sorted) or current_sorted[:6]
+        current_sorted = _filtrar_publicables(current_sorted) or current_sorted[:MAX_SIGNALS_VISIBLE]
         print(f"[SIGNALS] desde memoria -> {len(current_sorted)}")
-        return jsonify({"signals": current_sorted[:6]})
+        return jsonify({"signals": current_sorted[:MAX_SIGNALS_VISIBLE]})
 
     fallback = _signals_from_storage()
     if fallback:
         print(f"[SIGNALS] obtenidas desde archivo -> {len(fallback)}")
-        STATE["signals"] = fallback[:6]
-        return jsonify({"signals": fallback[:6]})
+        STATE["signals"] = fallback[:MAX_SIGNALS_VISIBLE]
+        return jsonify({"signals": fallback[:MAX_SIGNALS_VISIBLE]})
 
-    print("[SIGNALS] memoria vacia y archivo vacio -> ejecutando rescan")
-    partidos = obtener_partidos_para_scan()
-    senales = procesar_partidos(partidos)
-
-    STATE["signals"] = senales
-    STATE["hot_matches"] = detectar_hot_matches(partidos)
-    STATE["last_scan"] = int(time.time())
-    STATE["last_total_matches"] = len(partidos)
-    STATE["stats"] = _build_stats_from_signals(senales)
-
-    return jsonify({"signals": senales[:6]})
+    print("[SIGNALS] sin memoria ni storage -> devolviendo vacio")
+    return jsonify({"signals": []})
 
 
 # =========================================================
@@ -500,8 +568,9 @@ def signals():
 # =========================================================
 @app.route("/hot-matches")
 def hot_matches():
+    hot = STATE.get("hot_matches", [])
     return jsonify({
-        "hot_matches": STATE["hot_matches"]
+        "hot_matches": hot[:10]
     })
 
 
@@ -550,10 +619,11 @@ def dashboard_data():
         "status": "ok",
         "service": "jhonny_elite_v16",
         "last_scan": STATE.get("last_scan", 0),
+        "last_scan_error": STATE.get("last_scan_error", ""),
         "total_signals": len(signals_data),
         "total_hot_matches": len(STATE.get("hot_matches", [])),
         "total_matches": STATE.get("last_total_matches", 0),
-        "signals": signals_data[:6],
+        "signals": signals_data[:MAX_SIGNALS_VISIBLE],
         "stats": STATE.get("stats", {}),
     })
 
