@@ -1,1083 +1,851 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>JHONNY ELITE V16 PRO</title>
-    <style>
-        :root {
-            --bg: #07111f;
-            --bg-2: #0b1728;
-            --panel: rgba(14, 25, 44, 0.92);
-            --panel-2: rgba(17, 31, 54, 0.95);
-            --line: rgba(120, 160, 220, 0.16);
-            --line-strong: rgba(120, 160, 220, 0.28);
-            --text: #f5f7fb;
-            --muted: #93a4bf;
-            --accent: #35b8ff;
-            --accent-2: #54e0b5;
-            --gold: #ffd452;
-            --danger: #ff6b7a;
-            --success: #7dff91;
-            --elite: linear-gradient(135deg, #b18cff, #7cf5ff);
-            --top: linear-gradient(135deg, #26c6ff, #4fffb3);
-            --normal: linear-gradient(135deg, #4f6b91, #7a8ba8);
-            --shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
-            --radius-xl: 22px;
-            --radius-lg: 18px;
-            --radius-md: 14px;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        html, body {
-            margin: 0;
-            padding: 0;
-            background:
-                radial-gradient(circle at top left, rgba(38, 198, 255, 0.10), transparent 28%),
-                radial-gradient(circle at top right, rgba(255, 212, 82, 0.10), transparent 24%),
-                linear-gradient(180deg, #06111d 0%, #09182b 100%);
-            color: var(--text);
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        body {
-            min-height: 100vh;
-        }
-
-        .wrap {
-            max-width: 1450px;
-            margin: 0 auto;
-            padding: 22px;
-        }
-
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 18px;
-            padding: 18px 22px;
-            border: 1px solid var(--line);
-            background: linear-gradient(180deg, rgba(10, 18, 32, 0.9), rgba(8, 16, 28, 0.82));
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow);
-            margin-bottom: 18px;
-        }
-
-        .brand-block {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .eyebrow {
-            font-size: 12px;
-            letter-spacing: 1.8px;
-            text-transform: uppercase;
-            color: #8fb8d7;
-            font-weight: 700;
-        }
-
-        .brand-title {
-            margin: 0;
-            font-size: 28px;
-            line-height: 1.05;
-            font-weight: 900;
-            letter-spacing: 0.4px;
-        }
-
-        .brand-title .pro {
-            color: var(--gold);
-        }
-
-        .brand-sub {
-            margin: 0;
-            color: var(--muted);
-            font-size: 15px;
-        }
-
-        .system-strip {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-
-        .strip-pill {
-            border: 1px solid var(--line);
-            background: rgba(15, 29, 49, 0.92);
-            padding: 10px 14px;
-            border-radius: 999px;
-            font-size: 13px;
-            color: var(--muted);
-            white-space: nowrap;
-        }
-
-        .strip-pill strong {
-            color: var(--text);
-        }
-
-        .ok {
-            color: var(--success);
-            font-weight: 800;
-        }
-
-        .warn {
-            color: var(--gold);
-            font-weight: 800;
-        }
-
-        .hero {
-            display: grid;
-            grid-template-columns: 1.45fr 0.95fr;
-            gap: 18px;
-            margin-bottom: 18px;
-        }
-
-        .hero-left,
-        .hero-right {
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-        }
-
-        .panel {
-            background: linear-gradient(180deg, rgba(13, 24, 42, 0.94), rgba(10, 18, 33, 0.96));
-            border: 1px solid var(--line);
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow);
-        }
-
-        .panel-inner {
-            padding: 20px;
-        }
-
-        .actions {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            appearance: none;
-            border: none;
-            border-radius: 12px;
-            padding: 12px 18px;
-            cursor: pointer;
-            font-weight: 800;
-            font-size: 14px;
-            transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
-        }
-
-        .btn:hover {
-            transform: translateY(-1px);
-            opacity: 0.96;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #27a7ff, #42d0ff);
-            color: #fff;
-            box-shadow: 0 8px 18px rgba(39, 167, 255, 0.28);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.06);
-            color: var(--text);
-            border: 1px solid var(--line);
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 14px;
-        }
-
-        .stat-card {
-            min-height: 104px;
-            padding: 18px;
-            border-radius: var(--radius-lg);
-            background: linear-gradient(180deg, rgba(17, 31, 54, 0.95), rgba(12, 23, 41, 0.95));
-            border: 1px solid var(--line);
-        }
-
-        .stat-label {
-            color: var(--muted);
-            font-size: 13px;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-
-        .stat-value {
-            font-size: 17px;
-            font-weight: 900;
-            line-height: 1.2;
-            word-break: break-word;
-        }
-
-        .stat-value.big {
-            font-size: 22px;
-        }
-
-        .signal-main {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .signal-main::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background:
-                radial-gradient(circle at top left, rgba(83, 199, 255, 0.13), transparent 26%),
-                radial-gradient(circle at top right, rgba(255, 212, 82, 0.12), transparent 18%);
-            pointer-events: none;
-        }
-
-        .section-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 12px;
-            border-radius: 999px;
-            background: rgba(92, 255, 189, 0.1);
-            border: 1px solid rgba(92, 255, 189, 0.22);
-            color: #b7ffdb;
-            font-size: 12px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .signal-header-row {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 16px;
-            margin-top: 14px;
-            margin-bottom: 12px;
-        }
-
-        .signal-title {
-            margin: 0;
-            font-size: 28px;
-            line-height: 1.08;
-            font-weight: 900;
-        }
-
-        .signal-badges {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 78px;
-            padding: 8px 12px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 0.7px;
-            color: #06111d;
-        }
-
-        .badge.elite {
-            background: var(--elite);
-        }
-
-        .badge.top {
-            background: var(--top);
-        }
-
-        .badge.normal {
-            background: var(--normal);
-            color: white;
-        }
-
-        .match-line {
-            color: var(--text);
-            font-size: 17px;
-            font-weight: 800;
-            margin-bottom: 6px;
-        }
-
-        .meta-line {
-            color: var(--muted);
-            font-size: 14px;
-        }
-
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin-top: 18px;
-        }
-
-        .metric-box {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--line);
-            border-radius: 16px;
-            padding: 14px;
-        }
-
-        .metric-box .k {
-            font-size: 12px;
-            color: var(--muted);
-            margin-bottom: 8px;
-            font-weight: 700;
-        }
-
-        .metric-box .v {
-            font-size: 20px;
-            font-weight: 900;
-        }
-
-        .reason-list {
-            margin-top: 16px;
-            display: grid;
-            gap: 8px;
-        }
-
-        .reason-item {
-            font-size: 14px;
-            color: #dbe5f4;
-            line-height: 1.45;
-        }
-
-        .reason-item strong {
-            color: #ffffff;
-        }
-
-        .mini-panels {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 14px;
-        }
-
-        .mini-card {
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--line);
-            background: linear-gradient(180deg, rgba(17, 31, 54, 0.95), rgba(11, 22, 40, 0.96));
-            padding: 18px;
-            min-height: 112px;
-        }
-
-        .mini-title {
-            margin: 0 0 14px 0;
-            font-size: 15px;
-            font-weight: 900;
-        }
-
-        .mini-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-
-        .mini-kpi {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--line);
-            border-radius: 14px;
-            padding: 12px;
-        }
-
-        .mini-kpi .label {
-            color: var(--muted);
-            font-size: 12px;
-            margin-bottom: 6px;
-            font-weight: 700;
-        }
-
-        .mini-kpi .value {
-            font-size: 18px;
-            font-weight: 900;
-        }
-
-        .empty-box {
-            color: var(--muted);
-            font-size: 14px;
-            line-height: 1.5;
-        }
-
-        .table-panel .panel-inner {
-            padding: 18px 18px 10px 18px;
-        }
-
-        .table-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            gap: 12px;
-            margin-bottom: 14px;
-        }
-
-        .table-head h2 {
-            margin: 0;
-            font-size: 18px;
-            font-weight: 900;
-        }
-
-        .table-head p {
-            margin: 4px 0 0 0;
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .table-wrap {
-            overflow-x: auto;
-            border-radius: 14px;
-            border: 1px solid var(--line);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 980px;
-            background: rgba(7, 13, 24, 0.65);
-        }
-
-        thead th {
-            text-align: left;
-            font-size: 12px;
-            color: #9ab1ca;
-            padding: 14px 14px;
-            text-transform: uppercase;
-            letter-spacing: 0.7px;
-            border-bottom: 1px solid var(--line);
-            white-space: nowrap;
-        }
-
-        tbody td {
-            padding: 16px 14px;
-            border-bottom: 1px solid rgba(120, 160, 220, 0.08);
-            vertical-align: top;
-            font-size: 14px;
-        }
-
-        tbody tr:hover {
-            background: rgba(53, 184, 255, 0.05);
-        }
-
-        .match-col-main {
-            font-weight: 800;
-            margin-bottom: 4px;
-            line-height: 1.35;
-        }
-
-        .match-col-sub {
-            color: var(--muted);
-            font-size: 12px;
-            line-height: 1.35;
-        }
-
-        .cell-strong {
-            font-weight: 900;
-        }
-
-        .rank-chip {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 74px;
-            padding: 7px 12px;
-            border-radius: 999px;
-            font-size: 11px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-        }
-
-        .rank-chip.elite {
-            background: var(--elite);
-            color: #07111f;
-        }
-
-        .rank-chip.top {
-            background: var(--top);
-            color: #07111f;
-        }
-
-        .rank-chip.normal {
-            background: rgba(149, 168, 194, 0.18);
-            color: #d7e4f6;
-            border: 1px solid rgba(149, 168, 194, 0.25);
-        }
-
-        .rec-chip {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 7px 12px;
-            border-radius: 999px;
-            font-size: 11px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            background: rgba(125, 255, 145, 0.12);
-            color: #a6ffb3;
-            border: 1px solid rgba(125, 255, 145, 0.18);
-        }
-
-        .footer-note {
-            margin-top: 18px;
-            text-align: center;
-            color: #6d809c;
-            font-size: 12px;
-        }
-
-        .loading {
-            opacity: 0.75;
-        }
-
-        @media (max-width: 1180px) {
-            .hero {
-                grid-template-columns: 1fr;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .metrics-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 760px) {
-            .wrap {
-                padding: 14px;
-            }
-
-            .topbar {
-                padding: 16px;
-            }
-
-            .brand-title {
-                font-size: 24px;
-            }
-
-            .system-strip {
-                justify-content: flex-start;
-            }
-
-            .stats-grid,
-            .metrics-grid,
-            .mini-panels,
-            .mini-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .signal-header-row {
-                flex-direction: column;
-            }
-
-            .signal-badges {
-                justify-content: flex-start;
-            }
-
-            .signal-title {
-                font-size: 24px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JHONNY ELITE V16 PRO</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --bg-2: #0d1727;
+      --panel: rgba(14, 25, 43, 0.92);
+      --panel-2: rgba(18, 33, 56, 0.95);
+      --border: rgba(86, 136, 215, 0.18);
+      --text: #eef4ff;
+      --muted: #91a7cb;
+      --accent: #35c2ff;
+      --green: #29d17d;
+      --yellow: #ffcc66;
+      --red: #ff6b6b;
+      --blue: #4f8cff;
+      --shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --maxw: 1480px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(0, 120, 255, 0.12), transparent 28%),
+        radial-gradient(circle at top right, rgba(0, 255, 163, 0.08), transparent 22%),
+        linear-gradient(180deg, #06101c 0%, #07111f 45%, #040b15 100%);
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: 22px 18px 36px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .brand-title {
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: .4px;
+    }
+
+    .brand-title span {
+      color: #ffb22c;
+    }
+
+    .brand-subtitle {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(31, 49, 77, 0.95), rgba(14, 24, 41, 0.95));
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 800;
+      transition: .18s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(53, 194, 255, 0.45);
+    }
+
+    .btn-primary {
+      background: linear-gradient(180deg, rgba(0, 221, 136, 0.95), rgba(0, 176, 111, 0.95));
+      color: #041117;
+      border: none;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .stat-card,
+    .panel {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .stat-card {
+      padding: 16px;
+      min-height: 100px;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .stat-value {
+      font-size: 30px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .stat-sub {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.45fr 0.95fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 18px 0 18px;
+      flex-wrap: wrap;
+    }
+
+    .panel-title {
+      color: var(--accent);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      font-weight: 900;
+    }
+
+    .panel-body {
+      padding: 16px 18px 18px;
+    }
+
+    .signals-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .signal-card {
+      background: rgba(7, 18, 33, 0.68);
+      border: 1px solid rgba(86, 136, 215, 0.16);
+      border-radius: 16px;
+      padding: 16px;
+      cursor: pointer;
+      transition: .18s ease;
+    }
+
+    .signal-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(53, 194, 255, 0.36);
+      background: rgba(10, 22, 39, 0.82);
+    }
+
+    .signal-top {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .signal-match {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .signal-match-title {
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1.08;
+    }
+
+    .signal-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .signal-rank {
+      min-width: 82px;
+      text-align: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .rank-elite {
+      background: rgba(53, 194, 255, 0.12);
+      color: #bdeeff;
+      border-color: rgba(53, 194, 255, 0.28);
+    }
+
+    .rank-top {
+      background: rgba(41, 209, 125, 0.12);
+      color: #baffdc;
+      border-color: rgba(41, 209, 125, 0.28);
+    }
+
+    .rank-normal {
+      background: rgba(255,255,255,0.06);
+      color: #dce8ff;
+      border-color: rgba(255,255,255,0.08);
+    }
+
+    .signal-market {
+      margin-bottom: 14px;
+    }
+
+    .signal-market .market {
+      color: var(--accent);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+
+    .signal-market .selection {
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1.08;
+      margin-bottom: 6px;
+    }
+
+    .signal-market .reason {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .signal-metrics {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .metric-box {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .metric-box .k {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      font-weight: 800;
+    }
+
+    .metric-box .v {
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .signal-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .signal-footer-left {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .badge-green {
+      background: rgba(41, 209, 125, 0.15);
+      color: #9dffd0;
+      border-color: rgba(41, 209, 125, 0.28);
+    }
+
+    .badge-yellow {
+      background: rgba(255, 204, 102, 0.14);
+      color: #ffd990;
+      border-color: rgba(255, 204, 102, 0.25);
+    }
+
+    .badge-red {
+      background: rgba(255, 107, 107, 0.14);
+      color: #ffb0b0;
+      border-color: rgba(255, 107, 107, 0.24);
+    }
+
+    .detail-link {
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .hot-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .hot-item {
+      background: rgba(7, 18, 33, 0.62);
+      border: 1px solid rgba(86, 136, 215, 0.15);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .hot-item-title {
+      font-weight: 900;
+      font-size: 18px;
+      margin-bottom: 6px;
+      line-height: 1.15;
+    }
+
+    .hot-item-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .hot-mini-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .hot-mini {
+      background: rgba(255,255,255,0.03);
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .hot-mini .k {
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      font-weight: 800;
+    }
+
+    .hot-mini .v {
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .empty {
+      padding: 24px 8px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .loading-bar {
+      display: none;
+      margin-bottom: 14px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .green { color: var(--green); }
+    .yellow { color: var(--yellow); }
+    .red { color: var(--red); }
+
+    @media (max-width: 1300px) {
+      .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .signal-metrics {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .hot-mini-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .signal-metrics {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .signal-match-title {
+        font-size: 20px;
+      }
+
+      .signal-market .selection {
+        font-size: 22px;
+      }
+
+      .brand-title {
+        font-size: 25px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="wrap">
-        <header class="topbar">
-            <div class="brand-block">
-                <div class="eyebrow">Sistema predictivo en vivo</div>
-                <h1 class="brand-title">JHONNY ELITE V16 <span class="pro">PRO</span></h1>
-                <p class="brand-sub">Escaneo, interpretación, filtrado y selección de oportunidades reales.</p>
-            </div>
+  <div class="page">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-title">JHONNY ELITE <span>V16 PRO</span></div>
+        <div class="brand-subtitle">Panel operativo limpio · señales vivas · validación de mercado</div>
+      </div>
 
-            <div class="system-strip">
-                <div class="strip-pill">Sistema: <strong id="sys-status">...</strong></div>
-                <div class="strip-pill">Auto Scan: <span class="warn">ACTIVO</span></div>
-                <div class="strip-pill">Refresco: <strong>Cada 60s</strong></div>
-                <div class="actions">
-                    <button class="btn btn-primary" onclick="runScan()">Escanear ahora</button>
-                    <button class="btn btn-secondary" onclick="loadDashboard()">Actualizar panel</button>
-                </div>
-            </div>
-        </header>
-
-        <div class="hero">
-            <div class="hero-left">
-                <section class="panel">
-                    <div class="panel-inner">
-                        <div class="stats-grid">
-                            <div class="stat-card">
-                                <div class="stat-label">Estado</div>
-                                <div class="stat-value big" id="estado-kpi">ok</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-label">Último scan</div>
-                                <div class="stat-value big" id="ultimo-scan-kpi">--</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-label">Señales activas</div>
-                                <div class="stat-value big" id="signals-count-kpi">0</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-label">Hot matches</div>
-                                <div class="stat-value big" id="hot-count-kpi">0</div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="panel signal-main">
-                    <div class="panel-inner">
-                        <div class="section-tag">Señal principal</div>
-
-                        <div class="signal-header-row">
-                            <div>
-                                <h2 class="signal-title" id="main-selection">No hay señales publicables</h2>
-                                <div class="match-line" id="main-match">Esperando próximo escaneo...</div>
-                                <div class="meta-line" id="main-meta">Sin datos disponibles</div>
-                            </div>
-
-                            <div class="signal-badges">
-                                <span class="badge normal" id="main-rank">NORMAL</span>
-                                <span class="badge top" id="main-decision">OBSERVAR</span>
-                            </div>
-                        </div>
-
-                        <div class="metrics-grid">
-                            <div class="metric-box">
-                                <div class="k">Cuota</div>
-                                <div class="v" id="main-odd">--</div>
-                            </div>
-                            <div class="metric-box">
-                                <div class="k">Confianza</div>
-                                <div class="v" id="main-confidence">--</div>
-                            </div>
-                            <div class="metric-box">
-                                <div class="k">Value</div>
-                                <div class="v" id="main-value">--</div>
-                            </div>
-                            <div class="metric-box">
-                                <div class="k">Riesgo</div>
-                                <div class="v" id="main-risk">--</div>
-                            </div>
-
-                            <div class="metric-box">
-                                <div class="k">Signal Score</div>
-                                <div class="v" id="main-signal-score">--</div>
-                            </div>
-                            <div class="metric-box">
-                                <div class="k">Tactical Score</div>
-                                <div class="v" id="main-tactical-score">--</div>
-                            </div>
-                            <div class="metric-box">
-                                <div class="k">AI Decision</div>
-                                <div class="v" id="main-ai-score">--</div>
-                            </div>
-                            <div class="metric-box">
-                                <div class="k">Goal Score</div>
-                                <div class="v" id="main-goal-score">--</div>
-                            </div>
-                        </div>
-
-                        <div class="reason-list">
-                            <div class="reason-item"><strong>Motivo táctico:</strong> <span id="main-reason-tactical">Sin lectura disponible</span></div>
-                            <div class="reason-item"><strong>Motivo value:</strong> <span id="main-reason-value">Sin lectura disponible</span></div>
-                            <div class="reason-item"><strong>Lectura IA:</strong> <span id="main-reason-ai">Sin lectura disponible</span></div>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="panel table-panel">
-                    <div class="panel-inner">
-                        <div class="table-head">
-                            <div>
-                                <h2>Top señales del momento</h2>
-                                <p>Máximo 10 señales con mejor perfil operativo.</p>
-                            </div>
-                        </div>
-
-                        <div class="table-wrap">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Partido</th>
-                                        <th>Min</th>
-                                        <th>Mercado</th>
-                                        <th>Selección</th>
-                                        <th>Cuota</th>
-                                        <th>Confianza</th>
-                                        <th>Value</th>
-                                        <th>Riesgo</th>
-                                        <th>Rank</th>
-                                        <th>Recomendación</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="signals-table-body">
-                                    <tr>
-                                        <td colspan="10" style="text-align:center; color: var(--muted); padding: 24px;">
-                                            Cargando señales...
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-            </div>
-
-            <aside class="hero-right">
-                <section class="panel">
-                    <div class="panel-inner">
-                        <h3 class="mini-title">Rendimiento del sistema</h3>
-                        <div class="mini-grid">
-                            <div class="mini-kpi">
-                                <div class="label">Win Rate</div>
-                                <div class="value" id="stat-winrate">0%</div>
-                            </div>
-                            <div class="mini-kpi">
-                                <div class="label">ROI</div>
-                                <div class="value" id="stat-roi">0%</div>
-                            </div>
-                            <div class="mini-kpi">
-                                <div class="label">Ganadas</div>
-                                <div class="value" id="stat-wins">0</div>
-                            </div>
-                            <div class="mini-kpi">
-                                <div class="label">Perdidas</div>
-                                <div class="value" id="stat-losses">0</div>
-                            </div>
-                            <div class="mini-kpi">
-                                <div class="label">Elite</div>
-                                <div class="value" id="stat-elite">0</div>
-                            </div>
-                            <div class="mini-kpi">
-                                <div class="label">Top</div>
-                                <div class="value" id="stat-top">0</div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="panel">
-                    <div class="panel-inner">
-                        <h3 class="mini-title">Hot matches</h3>
-                        <div class="empty-box" id="hot-matches-box">
-                            No hay hot matches en este momento.
-                        </div>
-                    </div>
-                </section>
-
-                <section class="panel">
-                    <div class="panel-inner">
-                        <h3 class="mini-title">Resumen operativo</h3>
-                        <div class="mini-grid">
-                            <div class="mini-kpi">
-                                <div class="label">Señales cargadas</div>
-                                <div class="value" id="summary-signals">0</div>
-                            </div>
-                            <div class="mini-kpi">
-                                <div class="label">Value promedio</div>
-                                <div class="value" id="summary-value">0</div>
-                            </div>
-                            <div class="mini-kpi">
-                                <div class="label">Riesgo medio</div>
-                                <div class="value" id="summary-risk">0</div>
-                            </div>
-                            <div class="mini-kpi">
-                                <div class="label">Mejor rank</div>
-                                <div class="value" id="summary-rank">N/A</div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            </aside>
-        </div>
-
-        <div class="footer-note">
-            JHONNY ELITE V16 PRO · Panel operativo en vivo
-        </div>
+      <div class="toolbar">
+        <button class="btn" onclick="runScan()">Escanear</button>
+        <button class="btn" onclick="reloadAll()">Actualizar</button>
+        <button class="btn btn-primary" onclick="window.location.href='/dashboard'">Dashboard</button>
+      </div>
     </div>
 
-    <script>
-        function safeNumber(value, fallback = 0) {
-            const n = parseFloat(value);
-            return Number.isFinite(n) ? n : fallback;
-        }
+    <div class="loading-bar" id="loadingBar">Actualizando datos...</div>
 
-        function safeText(value, fallback = "N/A") {
-            if (value === null || value === undefined || value === "") return fallback;
-            return String(value);
-        }
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Señales activas</div>
+        <div class="stat-value" id="statSignals">0</div>
+        <div class="stat-sub">Señales top visibles</div>
+      </div>
 
-        function formatDate(ts) {
-            if (!ts) return "--";
-            try {
-                const d = new Date(ts * 1000);
-                return d.toLocaleString("es-ES");
-            } catch {
-                return "--";
-            }
-        }
+      <div class="stat-card">
+        <div class="stat-label">Hot matches</div>
+        <div class="stat-value" id="statHot">0</div>
+        <div class="stat-sub">Partidos con actividad</div>
+      </div>
 
-        function getRankClass(rank) {
-            const r = safeText(rank, "NORMAL").toUpperCase();
-            if (r === "ELITE") return "elite";
-            if (r === "TOP" || r === "ALTA") return "top";
-            return "normal";
-        }
+      <div class="stat-card">
+        <div class="stat-label">Partidos live</div>
+        <div class="stat-value" id="statMatches">0</div>
+        <div class="stat-sub">Partidos escaneados</div>
+      </div>
 
-        function getDecisionLabel(signal) {
-            return safeText(
-                signal.recomendacion_final ||
-                signal.ai_recommendation ||
-                signal.decision_ia ||
-                "OBSERVAR"
-            ).toUpperCase();
-        }
+      <div class="stat-card">
+        <div class="stat-label">Win rate</div>
+        <div class="stat-value" id="statWinrate">0%</div>
+        <div class="stat-sub">Histórico resuelto</div>
+      </div>
 
-        function getMainReasonTactical(s) {
-            return (
-                s.razon_tactica ||
-                s.reason ||
-                s.tempo_reason ||
-                s.context_reason ||
-                "Sin lectura táctica disponible"
-            );
-        }
+      <div class="stat-card">
+        <div class="stat-label">Value medio</div>
+        <div class="stat-value" id="statValue">0</div>
+        <div class="stat-sub">Promedio operativo</div>
+      </div>
 
-        function getMainReasonValue(s) {
-            return (
-                s.razon_value ||
-                s.value_reason ||
-                "Sin lectura de value disponible"
-            );
-        }
+      <div class="stat-card">
+        <div class="stat-label">Riesgo medio</div>
+        <div class="stat-value" id="statRisk">0</div>
+        <div class="stat-sub">Promedio visible</div>
+      </div>
+    </div>
 
-        function getMainReasonAI(s) {
-            return (
-                s.ai_reason ||
-                s.razon_ia ||
-                s.ai_fit_reason ||
-                "Sin lectura IA disponible"
-            );
-        }
+    <div class="main-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Top señales</div>
+          <div class="muted" id="lastScanText">Sin escaneo reciente</div>
+        </div>
+        <div class="panel-body">
+          <div id="signalsGrid" class="signals-grid">
+            <div class="empty">Cargando señales...</div>
+          </div>
+        </div>
+      </div>
 
-        function renderMainSignal(signal) {
-            if (!signal) {
-                document.getElementById("main-selection").textContent = "No hay señales publicables";
-                document.getElementById("main-match").textContent = "Esperando próximo escaneo...";
-                document.getElementById("main-meta").textContent = "Sin datos disponibles";
-                document.getElementById("main-rank").textContent = "NORMAL";
-                document.getElementById("main-rank").className = "badge normal";
-                document.getElementById("main-decision").textContent = "OBSERVAR";
-                document.getElementById("main-decision").className = "badge normal";
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Hot matches</div>
+          <div class="muted">Actividad en vivo</div>
+        </div>
+        <div class="panel-body">
+          <div id="hotList" class="hot-list">
+            <div class="empty">Cargando partidos calientes...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-                [
-                    "main-odd","main-confidence","main-value","main-risk",
-                    "main-signal-score","main-tactical-score","main-ai-score","main-goal-score"
-                ].forEach(id => document.getElementById(id).textContent = "--");
+  <script>
+    function safeNumber(value, fallback = 0) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : fallback;
+    }
 
-                document.getElementById("main-reason-tactical").textContent = "Sin lectura disponible";
-                document.getElementById("main-reason-value").textContent = "Sin lectura disponible";
-                document.getElementById("main-reason-ai").textContent = "Sin lectura disponible";
-                return;
-            }
+    function safeText(value, fallback = "-") {
+      if (value === null || value === undefined) return fallback;
+      const t = String(value).trim();
+      return t ? t : fallback;
+    }
 
-            const match = `${safeText(signal.home, "Local")} vs ${safeText(signal.away, "Visitante")}`;
-            const meta = `${safeText(signal.league, "Liga desconocida")} · ${safeText(signal.country, "World")} · Min ${safeText(signal.minute, "--")} · Marcador ${safeText(signal.score, "--")}`;
-            const rank = safeText(signal.signal_rank || signal.rank, "NORMAL").toUpperCase();
-            const decision = getDecisionLabel(signal);
+    function fmt(value, digits = 2) {
+      return safeNumber(value, 0).toFixed(digits);
+    }
 
-            document.getElementById("main-selection").textContent = safeText(signal.selection, "Sin selección");
-            document.getElementById("main-match").textContent = match;
-            document.getElementById("main-meta").textContent = meta;
+    function fmtPct(value, digits = 2) {
+      return `${safeNumber(value, 0).toFixed(digits)}%`;
+    }
 
-            const rankEl = document.getElementById("main-rank");
-            rankEl.textContent = rank;
-            rankEl.className = `badge ${getRankClass(rank)}`;
+    function getFairOdds(probReal) {
+      const p = safeNumber(probReal, 0);
+      if (p <= 0) return 0;
+      return 1 / p;
+    }
 
-            const decisionEl = document.getElementById("main-decision");
-            decisionEl.textContent = decision;
-            decisionEl.className = `badge ${decision === "APOSTAR_FUERTE" ? "elite" : decision === "APOSTAR" ? "top" : "normal"}`;
+    function goToMatchDetail(matchId) {
+      if (!matchId) return;
+      window.location.href = `/match_detail.html?match_id=${matchId}`;
+    }
 
-            document.getElementById("main-odd").textContent = safeText(signal.odd, "--");
-            document.getElementById("main-confidence").textContent = `${safeNumber(signal.confidence, 0)}%`;
-            document.getElementById("main-value").textContent = safeText(signal.value, "--");
-            document.getElementById("main-risk").textContent = safeText(signal.risk_score, safeText(signal.riesgo_operativo, "--"));
-            document.getElementById("main-signal-score").textContent = safeText(signal.signal_score, "--");
-            document.getElementById("main-tactical-score").textContent = safeText(signal.tactical_score, "--");
-            document.getElementById("main-ai-score").textContent = safeText(signal.ai_decision_score, safeText(signal.ai_score, "--"));
-            document.getElementById("main-goal-score").textContent = safeText(signal.goal_inminente_score, safeText(signal.goal_score, "--"));
+    function rankClass(rank) {
+      const r = safeText(rank, "").toUpperCase();
+      if (r === "ELITE") return "rank-elite";
+      if (r === "TOP" || r === "ALTA") return "rank-top";
+      return "rank-normal";
+    }
 
-            document.getElementById("main-reason-tactical").textContent = getMainReasonTactical(signal);
-            document.getElementById("main-reason-value").textContent = getMainReasonValue(signal);
-            document.getElementById("main-reason-ai").textContent = getMainReasonAI(signal);
-        }
+    function actionBadge(signal) {
+      const action = safeText(signal.recomendacion_final || signal.ai_recommendation || "OBSERVAR").toUpperCase();
 
-        function renderSignalsTable(signals) {
-            const tbody = document.getElementById("signals-table-body");
+      // Regla visual: si no hay odds reales validadas, no pintar como apuesta fuerte
+      const oddsOk = Boolean(signal.odds_data_available) && Boolean(signal.odds_validation_ok);
 
-            if (!signals || !signals.length) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="10" style="text-align:center; color: var(--muted); padding: 24px;">
-                            No hay señales publicables en este momento.
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
+      if (!oddsOk) {
+        return { text: "OBSERVAR", className: "badge-yellow" };
+      }
 
-            tbody.innerHTML = signals.slice(0, 10).map(s => {
-                const rank = safeText(s.signal_rank || s.rank, "NORMAL").toUpperCase();
-                const decision = getDecisionLabel(s);
-                return `
-                    <tr>
-                        <td>
-                            <div class="match-col-main">${safeText(s.home, "Local")} vs ${safeText(s.away, "Visitante")}</div>
-                            <div class="match-col-sub">${safeText(s.league, "Liga")} · ${safeText(s.score, "--")}</div>
-                        </td>
-                        <td class="cell-strong">${safeText(s.minute, "--")}</td>
-                        <td>${safeText(s.market, "--")}</td>
-                        <td>${safeText(s.selection, "--")}</td>
-                        <td class="cell-strong">${safeText(s.odd, "--")}</td>
-                        <td class="cell-strong">${safeNumber(s.confidence, 0)}%</td>
-                        <td class="cell-strong">${safeText(s.value, "--")}</td>
-                        <td class="cell-strong">${safeText(s.risk_score, "--")}</td>
-                        <td><span class="rank-chip ${getRankClass(rank)}">${rank}</span></td>
-                        <td><span class="rec-chip">${decision}</span></td>
-                    </tr>
-                `;
-            }).join("");
-        }
+      if (action.includes("NO_APOSTAR")) {
+        return { text: "NO APOSTAR", className: "badge-red" };
+      }
 
-        function renderStats(stats, signals) {
-            document.getElementById("stat-winrate").textContent = `${safeNumber(stats.win_rate, 0)}%`;
-            document.getElementById("stat-roi").textContent = `${safeNumber(stats.roi_percent, 0)}%`;
-            document.getElementById("stat-wins").textContent = safeText(stats.ganadas, "0");
-            document.getElementById("stat-losses").textContent = safeText(stats.perdidas, "0");
-            document.getElementById("stat-elite").textContent = safeText(stats.signals_elite, "0");
-            document.getElementById("stat-top").textContent = safeText(stats.signals_top, "0");
+      if (action.includes("APOSTAR")) {
+        return { text: "APOSTAR", className: "badge-green" };
+      }
 
-            const totalSignals = signals.length;
-            const avgValue = totalSignals
-                ? (signals.reduce((acc, s) => acc + safeNumber(s.value, 0), 0) / totalSignals).toFixed(2)
-                : "0";
-            const avgRisk = totalSignals
-                ? (signals.reduce((acc, s) => acc + safeNumber(s.risk_score, 0), 0) / totalSignals).toFixed(2)
-                : "0";
-            const bestRank = signals.some(s => safeText(s.signal_rank).toUpperCase() === "ELITE")
-                ? "ELITE"
-                : signals.some(s => safeText(s.signal_rank).toUpperCase() === "TOP")
-                ? "TOP"
-                : totalSignals ? "NORMAL" : "N/A";
+      return { text: "OBSERVAR", className: "badge-yellow" };
+    }
 
-            document.getElementById("summary-signals").textContent = totalSignals;
-            document.getElementById("summary-value").textContent = avgValue;
-            document.getElementById("summary-risk").textContent = avgRisk;
-            document.getElementById("summary-rank").textContent = bestRank;
-        }
+    function oddsBadge(signal) {
+      const available = Boolean(signal.odds_data_available);
+      const valid = Boolean(signal.odds_validation_ok);
 
-        function renderHotMatches(hotMatches) {
-            const box = document.getElementById("hot-matches-box");
-            const count = hotMatches ? hotMatches.length : 0;
-            document.getElementById("hot-count-kpi").textContent = count;
+      if (available && valid) {
+        return { text: "VALIDADA", className: "badge-green" };
+      }
 
-            if (!count) {
-                box.innerHTML = `No hay hot matches en este momento.`;
-                return;
-            }
+      if (available && !valid) {
+        return { text: "ODDS FALLIDAS", className: "badge-red" };
+      }
 
-            box.innerHTML = hotMatches.slice(0, 5).map(h => `
-                <div style="padding:10px 0; border-bottom: 1px solid rgba(120,160,220,0.08);">
-                    <div style="font-weight:800; margin-bottom:4px;">${safeText(h.local, "Local")} vs ${safeText(h.visitante, "Visitante")}</div>
-                    <div style="color: var(--muted); font-size: 13px;">
-                        ${safeText(h.liga, "Liga")} · Min ${safeText(h.minuto, "--")} · xG ${safeText(h.xG, "0")}
-                    </div>
+      return { text: "SIN ODDS", className: "badge-yellow" };
+    }
+
+    function renderSignals(signals) {
+      const grid = document.getElementById("signalsGrid");
+
+      if (!Array.isArray(signals) || !signals.length) {
+        grid.innerHTML = `<div class="empty">No hay señales disponibles.</div>`;
+        return;
+      }
+
+      grid.innerHTML = signals.map(signal => {
+        const rank = safeText(signal.signal_rank || "NORMAL");
+        const rankCls = rankClass(rank);
+        const action = actionBadge(signal);
+        const odds = oddsBadge(signal);
+
+        const probReal = safeNumber(signal.prob_real ?? signal.prob, 0);
+        const fair = probReal > 0 ? getFairOdds(probReal) : 0;
+
+        const matchTitle = safeText(signal.partido || `${safeText(signal.home)} vs ${safeText(signal.away)}`);
+        const minute = safeText(signal.minute, "-");
+        const score = safeText(signal.score, "-");
+        const market = safeText(signal.market, "-");
+        const selection = safeText(signal.selection, "-");
+        const reason = safeText(signal.reason || signal.razon_tactica || "Sin razón disponible");
+        const odd = safeNumber(signal.odd ?? signal.cuota, 0);
+        const value = safeNumber(signal.value ?? signal.valor, 0);
+        const risk = safeNumber(signal.risk_score, 0);
+        const confidence = safeNumber(signal.confidence, 0);
+        const ai = safeNumber(signal.ai_decision_score ?? signal.ai_score, 0);
+        const goal = safeNumber(signal.goal_inminente_score, 0);
+        const xg = safeNumber(signal.xG, 0);
+        const bookmaker = safeText(signal.odds_selected_bookmaker || "Sin bookmaker");
+
+        return `
+          <div class="signal-card" onclick="goToMatchDetail('${signal.match_id}')">
+            <div class="signal-top">
+              <div class="signal-match">
+                <div class="signal-match-title">${matchTitle}</div>
+                <div class="signal-meta">
+                  <span>${minute}'</span>
+                  <span>•</span>
+                  <span>${score}</span>
+                  <span>•</span>
+                  <span>${safeText(signal.league)}</span>
+                  <span>•</span>
+                  <span>${safeText(signal.country)}</span>
                 </div>
-            `).join("");
-        }
+              </div>
 
-        async function loadDashboard() {
-            try {
-                document.body.classList.add("loading");
+              <div class="signal-rank ${rankCls}">${rank}</div>
+            </div>
 
-                const [statusRes, signalsRes, statsRes, hotRes] = await Promise.all([
-                    fetch("/status"),
-                    fetch("/signals"),
-                    fetch("/learning-stats"),
-                    fetch("/hot-matches")
-                ]);
+            <div class="signal-market">
+              <div class="market">${market}</div>
+              <div class="selection">${selection}</div>
+              <div class="reason">${reason}</div>
+            </div>
 
-                const statusData = await statusRes.json();
-                const signalsData = await signalsRes.json();
-                const statsData = await statsRes.json();
-                const hotData = await hotRes.json();
+            <div class="signal-metrics">
+              <div class="metric-box">
+                <div class="k">Cuota</div>
+                <div class="v">${odd > 0 ? fmt(odd, 2) : "-"}</div>
+              </div>
 
-                const signals = Array.isArray(signalsData.signals) ? signalsData.signals : [];
-                const sortedSignals = [...signals].sort((a, b) => {
-                    const aScore =
-                        safeNumber(a.ai_decision_score, 0) * 3 +
-                        safeNumber(a.signal_score, 0) * 2 +
-                        safeNumber(a.confidence, 0) +
-                        safeNumber(a.value, 0);
+              <div class="metric-box">
+                <div class="k">Fair</div>
+                <div class="v">${fair > 0 ? fmt(fair, 2) : "-"}</div>
+              </div>
 
-                    const bScore =
-                        safeNumber(b.ai_decision_score, 0) * 3 +
-                        safeNumber(b.signal_score, 0) * 2 +
-                        safeNumber(b.confidence, 0) +
-                        safeNumber(b.value, 0);
+              <div class="metric-box">
+                <div class="k">Value</div>
+                <div class="v">${fmt(value, 2)}</div>
+              </div>
 
-                    return bScore - aScore;
-                });
+              <div class="metric-box">
+                <div class="k">Risk</div>
+                <div class="v">${fmt(risk, 2)}</div>
+              </div>
 
-                document.getElementById("sys-status").textContent = safeText(statusData.status, "ok").toUpperCase();
-                document.getElementById("estado-kpi").textContent = safeText(statusData.status, "ok");
-                document.getElementById("signals-count-kpi").textContent = sortedSignals.length;
+              <div class="metric-box">
+                <div class="k">Confidence</div>
+                <div class="v">${fmt(confidence, 0)}%</div>
+              </div>
 
-                renderMainSignal(sortedSignals[0] || null);
-                renderSignalsTable(sortedSignals);
-                renderStats(statsData || {}, sortedSignals);
-                renderHotMatches(Array.isArray(hotData.hot_matches) ? hotData.hot_matches : []);
-            } catch (error) {
-                console.error("ERROR cargando dashboard:", error);
-            } finally {
-                document.body.classList.remove("loading");
-            }
-        }
+              <div class="metric-box">
+                <div class="k">AI / Goal / xG</div>
+                <div class="v">${fmt(ai, 1)}</div>
+              </div>
+            </div>
 
-        async function runScan() {
-            try {
-                const btn = event.target;
-                btn.disabled = true;
-                btn.textContent = "Escaneando...";
+            <div class="signal-footer">
+              <div class="signal-footer-left">
+                <span class="badge ${action.className}">${action.text}</span>
+                <span class="badge ${odds.className}">${odds.text}</span>
+                <span class="badge">${bookmaker}</span>
+              </div>
 
-                const res = await fetch("/scan");
-                const data = await res.json();
-                console.log("SCAN:", data);
+              <div class="detail-link">Ver detalle →</div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
 
-                document.getElementById("ultimo-scan-kpi").textContent = formatDate(data.ultimo_scan || data.last_scan || 0);
+    function renderHotMatches(matches) {
+      const box = document.getElementById("hotList");
 
-                await loadDashboard();
-            } catch (error) {
-                console.error("ERROR scan:", error);
-            } finally {
-                const btn = document.querySelector(".btn-primary");
-                if (btn) {
-                    btn.disabled = false;
-                    btn.textContent = "Escanear ahora";
-                }
-            }
-        }
+      if (!Array.isArray(matches) || !matches.length) {
+        box.innerHTML = `<div class="empty">No hay hot matches ahora mismo.</div>`;
+        return;
+      }
 
-        setInterval(loadDashboard, 60000);
-        loadDashboard();
-    </script>
+      box.innerHTML = matches.slice(0, 10).map(m => {
+        const title = `${safeText(m.local)} vs ${safeText(m.visitante)}`;
+        const score = `${safeText(m.marcador_local, 0)} - ${safeText(m.marcador_visitante, 0)}`;
+        const minute = `${safeText(m.minuto, 0)}'`;
+
+        return `
+          <div class="hot-item">
+            <div class="hot-item-title">${title}</div>
+            <div class="hot-item-meta">
+              <span>${minute}</span>
+              <span>•</span>
+              <span>${score}</span>
+              <span>•</span>
+              <span>${safeText(m.liga)}</span>
+            </div>
+
+            <div class="hot-mini-grid">
+              <div class="hot-mini">
+                <div class="k">xG</div>
+                <div class="v">${fmt(m.xG, 2)}</div>
+              </div>
+              <div class="hot-mini">
+                <div class="k">Shots</div>
+                <div class="v">${safeText(m.shots, 0)}</div>
+              </div>
+              <div class="hot-mini">
+                <div class="k">On target</div>
+                <div class="v">${safeText(m.shots_on_target, 0)}</div>
+              </div>
+              <div class="hot-mini">
+                <div class="k">Danger</div>
+                <div class="v">${safeText(m.dangerous_attacks, 0)}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderStats(data) {
+      const stats = data.stats || {};
+
+      document.getElementById("statSignals").textContent = safeText(data.total_signals, "0");
+      document.getElementById("statHot").textContent = safeText(data.total_hot_matches, "0");
+      document.getElementById("statMatches").textContent = safeText(data.total_matches, "0");
+      document.getElementById("statWinrate").textContent = fmtPct(stats.win_rate || 0, 2);
+      document.getElementById("statValue").textContent = fmt(stats.value_promedio || 0, 2);
+      document.getElementById("statRisk").textContent = fmt(stats.riesgo_medio || 0, 2);
+
+      const lastScan = safeNumber(data.last_scan, 0);
+      const lastScanText = lastScan
+        ? `Último scan: ${new Date(lastScan * 1000).toLocaleString()}`
+        : "Sin escaneo reciente";
+
+      document.getElementById("lastScanText").textContent = lastScanText;
+    }
+
+    async function fetchJSON(url) {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    }
+
+    function setLoading(show, text = "Actualizando datos...") {
+      const bar = document.getElementById("loadingBar");
+      bar.style.display = show ? "block" : "none";
+      bar.textContent = text;
+    }
+
+    async function loadDashboard() {
+      setLoading(true, "Cargando dashboard...");
+
+      try {
+        const [dashboardData, signalsData, hotData] = await Promise.all([
+          fetchJSON("/dashboard-data"),
+          fetchJSON("/signals"),
+          fetchJSON("/hot-matches")
+        ]);
+
+        renderStats(dashboardData || {});
+        renderSignals((signalsData && signalsData.signals) || (dashboardData && dashboardData.signals) || []);
+        renderHotMatches((hotData && hotData.hot_matches) || []);
+      } catch (err) {
+        console.error(err);
+        document.getElementById("signalsGrid").innerHTML = `<div class="empty">No se pudieron cargar las señales.</div>`;
+        document.getElementById("hotList").innerHTML = `<div class="empty">No se pudieron cargar los hot matches.</div>`;
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function runScan() {
+      setLoading(true, "Ejecutando scan...");
+      try {
+        await fetchJSON("/scan");
+        await loadDashboard();
+      } catch (err) {
+        console.error(err);
+        setLoading(false);
+      }
+    }
+
+    async function reloadAll() {
+      await loadDashboard();
+    }
+
+    loadDashboard();
+  </script>
 </body>
     </html>
