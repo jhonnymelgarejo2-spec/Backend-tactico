@@ -17,16 +17,12 @@
       --green: #29d17d;
       --yellow: #ffcc66;
       --red: #ff6b6b;
-      --blue: #4f8cff;
       --shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
       --radius: 18px;
-      --radius-sm: 12px;
-      --maxw: 1480px;
+      --maxw: 1500px;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -54,25 +50,17 @@
       margin-bottom: 22px;
     }
 
-    .brand {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
     .brand-title {
       font-size: 32px;
       font-weight: 900;
-      letter-spacing: .4px;
     }
 
-    .brand-title span {
-      color: #ffb22c;
-    }
+    .brand-title span { color: #ffb22c; }
 
     .brand-subtitle {
       color: var(--muted);
       font-size: 14px;
+      margin-top: 4px;
     }
 
     .toolbar {
@@ -89,12 +77,6 @@
       border-radius: 12px;
       cursor: pointer;
       font-weight: 800;
-      transition: .18s ease;
-    }
-
-    .btn:hover {
-      transform: translateY(-1px);
-      border-color: rgba(53, 194, 255, 0.45);
     }
 
     .btn-primary {
@@ -110,8 +92,7 @@
       margin-bottom: 18px;
     }
 
-    .stat-card,
-    .panel {
+    .stat-card, .panel {
       background: linear-gradient(180deg, var(--panel), var(--panel-2));
       border: 1px solid var(--border);
       border-radius: var(--radius);
@@ -135,7 +116,6 @@
     .stat-value {
       font-size: 30px;
       font-weight: 900;
-      line-height: 1;
     }
 
     .stat-sub {
@@ -172,6 +152,24 @@
       padding: 16px 18px 18px;
     }
 
+    .filters-bar {
+      display: grid;
+      grid-template-columns: 1.2fr repeat(5, minmax(130px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .filter-input, .filter-select {
+      width: 100%;
+      background: rgba(7, 18, 33, 0.75);
+      border: 1px solid rgba(86, 136, 215, 0.18);
+      color: var(--text);
+      padding: 12px 12px;
+      border-radius: 12px;
+      outline: none;
+      font-weight: 700;
+    }
+
     .signals-grid {
       display: grid;
       gap: 14px;
@@ -200,12 +198,6 @@
       margin-bottom: 12px;
     }
 
-    .signal-match {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
     .signal-match-title {
       font-size: 24px;
       font-weight: 900;
@@ -218,6 +210,7 @@
       flex-wrap: wrap;
       color: var(--muted);
       font-size: 13px;
+      margin-top: 6px;
     }
 
     .signal-rank {
@@ -250,10 +243,6 @@
       border-color: rgba(255,255,255,0.08);
     }
 
-    .signal-market {
-      margin-bottom: 14px;
-    }
-
     .signal-market .market {
       color: var(--accent);
       font-size: 12px;
@@ -280,7 +269,7 @@
       display: grid;
       grid-template-columns: repeat(6, 1fr);
       gap: 10px;
-      margin-bottom: 14px;
+      margin: 14px 0;
     }
 
     .metric-box {
@@ -302,7 +291,6 @@
     .metric-box .v {
       font-size: 22px;
       font-weight: 900;
-      line-height: 1;
     }
 
     .signal-footer {
@@ -409,7 +397,6 @@
     .hot-mini .v {
       font-size: 18px;
       font-weight: 900;
-      line-height: 1;
     }
 
     .empty {
@@ -425,57 +412,32 @@
       font-size: 14px;
     }
 
-    .green { color: var(--green); }
-    .yellow { color: var(--yellow); }
-    .red { color: var(--red); }
-
     @media (max-width: 1300px) {
-      .stats-grid {
-        grid-template-columns: repeat(3, 1fr);
-      }
-
-      .main-grid {
-        grid-template-columns: 1fr;
-      }
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+      .main-grid { grid-template-columns: 1fr; }
+      .filters-bar { grid-template-columns: repeat(3, 1fr); }
     }
 
     @media (max-width: 900px) {
-      .signal-metrics {
-        grid-template-columns: repeat(3, 1fr);
-      }
-
-      .hot-mini-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
+      .signal-metrics { grid-template-columns: repeat(3, 1fr); }
+      .hot-mini-grid { grid-template-columns: repeat(2, 1fr); }
+      .filters-bar { grid-template-columns: repeat(2, 1fr); }
     }
 
     @media (max-width: 640px) {
-      .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .signal-metrics {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .signal-match-title {
-        font-size: 20px;
-      }
-
-      .signal-market .selection {
-        font-size: 22px;
-      }
-
-      .brand-title {
-        font-size: 25px;
-      }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .signal-metrics { grid-template-columns: repeat(2, 1fr); }
+      .signal-match-title { font-size: 20px; }
+      .signal-market .selection { font-size: 22px; }
+      .brand-title { font-size: 25px; }
+      .filters-bar { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <div class="page">
     <div class="topbar">
-      <div class="brand">
+      <div>
         <div class="brand-title">JHONNY ELITE <span>V16 PRO</span></div>
         <div class="brand-subtitle">Panel operativo limpio · señales vivas · validación de mercado</div>
       </div>
@@ -483,7 +445,7 @@
       <div class="toolbar">
         <button class="btn" onclick="runScan()">Escanear</button>
         <button class="btn" onclick="reloadAll()">Actualizar</button>
-        <button class="btn btn-primary" onclick="window.location.href='/dashboard'">Dashboard</button>
+        <button class="btn btn-primary" onclick="resetFilters()">Reset filtros</button>
       </div>
     </div>
 
@@ -493,33 +455,28 @@
       <div class="stat-card">
         <div class="stat-label">Señales activas</div>
         <div class="stat-value" id="statSignals">0</div>
-        <div class="stat-sub">Señales top visibles</div>
+        <div class="stat-sub">Después de filtros</div>
       </div>
-
       <div class="stat-card">
         <div class="stat-label">Hot matches</div>
         <div class="stat-value" id="statHot">0</div>
         <div class="stat-sub">Partidos con actividad</div>
       </div>
-
       <div class="stat-card">
         <div class="stat-label">Partidos live</div>
         <div class="stat-value" id="statMatches">0</div>
         <div class="stat-sub">Partidos escaneados</div>
       </div>
-
       <div class="stat-card">
         <div class="stat-label">Win rate</div>
         <div class="stat-value" id="statWinrate">0%</div>
         <div class="stat-sub">Histórico resuelto</div>
       </div>
-
       <div class="stat-card">
         <div class="stat-label">Value medio</div>
         <div class="stat-value" id="statValue">0</div>
-        <div class="stat-sub">Promedio operativo</div>
+        <div class="stat-sub">Promedio visible</div>
       </div>
-
       <div class="stat-card">
         <div class="stat-label">Riesgo medio</div>
         <div class="stat-value" id="statRisk">0</div>
@@ -531,9 +488,40 @@
       <div class="panel">
         <div class="panel-header">
           <div class="panel-title">Top señales</div>
-          <div class="muted" id="lastScanText">Sin escaneo reciente</div>
+          <div id="lastScanText" style="color:var(--muted)">Sin escaneo reciente</div>
         </div>
         <div class="panel-body">
+          <div class="filters-bar">
+            <input id="searchInput" class="filter-input" type="text" placeholder="Buscar partido..." />
+            <select id="validationFilter" class="filter-select">
+              <option value="all">Todas</option>
+              <option value="validated">Solo validadas</option>
+              <option value="no_odds">Solo sin odds</option>
+              <option value="failed_odds">Solo odds fallidas</option>
+            </select>
+            <select id="rankFilter" class="filter-select">
+              <option value="all">Todos los ranks</option>
+              <option value="elite">Solo ELITE</option>
+              <option value="top">Solo TOP/ALTA</option>
+            </select>
+            <select id="marketFilter" class="filter-select">
+              <option value="all">Todos los mercados</option>
+              <option value="over">Solo OVER</option>
+              <option value="under">Solo UNDER</option>
+            </select>
+            <select id="actionFilter" class="filter-select">
+              <option value="all">Todas las acciones</option>
+              <option value="apostar">Solo apostar</option>
+              <option value="observar">Solo observar</option>
+            </select>
+            <select id="sortFilter" class="filter-select">
+              <option value="ranking">Ordenar por ranking</option>
+              <option value="value">Ordenar por value</option>
+              <option value="confidence">Ordenar por confidence</option>
+              <option value="risk_low">Ordenar por menor riesgo</option>
+            </select>
+          </div>
+
           <div id="signalsGrid" class="signals-grid">
             <div class="empty">Cargando señales...</div>
           </div>
@@ -543,7 +531,7 @@
       <div class="panel">
         <div class="panel-header">
           <div class="panel-title">Hot matches</div>
-          <div class="muted">Actividad en vivo</div>
+          <div style="color:var(--muted)">Actividad en vivo</div>
         </div>
         <div class="panel-body">
           <div id="hotList" class="hot-list">
@@ -555,6 +543,10 @@
   </div>
 
   <script>
+    let rawSignals = [];
+    let hotMatches = [];
+    let dashboardStats = {};
+
     function safeNumber(value, fallback = 0) {
       const n = Number(value);
       return Number.isFinite(n) ? n : fallback;
@@ -594,22 +586,11 @@
 
     function actionBadge(signal) {
       const action = safeText(signal.recomendacion_final || signal.ai_recommendation || "OBSERVAR").toUpperCase();
-
-      // Regla visual: si no hay odds reales validadas, no pintar como apuesta fuerte
       const oddsOk = Boolean(signal.odds_data_available) && Boolean(signal.odds_validation_ok);
 
-      if (!oddsOk) {
-        return { text: "OBSERVAR", className: "badge-yellow" };
-      }
-
-      if (action.includes("NO_APOSTAR")) {
-        return { text: "NO APOSTAR", className: "badge-red" };
-      }
-
-      if (action.includes("APOSTAR")) {
-        return { text: "APOSTAR", className: "badge-green" };
-      }
-
+      if (!oddsOk) return { text: "OBSERVAR", className: "badge-yellow" };
+      if (action.includes("NO_APOSTAR")) return { text: "NO APOSTAR", className: "badge-red" };
+      if (action.includes("APOSTAR")) return { text: "APOSTAR", className: "badge-green" };
       return { text: "OBSERVAR", className: "badge-yellow" };
     }
 
@@ -617,22 +598,75 @@
       const available = Boolean(signal.odds_data_available);
       const valid = Boolean(signal.odds_validation_ok);
 
-      if (available && valid) {
-        return { text: "VALIDADA", className: "badge-green" };
-      }
-
-      if (available && !valid) {
-        return { text: "ODDS FALLIDAS", className: "badge-red" };
-      }
-
+      if (available && valid) return { text: "VALIDADA", className: "badge-green" };
+      if (available && !valid) return { text: "ODDS FALLIDAS", className: "badge-red" };
       return { text: "SIN ODDS", className: "badge-yellow" };
     }
 
-    function renderSignals(signals) {
-      const grid = document.getElementById("signalsGrid");
+    function applyFilters(signals) {
+      const search = safeText(document.getElementById("searchInput").value, "").toLowerCase();
+      const validation = document.getElementById("validationFilter").value;
+      const rank = document.getElementById("rankFilter").value;
+      const market = document.getElementById("marketFilter").value;
+      const action = document.getElementById("actionFilter").value;
+      const sort = document.getElementById("sortFilter").value;
 
-      if (!Array.isArray(signals) || !signals.length) {
-        grid.innerHTML = `<div class="empty">No hay señales disponibles.</div>`;
+      let out = [...signals];
+
+      if (search) {
+        out = out.filter(s => {
+          const txt = `${safeText(s.partido)} ${safeText(s.home)} ${safeText(s.away)} ${safeText(s.league)} ${safeText(s.market)} ${safeText(s.selection)}`.toLowerCase();
+          return txt.includes(search);
+        });
+      }
+
+      if (validation === "validated") {
+        out = out.filter(s => Boolean(s.odds_data_available) && Boolean(s.odds_validation_ok));
+      } else if (validation === "no_odds") {
+        out = out.filter(s => !Boolean(s.odds_data_available));
+      } else if (validation === "failed_odds") {
+        out = out.filter(s => Boolean(s.odds_data_available) && !Boolean(s.odds_validation_ok));
+      }
+
+      if (rank === "elite") {
+        out = out.filter(s => safeText(s.signal_rank).toUpperCase() === "ELITE");
+      } else if (rank === "top") {
+        out = out.filter(s => ["TOP", "ALTA"].includes(safeText(s.signal_rank).toUpperCase()));
+      }
+
+      if (market === "over") {
+        out = out.filter(s => safeText(s.market).toUpperCase().includes("OVER"));
+      } else if (market === "under") {
+        out = out.filter(s => safeText(s.market).toUpperCase().includes("UNDER"));
+      }
+
+      if (action === "apostar") {
+        out = out.filter(s => actionBadge(s).text === "APOSTAR");
+      } else if (action === "observar") {
+        out = out.filter(s => actionBadge(s).text === "OBSERVAR");
+      }
+
+      if (sort === "value") {
+        out.sort((a, b) => safeNumber(b.value ?? b.valor, 0) - safeNumber(a.value ?? a.valor, 0));
+      } else if (sort === "confidence") {
+        out.sort((a, b) => safeNumber(b.confidence, 0) - safeNumber(a.confidence, 0));
+      } else if (sort === "risk_low") {
+        out.sort((a, b) => safeNumber(a.risk_score, 99) - safeNumber(b.risk_score, 99));
+      } else {
+        out.sort((a, b) => safeNumber(b.ranking_score, 0) - safeNumber(a.ranking_score, 0));
+      }
+
+      return out;
+    }
+
+    function renderSignals() {
+      const grid = document.getElementById("signalsGrid");
+      const signals = applyFilters(rawSignals);
+
+      document.getElementById("statSignals").textContent = signals.length;
+
+      if (!signals.length) {
+        grid.innerHTML = `<div class="empty">No hay señales que coincidan con los filtros.</div>`;
         return;
       }
 
@@ -656,14 +690,12 @@
         const risk = safeNumber(signal.risk_score, 0);
         const confidence = safeNumber(signal.confidence, 0);
         const ai = safeNumber(signal.ai_decision_score ?? signal.ai_score, 0);
-        const goal = safeNumber(signal.goal_inminente_score, 0);
-        const xg = safeNumber(signal.xG, 0);
         const bookmaker = safeText(signal.odds_selected_bookmaker || "Sin bookmaker");
 
         return `
           <div class="signal-card" onclick="goToMatchDetail('${signal.match_id}')">
             <div class="signal-top">
-              <div class="signal-match">
+              <div>
                 <div class="signal-match-title">${matchTitle}</div>
                 <div class="signal-meta">
                   <span>${minute}'</span>
@@ -675,7 +707,6 @@
                   <span>${safeText(signal.country)}</span>
                 </div>
               </div>
-
               <div class="signal-rank ${rankCls}">${rank}</div>
             </div>
 
@@ -690,29 +721,24 @@
                 <div class="k">Cuota</div>
                 <div class="v">${odd > 0 ? fmt(odd, 2) : "-"}</div>
               </div>
-
               <div class="metric-box">
                 <div class="k">Fair</div>
                 <div class="v">${fair > 0 ? fmt(fair, 2) : "-"}</div>
               </div>
-
               <div class="metric-box">
                 <div class="k">Value</div>
                 <div class="v">${fmt(value, 2)}</div>
               </div>
-
               <div class="metric-box">
                 <div class="k">Risk</div>
                 <div class="v">${fmt(risk, 2)}</div>
               </div>
-
               <div class="metric-box">
                 <div class="k">Confidence</div>
                 <div class="v">${fmt(confidence, 0)}%</div>
               </div>
-
               <div class="metric-box">
-                <div class="k">AI / Goal / xG</div>
+                <div class="k">AI Score</div>
                 <div class="v">${fmt(ai, 1)}</div>
               </div>
             </div>
@@ -723,12 +749,24 @@
                 <span class="badge ${odds.className}">${odds.text}</span>
                 <span class="badge">${bookmaker}</span>
               </div>
-
               <div class="detail-link">Ver detalle →</div>
             </div>
           </div>
         `;
       }).join("");
+
+      const visibleValues = signals.map(s => safeNumber(s.value ?? s.valor, 0));
+      const visibleRisks = signals.map(s => safeNumber(s.risk_score, 0));
+
+      if (visibleValues.length) {
+        const avgValue = visibleValues.reduce((a, b) => a + b, 0) / visibleValues.length;
+        document.getElementById("statValue").textContent = fmt(avgValue, 2);
+      }
+
+      if (visibleRisks.length) {
+        const avgRisk = visibleRisks.reduce((a, b) => a + b, 0) / visibleRisks.length;
+        document.getElementById("statRisk").textContent = fmt(avgRisk, 2);
+      }
     }
 
     function renderHotMatches(matches) {
@@ -739,61 +777,37 @@
         return;
       }
 
-      box.innerHTML = matches.slice(0, 10).map(m => {
-        const title = `${safeText(m.local)} vs ${safeText(m.visitante)}`;
-        const score = `${safeText(m.marcador_local, 0)} - ${safeText(m.marcador_visitante, 0)}`;
-        const minute = `${safeText(m.minuto, 0)}'`;
-
-        return `
-          <div class="hot-item">
-            <div class="hot-item-title">${title}</div>
-            <div class="hot-item-meta">
-              <span>${minute}</span>
-              <span>•</span>
-              <span>${score}</span>
-              <span>•</span>
-              <span>${safeText(m.liga)}</span>
-            </div>
-
-            <div class="hot-mini-grid">
-              <div class="hot-mini">
-                <div class="k">xG</div>
-                <div class="v">${fmt(m.xG, 2)}</div>
-              </div>
-              <div class="hot-mini">
-                <div class="k">Shots</div>
-                <div class="v">${safeText(m.shots, 0)}</div>
-              </div>
-              <div class="hot-mini">
-                <div class="k">On target</div>
-                <div class="v">${safeText(m.shots_on_target, 0)}</div>
-              </div>
-              <div class="hot-mini">
-                <div class="k">Danger</div>
-                <div class="v">${safeText(m.dangerous_attacks, 0)}</div>
-              </div>
-            </div>
+      box.innerHTML = matches.slice(0, 10).map(m => `
+        <div class="hot-item">
+          <div class="hot-item-title">${safeText(m.local)} vs ${safeText(m.visitante)}</div>
+          <div class="hot-item-meta">
+            <span>${safeText(m.minuto, 0)}'</span>
+            <span>•</span>
+            <span>${safeText(m.marcador_local, 0)} - ${safeText(m.marcador_visitante, 0)}</span>
+            <span>•</span>
+            <span>${safeText(m.liga)}</span>
           </div>
-        `;
-      }).join("");
+
+          <div class="hot-mini-grid">
+            <div class="hot-mini"><div class="k">xG</div><div class="v">${fmt(m.xG, 2)}</div></div>
+            <div class="hot-mini"><div class="k">Shots</div><div class="v">${safeText(m.shots, 0)}</div></div>
+            <div class="hot-mini"><div class="k">On target</div><div class="v">${safeText(m.shots_on_target, 0)}</div></div>
+            <div class="hot-mini"><div class="k">Danger</div><div class="v">${safeText(m.dangerous_attacks, 0)}</div></div>
+          </div>
+        </div>
+      `).join("");
     }
 
     function renderStats(data) {
-      const stats = data.stats || {};
+      const stats = data.stats || dashboardStats || {};
 
-      document.getElementById("statSignals").textContent = safeText(data.total_signals, "0");
-      document.getElementById("statHot").textContent = safeText(data.total_hot_matches, "0");
+      document.getElementById("statHot").textContent = safeText(data.total_hot_matches ?? hotMatches.length, "0");
       document.getElementById("statMatches").textContent = safeText(data.total_matches, "0");
       document.getElementById("statWinrate").textContent = fmtPct(stats.win_rate || 0, 2);
-      document.getElementById("statValue").textContent = fmt(stats.value_promedio || 0, 2);
-      document.getElementById("statRisk").textContent = fmt(stats.riesgo_medio || 0, 2);
 
       const lastScan = safeNumber(data.last_scan, 0);
-      const lastScanText = lastScan
-        ? `Último scan: ${new Date(lastScan * 1000).toLocaleString()}`
-        : "Sin escaneo reciente";
-
-      document.getElementById("lastScanText").textContent = lastScanText;
+      document.getElementById("lastScanText").textContent =
+        lastScan ? `Último scan: ${new Date(lastScan * 1000).toLocaleString()}` : "Sin escaneo reciente";
     }
 
     async function fetchJSON(url) {
@@ -810,7 +824,6 @@
 
     async function loadDashboard() {
       setLoading(true, "Cargando dashboard...");
-
       try {
         const [dashboardData, signalsData, hotData] = await Promise.all([
           fetchJSON("/dashboard-data"),
@@ -818,9 +831,13 @@
           fetchJSON("/hot-matches")
         ]);
 
+        rawSignals = (signalsData && signalsData.signals) || (dashboardData && dashboardData.signals) || [];
+        hotMatches = (hotData && hotData.hot_matches) || [];
+        dashboardStats = (dashboardData && dashboardData.stats) || {};
+
         renderStats(dashboardData || {});
-        renderSignals((signalsData && signalsData.signals) || (dashboardData && dashboardData.signals) || []);
-        renderHotMatches((hotData && hotData.hot_matches) || []);
+        renderSignals();
+        renderHotMatches(hotMatches);
       } catch (err) {
         console.error(err);
         document.getElementById("signalsGrid").innerHTML = `<div class="empty">No se pudieron cargar las señales.</div>`;
@@ -845,7 +862,27 @@
       await loadDashboard();
     }
 
+    function resetFilters() {
+      document.getElementById("searchInput").value = "";
+      document.getElementById("validationFilter").value = "all";
+      document.getElementById("rankFilter").value = "all";
+      document.getElementById("marketFilter").value = "all";
+      document.getElementById("actionFilter").value = "all";
+      document.getElementById("sortFilter").value = "ranking";
+      renderSignals();
+    }
+
+    ["searchInput", "validationFilter", "rankFilter", "marketFilter", "actionFilter", "sortFilter"]
+      .forEach(id => {
+        document.addEventListener("DOMContentLoaded", () => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          const evt = id === "searchInput" ? "input" : "change";
+          el.addEventListener(evt, renderSignals);
+        });
+      });
+
     loadDashboard();
   </script>
 </body>
-        </html>
+                                                                                  </html>
