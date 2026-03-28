@@ -5,432 +5,215 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>JHONNY ELITE V16 PRO</title>
   <style>
-    :root {
-      --bg: #07111f;
-      --bg-2: #0d1727;
-      --panel: rgba(14, 25, 43, 0.92);
-      --panel-2: rgba(18, 33, 56, 0.95);
-      --border: rgba(86, 136, 215, 0.18);
-      --text: #eef4ff;
-      --muted: #91a7cb;
-      --accent: #35c2ff;
-      --green: #29d17d;
-      --yellow: #ffcc66;
-      --red: #ff6b6b;
-      --shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
-      --radius: 18px;
-      --maxw: 1500px;
+    :root{
+      --bg:#07111f;
+      --bg2:#0c1728;
+      --panel:rgba(13,24,41,.92);
+      --panel2:rgba(18,32,54,.96);
+      --border:rgba(79,140,255,.18);
+      --text:#edf4ff;
+      --muted:#8ea4c7;
+      --accent:#31c3ff;
+      --green:#28d17c;
+      --yellow:#ffcc66;
+      --red:#ff6b6b;
+      --shadow:0 14px 40px rgba(0,0,0,.35);
+      --radius:18px;
+      --radius-sm:12px;
+      --maxw:1500px;
     }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
-      color: var(--text);
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
       background:
-        radial-gradient(circle at top left, rgba(0, 120, 255, 0.12), transparent 28%),
-        radial-gradient(circle at top right, rgba(0, 255, 163, 0.08), transparent 22%),
-        linear-gradient(180deg, #06101c 0%, #07111f 45%, #040b15 100%);
-      min-height: 100vh;
+        radial-gradient(circle at top left, rgba(0,120,255,.12), transparent 28%),
+        radial-gradient(circle at top right, rgba(0,255,163,.08), transparent 22%),
+        linear-gradient(180deg,#06101c 0%,#07111f 45%,#040b15 100%);
+      min-height:100vh;
+    }
+    .page{max-width:var(--maxw);margin:0 auto;padding:22px 18px 36px}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+    .brand-title{font-size:32px;font-weight:900;letter-spacing:.4px}
+    .brand-title span{color:#ffb326}
+    .brand-sub{color:var(--muted);font-size:14px;margin-top:4px}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap}
+    .btn{
+      border:1px solid var(--border);
+      background:linear-gradient(180deg,rgba(31,49,77,.95),rgba(14,24,41,.95));
+      color:var(--text);
+      padding:10px 14px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:800;
+      transition:.18s ease;
+    }
+    .btn:hover{transform:translateY(-1px);border-color:rgba(49,195,255,.4)}
+    .btn-primary{
+      background:linear-gradient(180deg,rgba(0,221,136,.95),rgba(0,176,111,.95));
+      color:#041117;border:none;
     }
 
-    .page {
-      max-width: var(--maxw);
-      margin: 0 auto;
-      padding: 22px 18px 36px;
+    .stats-grid{
+      display:grid;
+      grid-template-columns:repeat(6,1fr);
+      gap:14px;
+      margin-bottom:18px;
+    }
+    .stat-card,.panel{
+      background:linear-gradient(180deg,var(--panel),var(--panel2));
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+    .stat-card{padding:16px;min-height:100px}
+    .stat-label{
+      color:var(--muted);
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:1px;
+      font-weight:800;
+      margin-bottom:10px;
+    }
+    .stat-value{font-size:30px;font-weight:900;line-height:1}
+    .stat-sub{margin-top:8px;color:var(--muted);font-size:12px}
+
+    .main-grid{
+      display:grid;
+      grid-template-columns:1.45fr .95fr;
+      gap:18px;
+      align-items:start;
+    }
+    .panel-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      padding:18px 18px 0;
+    }
+    .panel-title{
+      color:var(--accent);
+      font-size:13px;
+      text-transform:uppercase;
+      letter-spacing:1.2px;
+      font-weight:900;
+    }
+    .panel-body{padding:16px 18px 18px}
+
+    .filters{
+      display:grid;
+      grid-template-columns:1.2fr repeat(5,minmax(120px,1fr));
+      gap:10px;
+      margin-bottom:16px;
+    }
+    .filter-input,.filter-select{
+      width:100%;
+      background:rgba(7,18,33,.78);
+      border:1px solid rgba(86,136,215,.18);
+      color:var(--text);
+      padding:12px;
+      border-radius:12px;
+      outline:none;
+      font-weight:700;
     }
 
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
-      margin-bottom: 22px;
+    .signals-grid,.hot-list{display:grid;gap:14px}
+    .signal-card{
+      background:rgba(7,18,33,.68);
+      border:1px solid rgba(86,136,215,.16);
+      border-radius:16px;
+      padding:16px;
+      cursor:pointer;
+      transition:.18s ease;
     }
-
-    .brand-title {
-      font-size: 32px;
-      font-weight: 900;
+    .signal-card:hover{
+      transform:translateY(-2px);
+      border-color:rgba(49,195,255,.34);
+      background:rgba(10,22,39,.82);
     }
-
-    .brand-title span { color: #ffb22c; }
-
-    .brand-subtitle {
-      color: var(--muted);
-      font-size: 14px;
-      margin-top: 4px;
+    .signal-top{
+      display:flex;justify-content:space-between;align-items:start;gap:16px;margin-bottom:12px;
     }
-
-    .toolbar {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
+    .signal-title{font-size:24px;font-weight:900;line-height:1.08}
+    .signal-meta{display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:13px;margin-top:6px}
+    .signal-rank{
+      min-width:82px;text-align:center;padding:8px 12px;border-radius:999px;
+      font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:1px;
+      border:1px solid rgba(255,255,255,.08);
     }
+    .rank-elite{background:rgba(49,195,255,.12);color:#bdeeff;border-color:rgba(49,195,255,.28)}
+    .rank-top{background:rgba(40,209,124,.12);color:#baffdc;border-color:rgba(40,209,124,.28)}
+    .rank-normal{background:rgba(255,255,255,.06);color:#dce8ff;border-color:rgba(255,255,255,.08)}
 
-    .btn {
-      border: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(31, 49, 77, 0.95), rgba(14, 24, 41, 0.95));
-      color: var(--text);
-      padding: 10px 14px;
-      border-radius: 12px;
-      cursor: pointer;
-      font-weight: 800;
+    .signal-market .market{
+      color:var(--accent);font-size:12px;text-transform:uppercase;letter-spacing:1px;font-weight:900;margin-bottom:6px;
     }
+    .signal-market .selection{font-size:28px;font-weight:900;line-height:1.08;margin-bottom:6px}
+    .signal-market .reason{font-size:14px;color:var(--muted);line-height:1.45}
 
-    .btn-primary {
-      background: linear-gradient(180deg, rgba(0, 221, 136, 0.95), rgba(0, 176, 111, 0.95));
-      color: #041117;
-      border: none;
+    .signal-metrics{
+      display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:14px 0;
     }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 14px;
-      margin-bottom: 18px;
+    .metric{
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.05);
+      border-radius:12px;
+      padding:12px;
     }
-
-    .stat-card, .panel {
-      background: linear-gradient(180deg, var(--panel), var(--panel-2));
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
+    .metric .k{
+      color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:800;
     }
+    .metric .v{font-size:22px;font-weight:900;line-height:1}
 
-    .stat-card {
-      padding: 16px;
-      min-height: 100px;
+    .signal-footer{
+      display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
     }
-
-    .stat-label {
-      color: var(--muted);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-weight: 800;
-      margin-bottom: 10px;
+    .signal-footer-left{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .badge{
+      display:inline-flex;align-items:center;justify-content:center;
+      padding:8px 10px;border-radius:999px;font-size:12px;font-weight:900;
+      text-transform:uppercase;letter-spacing:.8px;border:1px solid rgba(255,255,255,.08);
     }
+    .badge-green{background:rgba(40,209,124,.15);color:#9dffd0;border-color:rgba(40,209,124,.28)}
+    .badge-yellow{background:rgba(255,204,102,.14);color:#ffd990;border-color:rgba(255,204,102,.25)}
+    .badge-red{background:rgba(255,107,107,.14);color:#ffb0b0;border-color:rgba(255,107,107,.24)}
+    .detail-link{color:var(--accent);font-size:13px;font-weight:800}
 
-    .stat-value {
-      font-size: 30px;
-      font-weight: 900;
+    .hot-item{
+      background:rgba(7,18,33,.62);
+      border:1px solid rgba(86,136,215,.15);
+      border-radius:14px;
+      padding:14px;
     }
+    .hot-title{font-weight:900;font-size:18px;margin-bottom:6px;line-height:1.15}
+    .hot-meta{display:flex;flex-wrap:wrap;gap:10px;color:var(--muted);font-size:13px;margin-bottom:10px}
+    .hot-mini-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .hot-mini{background:rgba(255,255,255,.03);border-radius:10px;padding:10px}
+    .hot-mini .k{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:800}
+    .hot-mini .v{font-size:18px;font-weight:900;line-height:1}
 
-    .stat-sub {
-      margin-top: 8px;
-      color: var(--muted);
-      font-size: 12px;
+    .empty{padding:24px 8px;text-align:center;color:var(--muted)}
+    .loading{display:none;margin-bottom:14px;color:var(--muted);font-size:14px}
+
+    @media (max-width:1300px){
+      .stats-grid{grid-template-columns:repeat(3,1fr)}
+      .main-grid{grid-template-columns:1fr}
+      .filters{grid-template-columns:repeat(3,1fr)}
     }
-
-    .main-grid {
-      display: grid;
-      grid-template-columns: 1.45fr 0.95fr;
-      gap: 18px;
-      align-items: start;
+    @media (max-width:900px){
+      .signal-metrics{grid-template-columns:repeat(3,1fr)}
+      .hot-mini-grid{grid-template-columns:repeat(2,1fr)}
+      .filters{grid-template-columns:repeat(2,1fr)}
     }
-
-    .panel-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 18px 18px 0 18px;
-      flex-wrap: wrap;
-    }
-
-    .panel-title {
-      color: var(--accent);
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
-      font-weight: 900;
-    }
-
-    .panel-body {
-      padding: 16px 18px 18px;
-    }
-
-    .filters-bar {
-      display: grid;
-      grid-template-columns: 1.2fr repeat(5, minmax(130px, 1fr));
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-
-    .filter-input, .filter-select {
-      width: 100%;
-      background: rgba(7, 18, 33, 0.75);
-      border: 1px solid rgba(86, 136, 215, 0.18);
-      color: var(--text);
-      padding: 12px 12px;
-      border-radius: 12px;
-      outline: none;
-      font-weight: 700;
-    }
-
-    .signals-grid {
-      display: grid;
-      gap: 14px;
-    }
-
-    .signal-card {
-      background: rgba(7, 18, 33, 0.68);
-      border: 1px solid rgba(86, 136, 215, 0.16);
-      border-radius: 16px;
-      padding: 16px;
-      cursor: pointer;
-      transition: .18s ease;
-    }
-
-    .signal-card:hover {
-      transform: translateY(-2px);
-      border-color: rgba(53, 194, 255, 0.36);
-      background: rgba(10, 22, 39, 0.82);
-    }
-
-    .signal-top {
-      display: flex;
-      align-items: start;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 12px;
-    }
-
-    .signal-match-title {
-      font-size: 24px;
-      font-weight: 900;
-      line-height: 1.08;
-    }
-
-    .signal-meta {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      color: var(--muted);
-      font-size: 13px;
-      margin-top: 6px;
-    }
-
-    .signal-rank {
-      min-width: 82px;
-      text-align: center;
-      padding: 8px 12px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .rank-elite {
-      background: rgba(53, 194, 255, 0.12);
-      color: #bdeeff;
-      border-color: rgba(53, 194, 255, 0.28);
-    }
-
-    .rank-top {
-      background: rgba(41, 209, 125, 0.12);
-      color: #baffdc;
-      border-color: rgba(41, 209, 125, 0.28);
-    }
-
-    .rank-normal {
-      background: rgba(255,255,255,0.06);
-      color: #dce8ff;
-      border-color: rgba(255,255,255,0.08);
-    }
-
-    .signal-market .market {
-      color: var(--accent);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-weight: 900;
-      margin-bottom: 6px;
-    }
-
-    .signal-market .selection {
-      font-size: 28px;
-      font-weight: 900;
-      line-height: 1.08;
-      margin-bottom: 6px;
-    }
-
-    .signal-market .reason {
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.45;
-    }
-
-    .signal-metrics {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 10px;
-      margin: 14px 0;
-    }
-
-    .metric-box {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 12px;
-      padding: 12px;
-    }
-
-    .metric-box .k {
-      color: var(--muted);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-      font-weight: 800;
-    }
-
-    .metric-box .v {
-      font-size: 22px;
-      font-weight: 900;
-    }
-
-    .signal-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .signal-footer-left {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: .8px;
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .badge-green {
-      background: rgba(41, 209, 125, 0.15);
-      color: #9dffd0;
-      border-color: rgba(41, 209, 125, 0.28);
-    }
-
-    .badge-yellow {
-      background: rgba(255, 204, 102, 0.14);
-      color: #ffd990;
-      border-color: rgba(255, 204, 102, 0.25);
-    }
-
-    .badge-red {
-      background: rgba(255, 107, 107, 0.14);
-      color: #ffb0b0;
-      border-color: rgba(255, 107, 107, 0.24);
-    }
-
-    .detail-link {
-      color: var(--accent);
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .hot-list {
-      display: grid;
-      gap: 10px;
-    }
-
-    .hot-item {
-      background: rgba(7, 18, 33, 0.62);
-      border: 1px solid rgba(86, 136, 215, 0.15);
-      border-radius: 14px;
-      padding: 14px;
-    }
-
-    .hot-item-title {
-      font-weight: 900;
-      font-size: 18px;
-      margin-bottom: 6px;
-      line-height: 1.15;
-    }
-
-    .hot-item-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      color: var(--muted);
-      font-size: 13px;
-      margin-bottom: 10px;
-    }
-
-    .hot-mini-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-    }
-
-    .hot-mini {
-      background: rgba(255,255,255,0.03);
-      border-radius: 10px;
-      padding: 10px;
-    }
-
-    .hot-mini .k {
-      color: var(--muted);
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 6px;
-      font-weight: 800;
-    }
-
-    .hot-mini .v {
-      font-size: 18px;
-      font-weight: 900;
-    }
-
-    .empty {
-      padding: 24px 8px;
-      text-align: center;
-      color: var(--muted);
-    }
-
-    .loading-bar {
-      display: none;
-      margin-bottom: 14px;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    @media (max-width: 1300px) {
-      .stats-grid { grid-template-columns: repeat(3, 1fr); }
-      .main-grid { grid-template-columns: 1fr; }
-      .filters-bar { grid-template-columns: repeat(3, 1fr); }
-    }
-
-    @media (max-width: 900px) {
-      .signal-metrics { grid-template-columns: repeat(3, 1fr); }
-      .hot-mini-grid { grid-template-columns: repeat(2, 1fr); }
-      .filters-bar { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    @media (max-width: 640px) {
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
-      .signal-metrics { grid-template-columns: repeat(2, 1fr); }
-      .signal-match-title { font-size: 20px; }
-      .signal-market .selection { font-size: 22px; }
-      .brand-title { font-size: 25px; }
-      .filters-bar { grid-template-columns: 1fr; }
+    @media (max-width:640px){
+      .stats-grid{grid-template-columns:repeat(2,1fr)}
+      .signal-metrics{grid-template-columns:repeat(2,1fr)}
+      .filters{grid-template-columns:1fr}
+      .signal-title{font-size:20px}
+      .signal-market .selection{font-size:22px}
+      .brand-title{font-size:25px}
     }
   </style>
 </head>
@@ -439,9 +222,8 @@
     <div class="topbar">
       <div>
         <div class="brand-title">JHONNY ELITE <span>V16 PRO</span></div>
-        <div class="brand-subtitle">Panel operativo limpio · señales vivas · validación de mercado</div>
+        <div class="brand-sub">Panel operativo limpio · señales vivas · validación de mercado</div>
       </div>
-
       <div class="toolbar">
         <button class="btn" onclick="runScan()">Escanear</button>
         <button class="btn" onclick="reloadAll()">Actualizar</button>
@@ -449,7 +231,7 @@
       </div>
     </div>
 
-    <div class="loading-bar" id="loadingBar">Actualizando datos...</div>
+    <div id="loadingBar" class="loading">Actualizando datos...</div>
 
     <div class="stats-grid">
       <div class="stat-card">
@@ -491,7 +273,7 @@
           <div id="lastScanText" style="color:var(--muted)">Sin escaneo reciente</div>
         </div>
         <div class="panel-body">
-          <div class="filters-bar">
+          <div class="filters">
             <input id="searchInput" class="filter-input" type="text" placeholder="Buscar partido..." />
             <select id="validationFilter" class="filter-select">
               <option value="all">Todas</option>
@@ -696,7 +478,7 @@
           <div class="signal-card" onclick="goToMatchDetail('${signal.match_id}')">
             <div class="signal-top">
               <div>
-                <div class="signal-match-title">${matchTitle}</div>
+                <div class="signal-title">${matchTitle}</div>
                 <div class="signal-meta">
                   <span>${minute}'</span>
                   <span>•</span>
@@ -717,30 +499,12 @@
             </div>
 
             <div class="signal-metrics">
-              <div class="metric-box">
-                <div class="k">Cuota</div>
-                <div class="v">${odd > 0 ? fmt(odd, 2) : "-"}</div>
-              </div>
-              <div class="metric-box">
-                <div class="k">Fair</div>
-                <div class="v">${fair > 0 ? fmt(fair, 2) : "-"}</div>
-              </div>
-              <div class="metric-box">
-                <div class="k">Value</div>
-                <div class="v">${fmt(value, 2)}</div>
-              </div>
-              <div class="metric-box">
-                <div class="k">Risk</div>
-                <div class="v">${fmt(risk, 2)}</div>
-              </div>
-              <div class="metric-box">
-                <div class="k">Confidence</div>
-                <div class="v">${fmt(confidence, 0)}%</div>
-              </div>
-              <div class="metric-box">
-                <div class="k">AI Score</div>
-                <div class="v">${fmt(ai, 1)}</div>
-              </div>
+              <div class="metric"><div class="k">Cuota</div><div class="v">${odd > 0 ? fmt(odd, 2) : "-"}</div></div>
+              <div class="metric"><div class="k">Fair</div><div class="v">${fair > 0 ? fmt(fair, 2) : "-"}</div></div>
+              <div class="metric"><div class="k">Value</div><div class="v">${fmt(value, 2)}</div></div>
+              <div class="metric"><div class="k">Risk</div><div class="v">${fmt(risk, 2)}</div></div>
+              <div class="metric"><div class="k">Confidence</div><div class="v">${fmt(confidence, 0)}%</div></div>
+              <div class="metric"><div class="k">AI Score</div><div class="v">${fmt(ai, 1)}</div></div>
             </div>
 
             <div class="signal-footer">
@@ -779,15 +543,14 @@
 
       box.innerHTML = matches.slice(0, 10).map(m => `
         <div class="hot-item">
-          <div class="hot-item-title">${safeText(m.local)} vs ${safeText(m.visitante)}</div>
-          <div class="hot-item-meta">
+          <div class="hot-title">${safeText(m.local)} vs ${safeText(m.visitante)}</div>
+          <div class="hot-meta">
             <span>${safeText(m.minuto, 0)}'</span>
             <span>•</span>
             <span>${safeText(m.marcador_local, 0)} - ${safeText(m.marcador_visitante, 0)}</span>
             <span>•</span>
             <span>${safeText(m.liga)}</span>
           </div>
-
           <div class="hot-mini-grid">
             <div class="hot-mini"><div class="k">xG</div><div class="v">${fmt(m.xG, 2)}</div></div>
             <div class="hot-mini"><div class="k">Shots</div><div class="v">${safeText(m.shots, 0)}</div></div>
@@ -800,7 +563,6 @@
 
     function renderStats(data) {
       const stats = data.stats || dashboardStats || {};
-
       document.getElementById("statHot").textContent = safeText(data.total_hot_matches ?? hotMatches.length, "0");
       document.getElementById("statMatches").textContent = safeText(data.total_matches, "0");
       document.getElementById("statWinrate").textContent = fmtPct(stats.win_rate || 0, 2);
@@ -872,17 +634,16 @@
       renderSignals();
     }
 
-    ["searchInput", "validationFilter", "rankFilter", "marketFilter", "actionFilter", "sortFilter"]
-      .forEach(id => {
-        document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", () => {
+      ["searchInput", "validationFilter", "rankFilter", "marketFilter", "actionFilter", "sortFilter"]
+        .forEach(id => {
           const el = document.getElementById(id);
-          if (!el) return;
           const evt = id === "searchInput" ? "input" : "change";
           el.addEventListener(evt, renderSignals);
         });
-      });
 
-    loadDashboard();
+      loadDashboard();
+    });
   </script>
 </body>
-      </html>
+  </html>
