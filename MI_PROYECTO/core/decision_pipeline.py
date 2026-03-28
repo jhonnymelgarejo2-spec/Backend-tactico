@@ -57,6 +57,19 @@ except Exception:
 
 
 # =========================================================
+# IMPORTS ANTI-TRAP / POST GOAL COOLDOWN
+# =========================================================
+try:
+    from post_goal_cooldown_engine import evaluar_post_goal_cooldown
+except Exception:
+    try:
+        from engines.post_goal_cooldown_engine import evaluar_post_goal_cooldown
+    except Exception as e:
+        print(f"[PIPELINE] ERROR import evaluar_post_goal_cooldown -> {e}")
+        evaluar_post_goal_cooldown = None
+
+
+# =========================================================
 # HELPERS
 # =========================================================
 def _safe_float(value: Any, default: float = 0.0) -> float:
@@ -770,6 +783,8 @@ def _master_gate(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str, A
     ai_recommendation = _upper(signal.get("ai_recommendation"))
     odds_data_available = bool(signal.get("odds_data_available", False))
     odds_validation_ok = bool(signal.get("odds_validation_ok", False))
+    post_goal_cooldown_block = bool(signal.get("post_goal_cooldown_block", False))
+    post_goal_cooldown_reason = _safe_text(signal.get("post_goal_cooldown_reason"))
 
     blocked_reasons: List[str] = []
 
@@ -802,6 +817,9 @@ def _master_gate(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str, A
 
     if odds_data_available and not odds_validation_ok:
         blocked_reasons.append(f"Validación de odds fallida: {_safe_text(signal.get('market_validation_reason'))}")
+
+    if post_goal_cooldown_block:
+        blocked_reasons.append(f"Post-goal cooldown: {post_goal_cooldown_reason}")
 
     if market == "UNDER_MATCH_DYNAMIC":
         if minute < 60:
@@ -942,6 +960,16 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         signal["odds_side"] = ""
         signal["market_validation_codes"] = []
 
+        # Defaults post-goal cooldown
+        signal["post_goal_cooldown_block"] = False
+        signal["post_goal_cooldown_reason"] = "OK"
+        signal["post_goal_cooldown_level"] = "NORMAL"
+        signal["post_goal_cooldown_minutes_left"] = 0
+        signal["post_goal_requires_reset"] = False
+        signal["post_goal_same_market_block"] = False
+        signal["post_goal_recent_goal_block"] = False
+        signal["post_goal_recycled_signal_block"] = False
+
         # Contexto auxiliar
         signal.update(_build_context_state(partido))
         signal.update(_build_emotion_state(partido))
@@ -999,6 +1027,26 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         # Operación
         signal.update(_build_operation_fields(signal))
         signal["decision_ia"] = _upper(signal.get("ai_recommendation", "OBSERVAR"))
+
+        # =========================================================
+        # ANTI-TRAP / POST GOAL COOLDOWN
+        # =========================================================
+        if evaluar_post_goal_cooldown:
+            try:
+                cooldown_data = evaluar_post_goal_cooldown(partido, signal)
+                if isinstance(cooldown_data, dict):
+                    signal.update(cooldown_data)
+            except Exception as e:
+                print(f"[PIPELINE] ERROR post_goal_cooldown -> {e}")
+
+        signal.setdefault("post_goal_cooldown_block", False)
+        signal.setdefault("post_goal_cooldown_reason", "OK")
+        signal.setdefault("post_goal_cooldown_level", "NORMAL")
+        signal.setdefault("post_goal_cooldown_minutes_left", 0)
+        signal.setdefault("post_goal_requires_reset", False)
+        signal.setdefault("post_goal_same_market_block", False)
+        signal.setdefault("post_goal_recent_goal_block", False)
+        signal.setdefault("post_goal_recycled_signal_block", False)
 
         # =========================================================
         # VALIDACION CON THE ODDS API SOLO SI LA SEÑAL YA ES FUERTE
