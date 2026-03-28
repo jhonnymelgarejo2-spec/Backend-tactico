@@ -690,6 +690,72 @@ def _build_operation_fields(signal: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _should_validate_with_odds(signal: Dict[str, Any], partido: Dict[str, Any]) -> bool:
+    market = _upper(signal.get("market"))
+    minute = _safe_int(signal.get("minute"), _safe_int(partido.get("minuto"), 0))
+    confidence = _safe_float(signal.get("confidence"), 0.0)
+    value = _safe_float(signal.get("value"), 0.0)
+    risk_score = _safe_float(signal.get("risk_score"), 10.0)
+    tactical_score = _safe_float(signal.get("tactical_score"), 0.0)
+    signal_score = _safe_float(signal.get("signal_score"), 0.0)
+
+    if market not in {"OVER_NEXT_15_DYNAMIC", "OVER_MATCH_DYNAMIC", "UNDER_MATCH_DYNAMIC"}:
+        return False
+
+    if not _es_minuto_operable(minute):
+        return False
+
+    if confidence < 74:
+        return False
+
+    if value < 2.0:
+        return False
+
+    if risk_score > 6.5:
+        return False
+
+    if signal_score < 150:
+        return False
+
+    if market != "UNDER_MATCH_DYNAMIC" and tactical_score < 12:
+        return False
+
+    return True
+
+
+def _obtener_odds_partido_safe(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    if not obtener_odds_partido:
+        return None
+
+    local = _safe_text(partido.get("local"))
+    visitante = _safe_text(partido.get("visitante"))
+    liga = _safe_text(partido.get("liga"))
+    pais = _safe_text(partido.get("pais"))
+
+    if not local or not visitante:
+        return None
+
+    try:
+        return obtener_odds_partido(
+            local=local,
+            visitante=visitante,
+            league=liga,
+            country=pais,
+        )
+    except TypeError:
+        try:
+            return obtener_odds_partido(
+                local=local,
+                visitante=visitante,
+            )
+        except Exception as e:
+            print(f"[PIPELINE] ERROR obtener_odds_partido (firma corta) -> {e}")
+            return None
+    except Exception as e:
+        print(f"[PIPELINE] ERROR obtener_odds_partido -> {e}")
+        return None
+
+
 def _master_gate(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str, Any]:
     minute = _safe_int(partido.get("minuto"), 0)
     confidence = _safe_float(signal.get("confidence"), 0.0)
@@ -867,7 +933,7 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         # Defaults odds
         signal["odds_data_available"] = False
         signal["odds_validation_ok"] = False
-        signal["market_validation_reason"] = "Sin validación externa"
+        signal["market_validation_reason"] = "Validación odds no ejecutada"
         signal["odds_selected_bookmaker"] = ""
         signal["odds_selected_line"] = 0.0
         signal["odds_selected_price"] = 0.0
@@ -935,46 +1001,44 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         signal["decision_ia"] = _upper(signal.get("ai_recommendation", "OBSERVAR"))
 
         # =========================================================
-        # VALIDACION CON THE ODDS API
+        # VALIDACION CON THE ODDS API SOLO SI LA SEÑAL YA ES FUERTE
         # =========================================================
-        if obtener_odds_partido and validar_mercado_con_odds:
+        if obtener_odds_partido and validar_mercado_con_odds and _should_validate_with_odds(signal, partido):
             try:
-                odds_payload = obtener_odds_partido(
-                    local=_safe_text(partido.get("local")),
-                    visitante=_safe_text(partido.get("visitante")),
-                    league=_safe_text(partido.get("liga")),
-                    country=_safe_text(partido.get("pais")),
-                )
+                odds_payload = _obtener_odds_partido_safe(partido)
 
-                odds_validation = validar_mercado_con_odds(signal, odds_payload)
-                if isinstance(odds_validation, dict):
-                    signal.update(odds_validation)
+                if isinstance(odds_payload, dict):
+                    odds_validation = validar_mercado_con_odds(signal, odds_payload)
+                    if isinstance(odds_validation, dict):
+                        signal.update(odds_validation)
 
-                # =====================================================
-                # SI EXISTEN ODDS REALES, REEMPLAZAR CUOTA FIJA 1.85
-                # =====================================================
-                if signal.get("odds_data_available", False):
-                    real_price = _safe_float(signal.get("odds_selected_price"), 0.0)
-                    real_imp = _safe_float(signal.get("odds_implied_probability"), 0.0)
-                    real_edge = _safe_float(signal.get("market_edge_with_odds"), 0.0)
+                    # =====================================================
+                    # SI EXISTEN ODDS REALES, REEMPLAZAR CUOTA FIJA 1.85
+                    # =====================================================
+                    if signal.get("odds_data_available", False):
+                        real_price = _safe_float(signal.get("odds_selected_price"), 0.0)
+                        real_imp = _safe_float(signal.get("odds_implied_probability"), 0.0)
+                        real_edge = _safe_float(signal.get("market_edge_with_odds"), 0.0)
 
-                    if real_price > 0:
-                        signal["odd"] = round(real_price, 2)
-                        signal["cuota"] = round(real_price, 2)
+                        if real_price > 0:
+                            signal["odd"] = round(real_price, 2)
+                            signal["cuota"] = round(real_price, 2)
 
-                    if real_imp > 0:
-                        signal["prob_implicita"] = round(real_imp, 4)
+                        if real_imp > 0:
+                            signal["prob_implicita"] = round(real_imp, 4)
 
-                    # usar edge real de mercado como value mostrado
-                    if real_edge != 0:
-                        signal["value"] = round(real_edge, 2)
-                        signal["valor"] = round(real_edge, 2)
+                        if real_edge != 0:
+                            signal["value"] = round(real_edge, 2)
+                            signal["valor"] = round(real_edge, 2)
 
-                    # recalcular signal score con value real si aplica
-                    signal.update(_recalcular_signal_score(signal))
-
+                        signal.update(_recalcular_signal_score(signal))
+                else:
+                    signal["market_validation_reason"] = "No fue posible obtener odds"
             except Exception as e:
                 print(f"[PIPELINE] ERROR validación odds -> {e}")
+                signal["market_validation_reason"] = f"Error odds: {e}"
+        else:
+            signal["market_validation_reason"] = "Saltada por pre-filtro de eficiencia"
 
         # Gate final
         signal.update(_master_gate(partido, signal))
