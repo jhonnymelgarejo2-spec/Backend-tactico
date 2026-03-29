@@ -22,6 +22,17 @@ def _safe_float(value: Any, default: float = 0.0) -> float:
         return default
 
 
+def _safe_int(value: Any, default: int = 0) -> int:
+    try:
+        if value is None or value == "":
+            return default
+        if isinstance(value, str):
+            value = value.replace("%", "").strip()
+        return int(float(value))
+    except Exception:
+        return default
+
+
 def _safe_text(value: Any, default: str = "") -> str:
     if value is None:
         return default
@@ -31,14 +42,35 @@ def _safe_text(value: Any, default: str = "") -> str:
 
 def _normalize_text(text: str) -> str:
     t = _safe_text(text).lower()
-    for ch in [".", ",", "-", "_", "/", "(", ")", ":", ";"]:
+    for ch in [".", ",", "-", "_", "/", "(", ")", ":", ";", "'"]:
         t = t.replace(ch, " ")
     t = " ".join(t.split())
     return t
 
 
 def _normalize_team_name(name: str) -> str:
-    return _normalize_text(name)
+    text = _normalize_text(name)
+
+    replacements = {
+        "fc": "",
+        "cf": "",
+        "sc": "",
+        "ac": "",
+        "cd": "",
+        "deportivo": "depor",
+        "athletic": "ath",
+        "atletico": "atletico",
+        "club": "",
+    }
+
+    tokens = text.split()
+    out = []
+    for tok in tokens:
+        mapped = replacements.get(tok, tok)
+        if mapped:
+            out.append(mapped)
+
+    return " ".join(out).strip()
 
 
 def _tokenize_team_name(name: str) -> List[str]:
@@ -57,7 +89,7 @@ def _similar_team_score(name_a: str, name_b: str) -> int:
         return 100
 
     if a in b or b in a:
-        return 75
+        return 78
 
     tokens_a = set(_tokenize_team_name(a))
     tokens_b = set(_tokenize_team_name(b))
@@ -69,8 +101,13 @@ def _similar_team_score(name_a: str, name_b: str) -> int:
         return 0
 
     score = len(common) * 20
+
     if len(common) >= 2:
+        score += 12
+
+    if len(common) == len(tokens_a) or len(common) == len(tokens_b):
         score += 10
+
     return min(score, 95)
 
 
@@ -107,16 +144,11 @@ def _request_json(url: str, params: Dict[str, Any], timeout: int = 15) -> Any:
 # MAPEO DE LIGAS -> SPORT KEY
 # =========================================================
 def _league_mapping_candidates(league: str, country: str = "") -> List[str]:
-    """
-    Devuelve candidatos ordenados por prioridad.
-    Amplíalo con las ligas que más te interesen.
-    """
     l = _normalize_text(league)
     c = _normalize_text(country)
 
     candidates: List[str] = []
 
-    # México
     if "liga mx femenil" in l:
         candidates.append("soccer_mexico_ligamx")
     if "liga mx" in l:
@@ -124,95 +156,74 @@ def _league_mapping_candidates(league: str, country: str = "") -> List[str]:
     if "liga de expansion" in l or "expansion mx" in l:
         candidates.append("soccer_mexico_ligamx")
 
-    # Brasil
-    if "brasileirao" in l or "serie a" in l and "brazil" in c:
+    if "brasileirao" in l or ("serie a" in l and "brazil" in c):
         candidates.append("soccer_brazil_campeonato")
 
-    # Argentina
     if "primera nacional" in l:
         candidates.append("soccer_argentina_primera_nacional")
     if "primera division" in l or ("liga profesional" in l and "argentina" in c):
         candidates.append("soccer_argentina_primera_division")
 
-    # Colombia
     if "primera a" in l or "liga betplay" in l:
         candidates.append("soccer_colombia_primera_a")
 
-    # Chile
     if "primera division" in l and "chile" in c:
         candidates.append("soccer_chile_campeonato")
 
-    # Uruguay
     if "primera division" in l and "uruguay" in c:
         candidates.append("soccer_uruguay_primera_division")
 
-    # Paraguay
     if "division profesional" in l and "paraguay" in c:
         candidates.append("soccer_paraguay_division_profesional")
 
-    # Perú
     if "liga 1" in l and "peru" in c:
         candidates.append("soccer_peru_primera_division")
 
-    # USA
     if "mls" in l:
         candidates.append("soccer_usa_mls")
 
-    # España
     if "la liga 2" in l or "segunda division" in l:
         candidates.append("soccer_spain_segunda_division")
     if "la liga" in l:
         candidates.append("soccer_spain_la_liga")
 
-    # Italia
     if "serie a" in l and "italy" in c:
         candidates.append("soccer_italy_serie_a")
     if "serie b" in l and "italy" in c:
         candidates.append("soccer_italy_serie_b")
 
-    # Portugal
     if "primeira liga" in l:
         candidates.append("soccer_portugal_primeira_liga")
 
-    # Irlanda
     if "league of ireland" in l:
         candidates.append("soccer_league_of_ireland")
 
-    # Noruega
     if "eliteserien" in l:
         candidates.append("soccer_norway_eliteserien")
 
-    # Suecia
     if "allsvenskan" in l:
         candidates.append("soccer_sweden_allsvenskan")
     if "superettan" in l:
         candidates.append("soccer_sweden_superettan")
 
-    # Japón
     if "j league" in l:
         candidates.append("soccer_japan_j_league")
 
-    # Corea
     if "k league 1" in l:
         candidates.append("soccer_korea_kleague1")
 
-    # Holanda
     if "eredivisie" in l:
         candidates.append("soccer_netherlands_eredivisie")
 
-    # Escocia
     if "premiership" in l and "scotland" in c:
         candidates.append("soccer_spl")
 
-    # Turquía
     if "super league" in l and "turkey" in c:
         candidates.append("soccer_turkey_super_league")
 
-    # Arabia Saudita
     if "saudi pro league" in l:
         candidates.append("soccer_saudi_arabia_pro_league")
 
-    # UEFA / CONMEBOL / CONCACAF
     if "champions league women" in l:
         candidates.append("soccer_uefa_champs_league_women")
     if "champions league qualification" in l:
@@ -240,7 +251,6 @@ def _league_mapping_candidates(league: str, country: str = "") -> List[str]:
     if "gold cup" in l:
         candidates.append("soccer_concacaf_gold_cup")
 
-    # quitar duplicados
     seen = set()
     out: List[str] = []
     for item in candidates:
@@ -258,7 +268,6 @@ def _score_sport_match(sport: Dict[str, Any], league: str, country: str) -> int:
     country_n = _normalize_text(country)
 
     haystack = f"{key} {title} {desc}"
-
     score = 0
 
     if "soccer" not in key:
@@ -314,12 +323,10 @@ def _resolve_candidate_sport_keys(api_key: str, league: str, country: str = "") 
 
     candidates: List[str] = []
 
-    # 1. mapping manual primero
     for key in _league_mapping_candidates(league, country):
         if key in active_keys:
             candidates.append(key)
 
-    # 2. búsqueda aproximada en sports activos
     scored: List[Tuple[int, str]] = []
     for sport in sports:
         key = _safe_text(sport.get("key"))
@@ -390,7 +397,7 @@ def _extract_totals_market(bookmakers: List[Dict[str, Any]]) -> List[Dict[str, A
 # =========================================================
 # ELEGIR MEJOR EVENTO
 # =========================================================
-def _choose_best_event(events: List[Dict[str, Any]], local: str, visitante: str) -> Optional[Dict[str, Any]]:
+def _choose_best_event(events: List[Dict[str, Any]], local: str, visitante: str) -> Tuple[Optional[Dict[str, Any]], int]:
     best_event = None
     best_score = -1
 
@@ -405,12 +412,12 @@ def _choose_best_event(events: List[Dict[str, Any]], local: str, visitante: str)
             best_event = event
 
     if best_event is None:
-        return None
+        return None, 0
 
-    if best_score < 40:
-        return None
+    if best_score < 90:
+        return None, best_score
 
-    return best_event
+    return best_event, best_score
 
 
 # =========================================================
@@ -441,31 +448,32 @@ def _fetch_odds_for_sport(api_key: str, sport_key: str) -> List[Dict[str, Any]]:
 def obtener_odds_partido(local: str, visitante: str, league: str = "", country: str = "") -> Dict[str, Any]:
     api_key = os.getenv("THE_ODDS_API_KEY", "").strip()
 
+    base_response = {
+        "ok": False,
+        "error": "",
+        "odds_source": "the_odds_api",
+        "odds_data_available": False,
+        "home_team": "",
+        "away_team": "",
+        "commence_time": "",
+        "sport_key": "",
+        "matched_event_id": "",
+        "match_score": 0,
+        "searched_sport_keys": [],
+        "bookmakers_found": 0,
+        "markets": [],
+    }
+
     if not api_key:
-        return {
-            "ok": False,
-            "error": "THE_ODDS_API_KEY no configurada",
-            "odds_data_available": False,
-            "home_team": "",
-            "away_team": "",
-            "commence_time": "",
-            "sport_key": "",
-            "markets": [],
-        }
+        base_response["error"] = "THE_ODDS_API_KEY no configurada"
+        return base_response
 
     sport_candidates = _resolve_candidate_sport_keys(api_key, league=league, country=country)
+    base_response["searched_sport_keys"] = sport_candidates
 
     if not sport_candidates:
-        return {
-            "ok": False,
-            "error": "no se encontró sport_key compatible en The Odds API",
-            "odds_data_available": False,
-            "home_team": "",
-            "away_team": "",
-            "commence_time": "",
-            "sport_key": "",
-            "markets": [],
-        }
+        base_response["error"] = "no se encontró sport_key compatible en The Odds API"
+        return base_response
 
     best_event = None
     best_sport_key = ""
@@ -476,33 +484,21 @@ def obtener_odds_partido(local: str, visitante: str, league: str = "", country: 
         if not events:
             continue
 
-        candidate_event = _choose_best_event(events, local, visitante)
+        candidate_event, candidate_score = _choose_best_event(events, local, visitante)
         if not candidate_event:
             continue
 
-        home_team = _safe_text(candidate_event.get("home_team"))
-        away_team = _extract_away_team(candidate_event)
-        score = _match_score(local, visitante, home_team, away_team)
-
-        if score > best_match_score:
-            best_match_score = score
+        if candidate_score > best_match_score:
+            best_match_score = candidate_score
             best_event = candidate_event
             best_sport_key = sport_key
 
-        if score >= 180:
+        if candidate_score >= 180:
             break
 
     if not best_event:
-        return {
-            "ok": False,
-            "error": "no se encontró partido compatible en The Odds API",
-            "odds_data_available": False,
-            "home_team": "",
-            "away_team": "",
-            "commence_time": "",
-            "sport_key": "",
-            "markets": [],
-        }
+        base_response["error"] = "no se encontró partido compatible en The Odds API"
+        return base_response
 
     home_team = _safe_text(best_event.get("home_team"))
     away_team = _extract_away_team(best_event)
@@ -512,11 +508,16 @@ def obtener_odds_partido(local: str, visitante: str, league: str = "", country: 
 
     return {
         "ok": True,
-        "error": "",
+        "error": "" if markets else "partido encontrado pero sin mercado totals disponible",
+        "odds_source": "the_odds_api",
         "odds_data_available": len(markets) > 0,
         "home_team": home_team,
         "away_team": away_team,
         "commence_time": commence_time,
         "sport_key": best_sport_key,
+        "matched_event_id": _safe_text(best_event.get("id")),
+        "match_score": best_match_score,
+        "searched_sport_keys": sport_candidates,
+        "bookmakers_found": len(bookmakers),
         "markets": markets,
-                         }
+               }
