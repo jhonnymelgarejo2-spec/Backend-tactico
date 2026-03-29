@@ -11,7 +11,7 @@ import time
 # =========================================================
 API_KEY_ENV = "FOOTBALL_API_KEY"
 API_URL_ENV = "FOOTBALL_API_URL"
-DEFAULT_API_URL = "https://v3.football.api-sports.io/fixtures"
+DEFAULT_API_URL = "https://v3.football.api-sports.io/fixtures?live=all"
 STATISTICS_URL = "https://v3.football.api-sports.io/fixtures/statistics"
 
 REQUEST_TIMEOUT = 25
@@ -70,11 +70,6 @@ def _parse_iso_timestamp_to_epoch(ts: Any) -> int:
 
 def _build_headers() -> Dict[str, str]:
     api_key = os.getenv(API_KEY_ENV, "").strip()
-
-    print(f"[API-FOOTBALL] ENV NAME: {API_KEY_ENV}")
-    print(f"[API-FOOTBALL] KEY PRESENTE: {bool(api_key)}")
-    print(f"[API-FOOTBALL] KEY LEN: {len(api_key) if api_key else 0}")
-
     if not api_key:
         raise RuntimeError(f"No se encontró la variable de entorno {API_KEY_ENV}")
 
@@ -86,8 +81,7 @@ def _build_headers() -> Dict[str, str]:
 
 
 def _build_url() -> str:
-    url = os.getenv(API_URL_ENV, DEFAULT_API_URL).strip()
-    return url or DEFAULT_API_URL
+    return os.getenv(API_URL_ENV, DEFAULT_API_URL).strip()
 
 
 def _request_json(url: str, headers: Dict[str, str], params: Dict[str, Any] | None = None) -> Dict[str, Any]:
@@ -97,25 +91,9 @@ def _request_json(url: str, headers: Dict[str, str], params: Dict[str, Any] | No
         params=params,
         timeout=REQUEST_TIMEOUT,
     )
-
-    print(f"[API-FOOTBALL] REQUEST URL: {response.url}")
-    print(f"[API-FOOTBALL] STATUS CODE: {response.status_code}")
-
     response.raise_for_status()
-
     data = response.json()
-    if not isinstance(data, dict):
-        print("[API-FOOTBALL] Respuesta no dict, devolviendo vacío")
-        return {}
-
-    print(f"[API-FOOTBALL] API ERRORS: {data.get('errors')}")
-    print(f"[API-FOOTBALL] API RESULTS: {data.get('results')}")
-    print(
-        f"[API-FOOTBALL] RESPONSE COUNT: "
-        f"{len(data.get('response', [])) if isinstance(data.get('response'), list) else 'NO_LIST'}"
-    )
-
-    return data
+    return data if isinstance(data, dict) else {}
 
 
 # =========================================================
@@ -189,7 +167,6 @@ def _normalize_stats_payload(statistics_payload: Dict[str, Any]) -> Dict[str, An
             shots_on_target_home * 3 +
             _to_int(_pick_stat(stats_home, "Corner Kicks"), 0) * 2
         )
-
     if dangerous_away == 0:
         dangerous_away = (
             shots_away * 2 +
@@ -352,7 +329,7 @@ def _fetch_fixture_statistics(fixture_id: int, headers: Dict[str, str]) -> Dict[
         )
         return _normalize_stats_payload(data)
     except Exception as e:
-        print(f"[API-FOOTBALL] Error obteniendo estadísticas del fixture {fixture_id}: {e}")
+        print(f"Error obteniendo estadísticas del fixture {fixture_id}: {e}")
         return {}
 
 
@@ -385,11 +362,16 @@ def _normalizar_fixture(item: Dict[str, Any], headers: Dict[str, str], fetched_a
     yellow_total = _to_int(stats.get("yellow_total"), 0)
     red_total = _to_int(stats.get("red_total"), 0)
 
+    # =========================================================
+    # FALLBACK FUERTE SI LA API NO TRAE STATS
+    # =========================================================
     if shots == 0 and shots_on_target == 0 and dangerous_attacks == 0:
-        shots = max(0, goles_totales * 3 + (1 if minuto >= 25 else 0))
-        shots_on_target = max(0, goles_totales + (1 if minuto >= 35 else 0))
-        dangerous_attacks = max(0, goles_totales * 6 + (3 if minuto >= 30 else 0))
-        corners_total = max(corners_total, goles_totales)
+        base = max(1, minuto // 10)
+
+        shots = max(4, goles_totales * 3 + base)
+        shots_on_target = max(2, goles_totales + base // 2)
+        dangerous_attacks = max(8, goles_totales * 5 + base * 2)
+        corners_total = max(2, goles_totales + base // 2)
         yellow_total = max(yellow_total, 0)
         red_total = max(red_total, 0)
 
@@ -524,21 +506,12 @@ def obtener_partidos_en_vivo() -> List[Dict[str, Any]]:
         headers = _build_headers()
         url = _build_url()
 
-        print(f"[API-FOOTBALL] URL CONFIGURADA: {url}")
-
         fetched_at = int(time.time())
-        data = _request_json(
-            url,
-            headers=headers,
-            params={"live": "all"},
-        )
+        data = _request_json(url, headers=headers)
         fixtures = data.get("response", [])
 
-        print(f"[API-FOOTBALL] FIXTURES RAW TYPE: {type(fixtures).__name__}")
-        print(f"[API-FOOTBALL] FIXTURES RAW COUNT: {len(fixtures) if isinstance(fixtures, list) else 'NO_LIST'}")
-
         if not isinstance(fixtures, list):
-            print("[API-FOOTBALL] respondió sin lista válida. Usando fallback demo.")
+            print("API-Football respondió sin lista válida. Usando fallback demo.")
             return _fallback_demo()
 
         resultados: List[Dict[str, Any]] = []
@@ -551,20 +524,19 @@ def obtener_partidos_en_vivo() -> List[Dict[str, Any]]:
                     continue
 
                 resultados.append(normalizado)
+
                 time.sleep(STAT_REQUEST_SLEEP_MS / 1000.0)
 
             except Exception as e:
-                print("[API-FOOTBALL] Error normalizando fixture:", e)
-
-        print(f"[API-FOOTBALL] PARTIDOS NORMALIZADOS: {len(resultados)}")
+                print("Error normalizando fixture API-Football:", e)
 
         if resultados:
-            print(f"[API-FOOTBALL] OK: devolvió {len(resultados)} partidos en vivo")
+            print(f"OK: API-Football devolvió {len(resultados)} partidos en vivo")
             return resultados
 
-        print("[API-FOOTBALL] no devolvió partidos live utilizables. Usando fallback demo.")
+        print("API-Football no devolvió partidos live utilizables. Usando fallback demo.")
         return _fallback_demo()
 
     except Exception as e:
-        print("[API-FOOTBALL] Error principal:", e)
+        print("Error API-Football:", e)
         return _fallback_demo()
