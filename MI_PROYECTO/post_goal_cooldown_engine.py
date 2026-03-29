@@ -225,3 +225,47 @@ def registrar_snapshot_partido(partido: Dict[str, Any]) -> None:
 
 def limpiar_memoria_partido(match_id: str) -> None:
     MATCH_MEMORY.pop(_safe_text(match_id), None)
+def evaluar_post_goal_cooldown(
+    partido: Dict[str, Any],
+    signal: Dict[str, Any] | None = None,
+    goal_cooldown_minutes: int = DEFAULT_GOAL_COOLDOWN_MINUTES,
+    same_market_cooldown_minutes: int = DEFAULT_SAME_MARKET_COOLDOWN_MINUTES,
+    min_minutes_between_signals: int = DEFAULT_MINUTES_BETWEEN_SIGNALS,
+) -> Dict[str, Any]:
+    data = evaluar_post_gol_y_reentrada(
+        partido=partido,
+        signal=signal,
+        goal_cooldown_minutes=goal_cooldown_minutes,
+        same_market_cooldown_minutes=same_market_cooldown_minutes,
+        min_minutes_between_signals=min_minutes_between_signals,
+    )
+
+    return {
+        "post_goal_cooldown_block": bool(data.get("anti_trap_block_signal", False)),
+        "post_goal_cooldown_reason": data.get("anti_trap_reason", "OK"),
+        "post_goal_cooldown_level": (
+            "ALTO" if data.get("anti_trap_block_signal", False)
+            else "NORMAL"
+        ),
+        "post_goal_cooldown_minutes_left": max(
+            0,
+            _safe_int(data.get("anti_trap_cooldown_until"), 0) - _safe_int(partido.get("minuto"), 0)
+        ) if data.get("anti_trap_cooldown_until") is not None else 0,
+        "post_goal_requires_reset": bool(data.get("anti_trap_score_changed_now", False)),
+        "post_goal_same_market_block": bool(data.get("anti_trap_same_market_reentry", False)),
+        "post_goal_recent_goal_block": bool(data.get("anti_trap_recent_goal", False)),
+        "post_goal_recycled_signal_block": bool(data.get("anti_trap_too_fast_reentry", False)),
+        "anti_trap_match_id": data.get("anti_trap_match_id"),
+        "anti_trap_score_changed_now": bool(data.get("anti_trap_score_changed_now", False)),
+        "anti_trap_recent_goal": bool(data.get("anti_trap_recent_goal", False)),
+        "anti_trap_cooldown_active": bool(data.get("anti_trap_cooldown_active", False)),
+        "anti_trap_same_market_reentry": bool(data.get("anti_trap_same_market_reentry", False)),
+        "anti_trap_too_fast_reentry": bool(data.get("anti_trap_too_fast_reentry", False)),
+        "anti_trap_new_phase_confirmed": bool(data.get("anti_trap_new_phase_confirmed", False)),
+        "anti_trap_block_signal": bool(data.get("anti_trap_block_signal", False)),
+        "anti_trap_reason": data.get("anti_trap_reason", "OK"),
+        "anti_trap_goal_cooldown_minutes": _safe_int(data.get("anti_trap_goal_cooldown_minutes"), DEFAULT_GOAL_COOLDOWN_MINUTES),
+        "anti_trap_same_market_cooldown_minutes": _safe_int(data.get("anti_trap_same_market_cooldown_minutes"), DEFAULT_SAME_MARKET_COOLDOWN_MINUTES),
+        "anti_trap_last_goal_minute": data.get("anti_trap_last_goal_minute"),
+        "anti_trap_cooldown_until": data.get("anti_trap_cooldown_until"),
+    }
