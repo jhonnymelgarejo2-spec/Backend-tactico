@@ -8,30 +8,21 @@ from typing import Dict, Any, List, Optional
 # =========================================================
 try:
     from signal_engine import generar_senal
-except Exception:
-    try:
-        from engines.signal_engine import generar_senal
-    except Exception as e:
-        print(f"[PIPELINE] ERROR import generar_senal -> {e}")
-        generar_senal = None
+except Exception as e:
+    print(f"[PIPELINE] ERROR import generar_senal -> {e}")
+    generar_senal = None
 
 try:
     from risk_engine import evaluar_riesgo
-except Exception:
-    try:
-        from engines.risk_engine import evaluar_riesgo
-    except Exception as e:
-        print(f"[PIPELINE] ERROR import evaluar_riesgo -> {e}")
-        evaluar_riesgo = None
+except Exception as e:
+    print(f"[PIPELINE] ERROR import evaluar_riesgo -> {e}")
+    evaluar_riesgo = None
 
 try:
     from ai_brain import decision_final_ia
-except Exception:
-    try:
-        from engines.ai_brain import decision_final_ia
-    except Exception as e:
-        print(f"[PIPELINE] ERROR import decision_final_ia -> {e}")
-        decision_final_ia = None
+except Exception as e:
+    print(f"[PIPELINE] ERROR import decision_final_ia -> {e}")
+    decision_final_ia = None
 
 
 # =========================================================
@@ -61,12 +52,9 @@ except Exception:
 # =========================================================
 try:
     from post_goal_cooldown_engine import evaluar_post_goal_cooldown
-except Exception:
-    try:
-        from engines.post_goal_cooldown_engine import evaluar_post_goal_cooldown
-    except Exception as e:
-        print(f"[PIPELINE] ERROR import evaluar_post_goal_cooldown -> {e}")
-        evaluar_post_goal_cooldown = None
+except Exception as e:
+    print(f"[PIPELINE] ERROR import evaluar_post_goal_cooldown -> {e}")
+    evaluar_post_goal_cooldown = None
 
 
 # =========================================================
