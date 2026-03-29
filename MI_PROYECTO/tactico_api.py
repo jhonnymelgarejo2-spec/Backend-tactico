@@ -3,7 +3,6 @@
 from flask import Flask, jsonify, render_template
 from typing import Dict, Any, List
 import time
-import os
 
 # =========================================================
 # IMPORT PIPELINE OFICIAL
@@ -70,12 +69,6 @@ except Exception as e:
 app = Flask(__name__)
 
 # =========================================================
-# CONFIG
-# =========================================================
-MAX_SCAN_MATCHES = int(os.getenv("MAX_SCAN_MATCHES", "12"))
-MAX_SIGNALS_VISIBLE = int(os.getenv("MAX_SIGNALS_VISIBLE", "6"))
-
-# =========================================================
 # ESTADO GLOBAL
 # =========================================================
 STATE = {
@@ -95,14 +88,23 @@ STATE = {
     },
     "leagues": [],
     "last_total_matches": 0,
-    "last_scan_error": "",
 }
+
+TOP_SIGNALS_LIMIT = 6
 
 MERCADOS_PERMITIDOS = {
     "OVER_NEXT_15_DYNAMIC",
     "OVER_MATCH_DYNAMIC",
     "UNDER_MATCH_DYNAMIC",
 }
+
+DECISIONES_VISIBLES = {
+    "APOSTAR_FUERTE",
+    "APOSTAR",
+    "APOSTAR_SUAVE",
+    "OBSERVAR",
+}
+
 
 # =========================================================
 # HELPERS BASE
@@ -176,52 +178,6 @@ def _signal_sort_key(signal: Dict[str, Any]):
     )
 
 
-def _score_partido_para_scan(partido: Dict[str, Any]) -> float:
-    minuto = _safe_int(partido.get("minuto"), 0)
-    xg = _safe_float(partido.get("xG"), 0.0)
-    shots = _safe_int(partido.get("shots"), 0)
-    shots_on_target = _safe_int(partido.get("shots_on_target"), 0)
-    dangerous_attacks = _safe_int(partido.get("dangerous_attacks"), 0)
-    pressure_score = _safe_float((partido.get("goal_pressure") or {}).get("pressure_score"), 0.0)
-    predictor_score = _safe_float((partido.get("goal_predictor") or {}).get("predictor_score"), 0.0)
-
-    score = 0.0
-
-    if 15 <= minuto <= 85:
-        score += 20
-    elif 10 <= minuto <= 88:
-        score += 10
-    else:
-        score -= 20
-
-    score += xg * 10.0
-    score += shots * 0.5
-    score += shots_on_target * 2.5
-    score += dangerous_attacks * 0.18
-    score += pressure_score * 1.8
-    score += predictor_score * 1.5
-
-    return round(score, 2)
-
-
-def _seleccionar_partidos_para_scan(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    candidatos = []
-
-    for p in partidos:
-        try:
-            if _esta_finalizado(p):
-                continue
-            candidatos.append(p)
-        except Exception:
-            continue
-
-    candidatos.sort(key=_score_partido_para_scan, reverse=True)
-
-    seleccionados = candidatos[:MAX_SCAN_MATCHES]
-    print(f"[SCAN] partidos seleccionados para procesamiento -> {len(seleccionados)} de {len(partidos)}")
-    return seleccionados
-
-
 def _dedupe_signals(signals: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     seen = {}
 
@@ -244,22 +200,58 @@ def _dedupe_signals(signals: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return list(seen.values())
 
 
-def _filtrar_publicables(signals: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    publicables = [
-        s for s in signals
-        if (
-            _safe_upper(s.get("market")) in MERCADOS_PERMITIDOS
-            and bool(s.get("publish_ready", False))
-            and _safe_float(s.get("confidence", 0.0), 0.0) >= 64
-            and _safe_float(s.get("value", 0.0), 0.0) >= 0.5
-            and _safe_float(s.get("risk_score", 10.0), 10.0) <= 7.8
-            and _safe_float(s.get("ranking_score", 0.0), 0.0) >= 110
-            and bool(s.get("qualifies_for_top", True))
-        )
-    ]
+def _tiene_odds_reales(signal: Dict[str, Any]) -> bool:
+    return bool(signal.get("odds_data_available", False)) and bool(signal.get("odds_validation_ok", False))
 
-    publicables.sort(key=_signal_sort_key, reverse=True)
-    return publicables[:MAX_SIGNALS_VISIBLE]
+
+def _decision_final_visible(signal: Dict[str, Any]) -> str:
+    return _safe_upper(signal.get("decision_panel_final", "OBSERVAR"))
+
+
+def _es_publicable_visual(signal: Dict[str, Any]) -> bool:
+    market_ok = _safe_upper(signal.get("market")) in MERCADOS_PERMITIDOS
+    decision = _decision_final_visible(signal)
+    publish_ready = bool(signal.get("publish_ready", False))
+    cooldown_block = bool(signal.get("post_goal_cooldown_block", False))
+    qualifies = bool(signal.get("qualifies_for_top", False))
+    risk_score = _safe_float(signal.get("risk_score", 10.0), 10.0)
+    ranking_score = _safe_float(signal.get("ranking_score", 0.0), 0.0)
+    confidence = _safe_float(signal.get("confidence", 0.0), 0.0)
+    value = _safe_float(signal.get("value", 0.0), 0.0)
+
+    if not market_ok:
+        return False
+    if not qualifies:
+        return False
+    if cooldown_block:
+        return False
+    if risk_score > 7.8:
+        return False
+    if ranking_score < 110:
+        return False
+    if confidence < 64:
+        return False
+    if value < 0.5:
+        return False
+    if decision not in DECISIONES_VISIBLES:
+        return False
+
+    # Si la decisión es de apostar, debe tener odds reales
+    if decision in {"APOSTAR_FUERTE", "APOSTAR", "APOSTAR_SUAVE"} and not _tiene_odds_reales(signal):
+        return False
+
+    # OBSERVAR puede pasar aunque no tenga odds, pero solo si es técnicamente consistente
+    if decision == "OBSERVAR":
+        return True
+
+    return publish_ready
+
+
+def _build_top6(signals: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    filtradas = [s for s in signals if _es_publicable_visual(s)]
+    filtradas = _dedupe_signals(filtradas)
+    filtradas.sort(key=_signal_sort_key, reverse=True)
+    return filtradas[:TOP_SIGNALS_LIMIT]
 
 
 def _build_stats_from_signals(signals: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -321,11 +313,11 @@ def _demo_partidos() -> List[Dict[str, Any]]:
             "goal_predictor": {
                 "predictor_score": 8,
                 "goal_next_5_prob": 0.27,
-                "goal_next_10_prob": 0.39
+                "goal_next_10_prob": 0.39,
             },
             "chaos": {"chaos_score": 2},
             "estado_partido": "en_juego",
-            "cuota": 1.85,
+            "cuota": 0.0,
             "prob_real": 0.65,
             "prob_implicita": 0.54,
             "live": True,
@@ -338,9 +330,9 @@ def obtener_partidos_para_scan() -> List[Dict[str, Any]]:
         try:
             partidos = obtener_partidos_en_vivo()
             if isinstance(partidos, list) and partidos:
-                print(f"[SCAN] fetcher principal devolvio -> {len(partidos)} partidos")
+                print(f"[SCAN] fetcher principal devolvió -> {len(partidos)} partidos")
                 return partidos
-            print("[SCAN] fetcher principal devolvio vacio, usando demo")
+            print("[SCAN] fetcher principal devolvió vacío, usando demo")
         except Exception as e:
             print(f"[SCAN] ERROR fetcher principal -> {e}")
 
@@ -370,7 +362,6 @@ def detectar_hot_matches(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]
         ):
             hot.append(p)
 
-    hot.sort(key=_score_partido_para_scan, reverse=True)
     return hot[:10]
 
 
@@ -389,9 +380,7 @@ def _signals_from_storage() -> List[Dict[str, Any]]:
         ]
 
         filtradas = _dedupe_signals(filtradas)
-        filtradas.sort(key=_signal_sort_key, reverse=True)
-
-        return _filtrar_publicables(filtradas)
+        return _build_top6(filtradas)
     except Exception as e:
         print(f"[SIGNALS] ERROR storage -> {e}")
         return []
@@ -404,63 +393,51 @@ def procesar_partidos(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     if not isinstance(partidos, list):
         return []
 
-    partidos = _seleccionar_partidos_para_scan(partidos)
+    senales = []
 
-    if generar_senales:
+    # Opción principal: usar pipeline partido por partido
+    if procesar_partido:
+        for p in partidos:
+            try:
+                if _esta_finalizado(p):
+                    print(f"[SCAN] partido omitido por finalizado -> {p.get('id')}")
+                    continue
+
+                s = procesar_partido(p)
+                if not s:
+                    continue
+
+                senales.append(s)
+
+            except Exception as e:
+                print(f"[ERROR PARTIDO] {e}")
+
+    # Fallback si el pipeline no está disponible
+    elif generar_senales:
         try:
-            senales = generar_senales(partidos)
-            if not isinstance(senales, list):
-                senales = []
-
-            senales = _dedupe_signals(senales)
-            senales.sort(key=_signal_sort_key, reverse=True)
-            top_signals = _filtrar_publicables(senales)
-
-            for s in top_signals:
-                if guardar_senal:
-                    try:
-                        guardar_senal(s)
-                    except Exception as e:
-                        print(f"[ALMACENAMIENTO] ERROR guardar_senal -> {e}")
-
-            print(f"[SCAN] total senales generadas -> {len(top_signals)}")
-            return top_signals
+            raw = generar_senales(partidos)
+            if isinstance(raw, list):
+                senales.extend(raw)
         except Exception as e:
             print(f"[SCAN] ERROR wrapper generar_senales -> {e}")
 
-    # Fallback directo al pipeline si falla el wrapper
-    senales = []
-
-    if not procesar_partido:
-        print("[SCAN] procesar_partido no disponible")
-        return senales
-
-    for p in partidos:
-        try:
-            if _esta_finalizado(p):
-                print(f"[SCAN] partido omitido por finalizado -> {p.get('id')}")
-                continue
-
-            s = procesar_partido(p)
-            if not s:
-                continue
-
-            senales.append(s)
-
-            if guardar_senal:
-                try:
-                    guardar_senal(s)
-                except Exception as e:
-                    print(f"[ALMACENAMIENTO] ERROR guardar_senal -> {e}")
-
-        except Exception as e:
-            print(f"[ERROR PARTIDO] {e}")
+    if not senales:
+        print("[SCAN] total señales generadas -> 0")
+        return []
 
     senales = _dedupe_signals(senales)
     senales.sort(key=_signal_sort_key, reverse=True)
 
-    top_signals = _filtrar_publicables(senales)
-    print(f"[SCAN] total senales generadas -> {len(top_signals)}")
+    top_signals = _build_top6(senales)
+
+    for s in top_signals:
+        if guardar_senal:
+            try:
+                guardar_senal(s)
+            except Exception as e:
+                print(f"[ALMACENAMIENTO] ERROR guardar_senal -> {e}")
+
+    print(f"[SCAN] total señales generadas -> {len(top_signals)}")
     return top_signals
 
 
@@ -475,11 +452,6 @@ def home():
 @app.route("/dashboard")
 def dashboard():
     return render_template("dashboard.html")
-
-
-@app.route("/match_detail.html")
-def match_detail_html():
-    return render_template("match_detail.html")
 
 
 # =========================================================
@@ -503,64 +475,58 @@ def health():
 # =========================================================
 @app.route("/scan")
 def scan():
-    try:
-        partidos = obtener_partidos_para_scan()
-        senales = procesar_partidos(partidos)
-        hot = detectar_hot_matches(partidos)
+    partidos = obtener_partidos_para_scan()
+    senales = procesar_partidos(partidos)
+    hot = detectar_hot_matches(partidos)
 
-        STATE["signals"] = senales
-        STATE["hot_matches"] = hot
-        STATE["last_scan"] = int(time.time())
-        STATE["last_total_matches"] = len(partidos)
-        STATE["last_scan_error"] = ""
+    STATE["signals"] = senales
+    STATE["hot_matches"] = hot
+    STATE["last_scan"] = int(time.time())
+    STATE["last_total_matches"] = len(partidos)
 
-        ligas = sorted(list({
-            f"{_safe_text(p.get('pais'))} - {_safe_text(p.get('liga'))}"
-            for p in partidos
-        }))
-        STATE["leagues"] = ligas
-        STATE["stats"] = _build_stats_from_signals(senales)
+    ligas = sorted(list({
+        f"{_safe_text(p.get('pais'))} - {_safe_text(p.get('liga'))}"
+        for p in partidos
+    }))
+    STATE["leagues"] = ligas
+    STATE["stats"] = _build_stats_from_signals(senales)
 
-        return jsonify({
-            "ok": True,
-            "ultimo_scan": STATE["last_scan"],
-            "total_partidos": len(partidos),
-            "total_senales": len(senales),
-            "procesados": min(len(partidos), MAX_SCAN_MATCHES),
-        })
-    except Exception as e:
-        STATE["last_scan_error"] = str(e)
-        print(f"[SCAN] ERROR GLOBAL -> {e}")
-
-        return jsonify({
-            "ok": False,
-            "error": str(e),
-            "ultimo_scan": STATE.get("last_scan", 0),
-            "total_partidos": STATE.get("last_total_matches", 0),
-            "total_senales": len(STATE.get("signals", [])),
-        }), 200
+    return jsonify({
+        "ultimo_scan": STATE["last_scan"],
+        "total_partidos": len(partidos),
+        "total_senales": len(senales),
+    })
 
 
 # =========================================================
-# SENALES
+# SEÑALES
 # =========================================================
 @app.route("/signals")
 def signals():
     current_signals = STATE.get("signals", [])
     if current_signals:
         current_sorted = sorted(current_signals, key=_signal_sort_key, reverse=True)
-        current_sorted = _filtrar_publicables(current_sorted) or current_sorted[:MAX_SIGNALS_VISIBLE]
+        current_sorted = _build_top6(current_sorted)
         print(f"[SIGNALS] desde memoria -> {len(current_sorted)}")
-        return jsonify({"signals": current_sorted[:MAX_SIGNALS_VISIBLE]})
+        return jsonify({"signals": current_sorted[:TOP_SIGNALS_LIMIT]})
 
     fallback = _signals_from_storage()
     if fallback:
         print(f"[SIGNALS] obtenidas desde archivo -> {len(fallback)}")
-        STATE["signals"] = fallback[:MAX_SIGNALS_VISIBLE]
-        return jsonify({"signals": fallback[:MAX_SIGNALS_VISIBLE]})
+        STATE["signals"] = fallback[:TOP_SIGNALS_LIMIT]
+        return jsonify({"signals": fallback[:TOP_SIGNALS_LIMIT]})
 
-    print("[SIGNALS] sin memoria ni storage -> devolviendo vacio")
-    return jsonify({"signals": []})
+    print("[SIGNALS] memoria vacía y archivo vacío -> ejecutando rescan")
+    partidos = obtener_partidos_para_scan()
+    senales = procesar_partidos(partidos)
+
+    STATE["signals"] = senales
+    STATE["hot_matches"] = detectar_hot_matches(partidos)
+    STATE["last_scan"] = int(time.time())
+    STATE["last_total_matches"] = len(partidos)
+    STATE["stats"] = _build_stats_from_signals(senales)
+
+    return jsonify({"signals": senales[:TOP_SIGNALS_LIMIT]})
 
 
 # =========================================================
@@ -568,9 +534,8 @@ def signals():
 # =========================================================
 @app.route("/hot-matches")
 def hot_matches():
-    hot = STATE.get("hot_matches", [])
     return jsonify({
-        "hot_matches": hot[:10]
+        "hot_matches": STATE["hot_matches"]
     })
 
 
@@ -619,11 +584,10 @@ def dashboard_data():
         "status": "ok",
         "service": "jhonny_elite_v16",
         "last_scan": STATE.get("last_scan", 0),
-        "last_scan_error": STATE.get("last_scan_error", ""),
         "total_signals": len(signals_data),
         "total_hot_matches": len(STATE.get("hot_matches", [])),
         "total_matches": STATE.get("last_total_matches", 0),
-        "signals": signals_data[:MAX_SIGNALS_VISIBLE],
+        "signals": signals_data[:TOP_SIGNALS_LIMIT],
         "stats": STATE.get("stats", {}),
     })
 
