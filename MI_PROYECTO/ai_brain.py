@@ -1,8 +1,24 @@
 # ai_brain.py
 
 from typing import Dict
-from chaos_detector import detect_chaos
-from goal_imminent_engine import evaluar_gol_inminente
+
+try:
+    from chaos_detector import detect_chaos
+except Exception:
+    try:
+        from core.chaos_detector import detect_chaos
+    except Exception as e:
+        print(f"[AI_BRAIN] ERROR import detect_chaos -> {e}")
+        detect_chaos = None
+
+try:
+    from goal_imminent_engine import evaluar_gol_inminente
+except Exception:
+    try:
+        from core.goal_imminent_engine import evaluar_gol_inminente
+    except Exception as e:
+        print(f"[AI_BRAIN] ERROR import evaluar_gol_inminente -> {e}")
+        evaluar_gol_inminente = None
 
 
 def _f(value, default=0.0):
@@ -14,7 +30,7 @@ def _f(value, default=0.0):
 
 def _i(value, default=0):
     try:
-        return int(value)
+        return int(float(value))
     except Exception:
         return default
 
@@ -46,73 +62,107 @@ def leer_contexto_partido(match: Dict) -> Dict:
     shots_on_target = _f(match.get("shots_on_target"), 0)
     dangerous_attacks = _f(match.get("dangerous_attacks"), 0)
 
-    # 1. partido muerto
     if minuto >= 78 and xg < 1.1 and momentum in ("BAJO", "MEDIO") and pressure_score < 5:
         return {
             "ai_state": "PARTIDO_MUERTO",
             "ai_score": 20,
-            "ai_reason": "Poco impulso ofensivo en tramo final"
+            "ai_reason": "Poco impulso ofensivo en tramo final",
         }
 
-    # 2. cierre táctico
     if minuto >= 75 and diff >= 1 and momentum in ("BAJO", "MEDIO") and pressure_score < 6:
         return {
             "ai_state": "CIERRE_TACTICO",
             "ai_score": 30,
-            "ai_reason": "El partido parece entrar en gestión de resultado"
+            "ai_reason": "El partido parece entrar en gestión de resultado",
         }
 
-    # 3. presión falsa
     if dangerous_attacks >= 18 and shots_on_target == 0 and xg < 0.9:
         return {
             "ai_state": "PRESION_FALSA",
             "ai_score": 35,
-            "ai_reason": "Mucho ataque aparente pero sin peligro real"
+            "ai_reason": "Mucho ataque aparente pero sin peligro real",
         }
 
-    # 4. caos peligroso
     if chaos_score >= 12 and pressure_score < 6 and xg < 1.2:
         return {
             "ai_state": "CAOS_PELIGROSO",
             "ai_score": 40,
-            "ai_reason": "Partido roto pero sin dirección ofensiva clara"
+            "ai_reason": "Partido roto pero sin dirección ofensiva clara",
         }
 
-    # 5. caos útil
     if chaos_score >= 9 and pressure_score >= 7 and (goal5 >= 0.55 or goal10 >= 0.70):
         return {
             "ai_state": "CAOS_UTIL",
             "ai_score": 75,
-            "ai_reason": "Caos acompañado de presión y ventana real de gol"
+            "ai_reason": "Caos acompañado de presión y ventana real de gol",
         }
 
-    # 6. control real
     if xg >= 1.5 and pressure_score >= 7 and predictor_score >= 5 and shots_on_target >= 2:
         return {
             "ai_state": "CONTROL_REAL",
             "ai_score": 82,
-            "ai_reason": "Presión ofensiva respaldada por producción real"
+            "ai_reason": "Presión ofensiva respaldada por producción real",
         }
 
-    # 7. partido trampa
     if minuto >= 80 and pressure_score >= 7 and goal5 < 0.35:
         return {
             "ai_state": "PARTIDO_TRAMPA",
             "ai_score": 18,
-            "ai_reason": "Presión tardía poco confiable para entrar"
+            "ai_reason": "Presión tardía poco confiable para entrar",
         }
 
     return {
         "ai_state": "NEUTRO",
         "ai_score": 55,
-        "ai_reason": "Contexto mixto sin lectura extrema"
+        "ai_reason": "Contexto mixto sin lectura extrema",
+    }
+
+
+def _default_chaos_read() -> Dict:
+    return {
+        "chaos_level": "BAJO",
+        "chaos_detector_score": 0.0,
+        "chaos_reason": "Sin lectura de caos disponible",
+        "chaos_block_signal": False,
+        "chaos_confidence_penalty": 0.0,
+    }
+
+
+def _default_goal_read() -> Dict:
+    return {
+        "goal_imminent_score": 0.0,
+        "goal_imminent_level": "BAJO",
+        "goal_imminent_reason": "Motor de gol inminente no disponible",
     }
 
 
 def evaluar_ajuste_para_senal(match: Dict, signal: Dict) -> Dict:
     lectura = leer_contexto_partido(match)
-    chaos_read = detect_chaos(match)
-    goal_read = evaluar_gol_inminente(match)
+
+    chaos_read = _default_chaos_read()
+    if detect_chaos:
+        try:
+            chaos_result = detect_chaos(match)
+            if isinstance(chaos_result, dict):
+                chaos_read.update(chaos_result)
+        except Exception as e:
+            print(f"[AI_BRAIN] ERROR detect_chaos -> {e}")
+
+    goal_read = _default_goal_read()
+    if evaluar_gol_inminente:
+        try:
+            goal_result = evaluar_gol_inminente(match, signal)
+            if isinstance(goal_result, dict):
+                goal_read.update(goal_result)
+        except TypeError:
+            try:
+                goal_result = evaluar_gol_inminente(match)
+                if isinstance(goal_result, dict):
+                    goal_read.update(goal_result)
+            except Exception as e:
+                print(f"[AI_BRAIN] ERROR evaluar_gol_inminente fallback -> {e}")
+        except Exception as e:
+            print(f"[AI_BRAIN] ERROR evaluar_gol_inminente -> {e}")
 
     ai_state = lectura["ai_state"]
     ai_score = _f(lectura["ai_score"], 55)
@@ -127,15 +177,18 @@ def evaluar_ajuste_para_senal(match: Dict, signal: Dict) -> Dict:
     is_over = "OVER" in market or market == "NEXT_GOAL"
     is_hold = "RESULT_HOLDS" in market or "HOLD" in market
 
-    # =========================================================
-    # AJUSTE POR TIPO DE MERCADO
-    # =========================================================
     if is_over:
         if ai_state in ("CONTROL_REAL", "CAOS_UTIL"):
             ajuste += 8
             fit = "ALINEADA"
             fit_reason = "La señal ofensiva encaja con la lectura IA"
-        elif ai_state in ("PRESION_FALSA", "CIERRE_TACTICO", "PARTIDO_MUERTO", "PARTIDO_TRAMPA", "CAOS_PELIGROSO"):
+        elif ai_state in (
+            "PRESION_FALSA",
+            "CIERRE_TACTICO",
+            "PARTIDO_MUERTO",
+            "PARTIDO_TRAMPA",
+            "CAOS_PELIGROSO",
+        ):
             ajuste -= 12
             fit = "DESALINEADA"
             fit_reason = "La señal ofensiva no encaja con el contexto actual"
@@ -166,17 +219,14 @@ def evaluar_ajuste_para_senal(match: Dict, signal: Dict) -> Dict:
             fit = "DESALINEADA"
             fit_reason = "El hold choca con una ventana real de gol"
 
-    # =========================================================
-    # AJUSTE POR CHAOS DETECTOR
-    # =========================================================
     if chaos_read["chaos_level"] == "MEDIO":
-        ajuste -= chaos_read["chaos_confidence_penalty"]
+        ajuste -= _f(chaos_read["chaos_confidence_penalty"], 0)
         if fit == "NEUTRO":
             fit = "RIESGO_MEDIO"
             fit_reason = f"Se detecta volatilidad: {chaos_read['chaos_reason']}"
 
     elif chaos_read["chaos_level"] == "ALTO":
-        ajuste -= chaos_read["chaos_confidence_penalty"]
+        ajuste -= _f(chaos_read["chaos_confidence_penalty"], 0)
         fit = "RIESGO_ALTO"
         fit_reason = f"Partido caótico: {chaos_read['chaos_reason']}"
 
@@ -191,12 +241,12 @@ def evaluar_ajuste_para_senal(match: Dict, signal: Dict) -> Dict:
         "ai_confidence_adjustment": ajuste,
         "ai_confidence_final": round(adjusted_confidence, 2),
         "chaos_level": chaos_read["chaos_level"],
-        "chaos_detector_score": chaos_read["chaos_detector_score"],
+        "chaos_detector_score": _f(chaos_read["chaos_detector_score"], 0),
         "chaos_reason": chaos_read["chaos_reason"],
-        "chaos_block_signal": chaos_read["chaos_block_signal"],
-        "chaos_confidence_penalty": chaos_read["chaos_confidence_penalty"],
-        "goal_imminent_score": goal_read["goal_imminent_score"],
-        "goal_imminent_level": goal_read["goal_imminent_level"],
+        "chaos_block_signal": bool(chaos_read["chaos_block_signal"]),
+        "chaos_confidence_penalty": _f(chaos_read["chaos_confidence_penalty"], 0),
+        "goal_imminent_score": _f(goal_read["goal_imminent_score"], 0),
+        "goal_imminent_level": _u(goal_read["goal_imminent_level"]) or "BAJO",
         "goal_imminent_reason": goal_read["goal_imminent_reason"],
     }
 
