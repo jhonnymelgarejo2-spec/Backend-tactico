@@ -8,25 +8,34 @@ from typing import Dict, Any, List, Optional
 # =========================================================
 try:
     from signal_engine import generar_senal
-except Exception as e:
-    print(f"[PIPELINE] ERROR import generar_senal -> {e}")
-    generar_senal = None
+except Exception:
+    try:
+        from core.signal_engine import generar_senal
+    except Exception as e:
+        print(f"[PIPELINE] ERROR import generar_senal -> {e}")
+        generar_senal = None
 
 try:
     from risk_engine import evaluar_riesgo
-except Exception as e:
-    print(f"[PIPELINE] ERROR import evaluar_riesgo -> {e}")
-    evaluar_riesgo = None
+except Exception:
+    try:
+        from core.risk_engine import evaluar_riesgo
+    except Exception as e:
+        print(f"[PIPELINE] ERROR import evaluar_riesgo -> {e}")
+        evaluar_riesgo = None
 
 try:
     from ai_brain import decision_final_ia
-except Exception as e:
-    print(f"[PIPELINE] ERROR import decision_final_ia -> {e}")
-    decision_final_ia = None
+except Exception:
+    try:
+        from core.ai_brain import decision_final_ia
+    except Exception as e:
+        print(f"[PIPELINE] ERROR import decision_final_ia -> {e}")
+        decision_final_ia = None
 
 
 # =========================================================
-# IMPORTS THE ODDS API
+# IMPORTS ODDS
 # =========================================================
 try:
     from core.odds_market_fetcher import obtener_odds_partido
@@ -48,13 +57,16 @@ except Exception:
 
 
 # =========================================================
-# IMPORTS ANTI-TRAP / POST GOAL COOLDOWN
+# IMPORTS POST GOAL COOLDOWN
 # =========================================================
 try:
     from post_goal_cooldown_engine import evaluar_post_goal_cooldown
-except Exception as e:
-    print(f"[PIPELINE] ERROR import evaluar_post_goal_cooldown -> {e}")
-    evaluar_post_goal_cooldown = None
+except Exception:
+    try:
+        from core.post_goal_cooldown_engine import evaluar_post_goal_cooldown
+    except Exception as e:
+        print(f"[PIPELINE] ERROR import evaluar_post_goal_cooldown -> {e}")
+        evaluar_post_goal_cooldown = None
 
 
 # =========================================================
@@ -91,10 +103,6 @@ def _safe_text(value: Any, default: str = "") -> str:
 
 def _upper(value: Any) -> str:
     return _safe_text(value).upper()
-
-
-def _lower(value: Any) -> str:
-    return _safe_text(value).lower()
 
 
 def _clamp(value: float, min_value: float, max_value: float) -> float:
@@ -182,7 +190,7 @@ def _calcular_probabilidades_base(partido: Dict[str, Any]) -> Dict[str, float]:
     return {
         "prob_real": round(prob_real, 4),
         "prob_implicita": 0.5405,
-        "cuota": 1.85,
+        "cuota": 0.0,
     }
 
 
@@ -390,7 +398,7 @@ def _build_arbiter_state(partido: Dict[str, Any]) -> Dict[str, Any]:
 
 
 # =========================================================
-# FORMATO PUBLICO / INTERNO
+# FORMATO PÚBLICO
 # =========================================================
 def _publicar_formato_final(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str, Any]:
     local = _safe_text(partido.get("local"), "Local")
@@ -402,13 +410,11 @@ def _publicar_formato_final(partido: Dict[str, Any], signal: Dict[str, Any]) -> 
     minuto = _safe_int(partido.get("minuto"), 0)
 
     market = _safe_text(signal.get("mercado"))
-    selection = _safe_text(signal.get("selection"))
-    if not selection:
-        selection = _safe_text(signal.get("apuesta"))
+    selection = _safe_text(signal.get("selection")) or _safe_text(signal.get("apuesta"))
 
-    cuota_base = round(_safe_float(signal.get("cuota"), 1.85), 2)
-    prob_implicita_base = round(_safe_float(signal.get("prob_implicita"), 0.0), 4)
-    value_base = round(_safe_float(signal.get("valor"), 0.0), 2)
+    cuota_base = _safe_float(signal.get("cuota"), 0.0)
+    prob_implicita_base = _safe_float(signal.get("prob_implicita"), 0.0)
+    value_base = _safe_float(signal.get("valor"), 0.0)
 
     return {
         "match_id": partido.get("id"),
@@ -422,15 +428,15 @@ def _publicar_formato_final(partido: Dict[str, Any], signal: Dict[str, Any]) -> 
         "market": market,
         "selection": selection,
         "line": signal.get("linea"),
-        "odd": cuota_base,
-        "cuota": cuota_base,
+        "odd": round(cuota_base, 2) if cuota_base > 0 else 0.0,
+        "cuota": round(cuota_base, 2) if cuota_base > 0 else 0.0,
         "prob": round(_safe_float(signal.get("prob_real"), 0.0), 4),
         "prob_real": round(_safe_float(signal.get("prob_real"), 0.0), 4),
         "prob_real_pct": round(_safe_float(signal.get("prob_real"), 0.0) * 100, 2),
-        "prob_implicita": prob_implicita_base,
+        "prob_implicita": round(prob_implicita_base, 4) if prob_implicita_base > 0 else 0.0,
         "confidence": round(_safe_float(signal.get("confianza"), 0.0), 2),
-        "value": value_base,
-        "valor": value_base,
+        "value": round(value_base, 2),
+        "valor": round(value_base, 2),
         "reason": _safe_text(signal.get("razon")),
         "tier": _safe_text(signal.get("tier")),
         "goal_prob_5": round(_safe_float(signal.get("goal_prob_5"), 0.0), 2),
@@ -445,7 +451,7 @@ def _publicar_formato_final(partido: Dict[str, Any], signal: Dict[str, Any]) -> 
         "linea_goles_probable": _safe_text(signal.get("linea_goles_probable")),
         "over_under_probable": _safe_text(signal.get("over_under_probable")),
         "confianza_prediccion": round(_safe_float(signal.get("confianza_prediccion"), 0.0), 2),
-        "recomendacion_final": _safe_text(signal.get("recomendacion_final"), "APOSTAR"),
+        "recomendacion_final": _safe_text(signal.get("recomendacion_final"), "OBSERVAR"),
         "riesgo_operativo": _safe_text(signal.get("riesgo_operativo"), "MEDIO"),
         "xG": round(_safe_float(partido.get("xG"), 0.0), 2),
         "shots": _safe_int(partido.get("shots"), 0),
@@ -556,7 +562,7 @@ def _recalcular_signal_score(signal: Dict[str, Any]) -> Dict[str, Any]:
 
 
 # =========================================================
-# SCORING DE MERCADO / OUTCOME
+# SESGOS DE MERCADO
 # =========================================================
 def _market_bias(signal: Dict[str, Any]) -> Dict[str, Any]:
     market = _upper(signal.get("market"))
@@ -655,7 +661,7 @@ def _final_outcome_bias(signal: Dict[str, Any]) -> Dict[str, Any]:
 
 
 # =========================================================
-# OPERACION / RANKING
+# OPERACIÓN / RANKING / UI
 # =========================================================
 def _build_operation_fields(signal: Dict[str, Any]) -> Dict[str, Any]:
     signal_rank = _upper(signal.get("signal_rank"))
@@ -664,8 +670,8 @@ def _build_operation_fields(signal: Dict[str, Any]) -> Dict[str, Any]:
     value = _safe_float(signal.get("value"), 0.0)
     risk_score = _safe_float(signal.get("risk_score"), 0.0)
 
-    stake_pct = 2.0
-    stake_label = "NORMAL"
+    stake_pct = 0.0
+    stake_label = "N/A"
 
     if signal_rank == "ELITE" or (confidence >= 86 and ai_score >= 150 and value >= 10 and risk_score <= 4.8):
         stake_pct = 4.9
@@ -702,22 +708,16 @@ def _should_validate_with_odds(signal: Dict[str, Any], partido: Dict[str, Any]) 
 
     if market not in {"OVER_NEXT_15_DYNAMIC", "OVER_MATCH_DYNAMIC", "UNDER_MATCH_DYNAMIC"}:
         return False
-
     if not _es_minuto_operable(minute):
         return False
-
     if confidence < 74:
         return False
-
     if value < 2.0:
         return False
-
     if risk_score > 6.5:
         return False
-
     if signal_score < 150:
         return False
-
     if market != "UNDER_MATCH_DYNAMIC" and tactical_score < 12:
         return False
 
@@ -803,9 +803,6 @@ def _master_gate(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str, A
     if ai_recommendation == "NO_APOSTAR":
         blocked_reasons.append("IA bloquea la señal")
 
-    if odds_data_available and not odds_validation_ok:
-        blocked_reasons.append(f"Validación de odds fallida: {_safe_text(signal.get('market_validation_reason'))}")
-
     if post_goal_cooldown_block:
         blocked_reasons.append(f"Post-goal cooldown: {post_goal_cooldown_reason}")
 
@@ -822,6 +819,11 @@ def _master_gate(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dict[str, A
             blocked_reasons.append("Under incoherente con probabilidad de gol")
 
     publish_ready = len(blocked_reasons) == 0
+
+    # publish_ready es técnico; no obliga a apostar
+    if odds_data_available and not odds_validation_ok:
+        publish_ready = False
+        blocked_reasons.append(f"Validación de odds fallida: {_safe_text(signal.get('market_validation_reason'))}")
 
     return {
         "publish_ready": publish_ready,
@@ -842,16 +844,19 @@ def _ranking_layer(signal: Dict[str, Any]) -> Dict[str, Any]:
     shots_on_target = _safe_int(signal.get("shots_on_target"), 0)
     dangerous_attacks = _safe_int(signal.get("dangerous_attacks"), 0)
     goal_prob_10 = _safe_float(signal.get("goal_prob_10"), 0.0)
+    odds_bonus = 20 if bool(signal.get("odds_validation_ok", False)) else 0
+    cooldown_penalty = 100 if bool(signal.get("post_goal_cooldown_block", False)) else 0
 
     ranking_score_base = (
         ai_decision_score * 1.70 +
         signal_score * 1.35 +
         confidence * 1.10 +
         value * 2.00 +
-        tactical_score * 0.75
+        tactical_score * 0.75 +
+        odds_bonus
     )
 
-    ranking_penalty = risk_score * 9.0
+    ranking_penalty = risk_score * 9.0 + cooldown_penalty
 
     if minute >= 85:
         ranking_penalty += 8
@@ -901,6 +906,46 @@ def _build_reason_fields(partido: Dict[str, Any], signal: Dict[str, Any]) -> Dic
     }
 
 
+def _build_panel_decision(signal: Dict[str, Any]) -> Dict[str, Any]:
+    publish_ready = bool(signal.get("publish_ready", False))
+    ai_recommendation = _upper(signal.get("ai_recommendation"))
+    odds_data_available = bool(signal.get("odds_data_available", False))
+    odds_validation_ok = bool(signal.get("odds_validation_ok", False))
+    cooldown_block = bool(signal.get("post_goal_cooldown_block", False))
+    risk_score = _safe_float(signal.get("risk_score"), 0.0)
+    signal_rank = _upper(signal.get("signal_rank"))
+
+    decision = "OBSERVAR"
+
+    if not publish_ready:
+        decision = "NO_PUBLICAR"
+    elif cooldown_block:
+        decision = "OBSERVAR"
+    elif ai_recommendation == "NO_APOSTAR":
+        decision = "NO_APOSTAR"
+    elif not odds_data_available or not odds_validation_ok:
+        decision = "OBSERVAR"
+    elif risk_score > 7:
+        decision = "OBSERVAR"
+    elif ai_recommendation == "APOSTAR_FUERTE" and signal_rank == "ELITE":
+        decision = "APOSTAR_FUERTE"
+    elif ai_recommendation in ("APOSTAR_FUERTE", "APOSTAR"):
+        decision = "APOSTAR"
+    elif ai_recommendation == "APOSTAR_SUAVE":
+        decision = "APOSTAR_SUAVE"
+    else:
+        decision = "OBSERVAR"
+
+    ui_button_enabled = decision in ("APOSTAR_FUERTE", "APOSTAR", "APOSTAR_SUAVE")
+    ui_stake_visible = decision in ("APOSTAR_FUERTE", "APOSTAR", "APOSTAR_SUAVE")
+
+    return {
+        "decision_panel_final": decision,
+        "ui_button_enabled": ui_button_enabled,
+        "ui_stake_visible": ui_stake_visible,
+    }
+
+
 # =========================================================
 # PIPELINE CENTRAL
 # =========================================================
@@ -937,9 +982,11 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             return None
 
         # Defaults odds
+        signal["odds_source"] = "none"
+        signal["odds_is_real"] = False
         signal["odds_data_available"] = False
         signal["odds_validation_ok"] = False
-        signal["market_validation_reason"] = "Validación odds no ejecutada"
+        signal["market_validation_reason"] = "Sin validación externa"
         signal["odds_selected_bookmaker"] = ""
         signal["odds_selected_line"] = 0.0
         signal["odds_selected_price"] = 0.0
@@ -1002,9 +1049,6 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         signal.setdefault("ai_state", "NEUTRO")
         signal.setdefault("ai_score", 55.0)
         signal.setdefault("ai_reason", "Contexto mixto sin lectura extrema")
-        signal.setdefault("ai_fit", "NEUTRO")
-        signal.setdefault("ai_fit_reason", "Sin ajuste especial")
-        signal.setdefault("ai_confidence_adjustment", 0.0)
         signal.setdefault("ai_confidence_final", _safe_float(signal.get("confidence"), 0.0))
         signal.setdefault("ai_decision_score", 0.0)
         signal.setdefault("ai_recommendation", "OBSERVAR")
@@ -1012,13 +1056,10 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         # Signal score final antes de odds
         signal.update(_recalcular_signal_score(signal))
 
-        # Operación
+        # Operación sugerida
         signal.update(_build_operation_fields(signal))
-        signal["decision_ia"] = _upper(signal.get("ai_recommendation", "OBSERVAR"))
 
-        # =========================================================
-        # ANTI-TRAP / POST GOAL COOLDOWN
-        # =========================================================
+        # Cooldown post-gol
         if evaluar_post_goal_cooldown:
             try:
                 cooldown_data = evaluar_post_goal_cooldown(partido, signal)
@@ -1027,18 +1068,7 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             except Exception as e:
                 print(f"[PIPELINE] ERROR post_goal_cooldown -> {e}")
 
-        signal.setdefault("post_goal_cooldown_block", False)
-        signal.setdefault("post_goal_cooldown_reason", "OK")
-        signal.setdefault("post_goal_cooldown_level", "NORMAL")
-        signal.setdefault("post_goal_cooldown_minutes_left", 0)
-        signal.setdefault("post_goal_requires_reset", False)
-        signal.setdefault("post_goal_same_market_block", False)
-        signal.setdefault("post_goal_recent_goal_block", False)
-        signal.setdefault("post_goal_recycled_signal_block", False)
-
-        # =========================================================
-        # VALIDACION CON THE ODDS API SOLO SI LA SEÑAL YA ES FUERTE
-        # =========================================================
+        # Odds reales solo si ya vale la pena consultar
         if obtener_odds_partido and validar_mercado_con_odds and _should_validate_with_odds(signal, partido):
             try:
                 odds_payload = _obtener_odds_partido_safe(partido)
@@ -1048,10 +1078,10 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
                     if isinstance(odds_validation, dict):
                         signal.update(odds_validation)
 
-                    # =====================================================
-                    # SI EXISTEN ODDS REALES, REEMPLAZAR CUOTA FIJA 1.85
-                    # =====================================================
                     if signal.get("odds_data_available", False):
+                        signal["odds_source"] = signal.get("odds_source") or "external"
+                        signal["odds_is_real"] = True
+
                         real_price = _safe_float(signal.get("odds_selected_price"), 0.0)
                         real_imp = _safe_float(signal.get("odds_implied_probability"), 0.0)
                         real_edge = _safe_float(signal.get("market_edge_with_odds"), 0.0)
@@ -1079,17 +1109,11 @@ def procesar_partido(partido: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         # Gate final
         signal.update(_master_gate(partido, signal))
 
-        if not signal.get("publish_ready", False):
-            print(f"[PIPELINE] RECHAZADO MASTER GATE -> {partido.get('local')} vs {partido.get('visitante')}")
-            print(f"[PIPELINE] BLOQUEOS -> {signal.get('publish_blocked_reasons', [])}")
-            return None
-
         # Ranking
         signal.update(_ranking_layer(signal))
 
-        if not signal.get("qualifies_for_top", False):
-            print(f"[PIPELINE] FINAL RECHAZADO POR RANKING -> {partido.get('local')} vs {partido.get('visitante')}")
-            return None
+        # Decisión única para panel
+        signal.update(_build_panel_decision(signal))
 
         # Razones finales
         signal.update(_build_reason_fields(partido, signal))
