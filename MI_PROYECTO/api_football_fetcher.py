@@ -15,7 +15,8 @@ DEFAULT_API_URL = "https://v3.football.api-sports.io/fixtures?live=all"
 STATISTICS_URL = "https://v3.football.api-sports.io/fixtures/statistics"
 
 REQUEST_TIMEOUT = 25
-STAT_REQUEST_SLEEP_MS = 120   # pequeña pausa entre requests para no castigar la API
+STAT_REQUEST_SLEEP_MS = 120
+MAX_SOURCE_DELAY_SECONDS = 90
 
 
 # =========================================================
@@ -48,6 +49,23 @@ def _safe_text(value: Any, default: str = "") -> str:
         return default
     text = str(value).strip()
     return text if text else default
+
+
+def _parse_iso_timestamp_to_epoch(ts: Any) -> int:
+    """
+    Convierte ISO timestamp tipo:
+    2025-03-01T19:45:00+00:00
+    """
+    text = _safe_text(ts)
+    if not text:
+        return 0
+
+    try:
+        from datetime import datetime
+        dt = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        return int(dt.timestamp())
+    except Exception:
+        return 0
 
 
 def _build_headers() -> Dict[str, str]:
@@ -115,23 +133,6 @@ def _pick_stat(source: Dict[str, Any], *keys: str, default: Any = 0) -> Any:
 
 
 def _normalize_stats_payload(statistics_payload: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Normaliza la respuesta de /fixtures/statistics?fixture=<id>
-
-    Respuesta esperada:
-    {
-      "response": [
-        {
-          "team": {...},
-          "statistics": [{"type": "...", "value": ...}, ...]
-        },
-        {
-          "team": {...},
-          "statistics": [{"type": "...", "value": ...}, ...]
-        }
-      ]
-    }
-    """
     response = statistics_payload.get("response", [])
     stats_home: Dict[str, Any] = {}
     stats_away: Dict[str, Any] = {}
@@ -157,11 +158,9 @@ def _normalize_stats_payload(statistics_payload: Dict[str, Any]) -> Dict[str, An
     shots_on_target_home = _to_int(_pick_stat(stats_home, "Shots on Goal"), 0)
     shots_on_target_away = _to_int(_pick_stat(stats_away, "Shots on Goal"), 0)
 
-    # API-Football no siempre trae Dangerous Attacks.
     dangerous_home = _to_int(_pick_stat(stats_home, "Dangerous Attacks", "Dangerous attacks"), 0)
     dangerous_away = _to_int(_pick_stat(stats_away, "Dangerous Attacks", "Dangerous attacks"), 0)
 
-    # Si no hay dangerous attacks reales, derivamos una aproximación
     if dangerous_home == 0:
         dangerous_home = (
             shots_home * 2 +
@@ -213,7 +212,6 @@ def _normalize_stats_payload(statistics_payload: Dict[str, Any]) -> Dict[str, An
 
 def _build_pressure_score(minuto: int, shots_on_target: int, dangerous_attacks: int, corners: int) -> float:
     score = 0.0
-
     score += min(shots_on_target * 1.6, 12.0)
     score += min(dangerous_attacks * 0.22, 12.0)
     score += min(corners * 0.6, 4.0)
@@ -228,7 +226,6 @@ def _build_pressure_score(minuto: int, shots_on_target: int, dangerous_attacks: 
 
 def _build_predictor_score(minuto: int, goles_totales: int, shots_on_target: int, dangerous_attacks: int) -> float:
     score = 0.0
-
     score += min(shots_on_target * 1.4, 10.0)
     score += min(dangerous_attacks * 0.18, 10.0)
 
@@ -244,7 +241,6 @@ def _build_predictor_score(minuto: int, goles_totales: int, shots_on_target: int
 
 def _build_chaos_score(goles_totales: int, yellow_total: int, red_total: int, minuto: int) -> float:
     score = 0.0
-
     score += min(goles_totales * 1.3, 4.0)
     score += min(yellow_total * 0.35, 3.0)
     score += min(red_total * 2.5, 5.0)
@@ -297,6 +293,28 @@ def _goal_probs(minuto: int, pressure_score: float, predictor_score: float, chao
 
 
 # =========================================================
+# FRESHNESS / TIEMPO
+# =========================================================
+def _build_freshness_fields(fixture: Dict[str, Any], fetched_at: int) -> Dict[str, Any]:
+    update_iso = _safe_text(fixture.get("update"))
+    source_updated_at = _parse_iso_timestamp_to_epoch(update_iso)
+
+    delay = 0
+    if source_updated_at > 0:
+        delay = max(0, fetched_at - source_updated_at)
+
+    time_fresh = delay <= MAX_SOURCE_DELAY_SECONDS if source_updated_at > 0 else True
+
+    return {
+        "fetched_at": fetched_at,
+        "source_updated_at": source_updated_at,
+        "source_update_iso": update_iso,
+        "source_delay_seconds": delay,
+        "time_fresh": time_fresh,
+    }
+
+
+# =========================================================
 # FETCH DE ESTADISTICAS POR FIXTURE
 # =========================================================
 def _fetch_fixture_statistics(fixture_id: int, headers: Dict[str, str]) -> Dict[str, Any]:
@@ -318,7 +336,7 @@ def _fetch_fixture_statistics(fixture_id: int, headers: Dict[str, str]) -> Dict[
 # =========================================================
 # NORMALIZACION DEL FIXTURE
 # =========================================================
-def _normalizar_fixture(item: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
+def _normalizar_fixture(item: Dict[str, Any], headers: Dict[str, str], fetched_at: int) -> Dict[str, Any]:
     fixture = item.get("fixture", {}) or {}
     league = item.get("league", {}) or {}
     teams = item.get("teams", {}) or {}
@@ -337,7 +355,6 @@ def _normalizar_fixture(item: Dict[str, Any], headers: Dict[str, str]) -> Dict[s
 
     stats = _fetch_fixture_statistics(fixture_id, headers)
 
-    # Fallback estadístico razonable si la API no responde con stats
     shots = _to_int(stats.get("shots_total"), 0)
     shots_on_target = _to_int(stats.get("shots_on_target_total"), 0)
     dangerous_attacks = _to_int(stats.get("dangerous_attacks_total"), 0)
@@ -345,7 +362,6 @@ def _normalizar_fixture(item: Dict[str, Any], headers: Dict[str, str]) -> Dict[s
     yellow_total = _to_int(stats.get("yellow_total"), 0)
     red_total = _to_int(stats.get("red_total"), 0)
 
-    # Si no llegaron stats, no dejamos todo muerto: usamos una heurística suave por marcador y minuto
     if shots == 0 and shots_on_target == 0 and dangerous_attacks == 0:
         shots = max(0, goles_totales * 3 + (1 if minuto >= 25 else 0))
         shots_on_target = max(0, goles_totales + (1 if minuto >= 35 else 0))
@@ -361,6 +377,8 @@ def _normalizar_fixture(item: Dict[str, Any], headers: Dict[str, str]) -> Dict[s
 
     probs = _goal_probs(minuto, pressure_score, predictor_score, chaos_score)
     momentum = _parse_momentum(minuto, goles_totales, shots, shots_on_target, dangerous_attacks)
+
+    freshness = _build_freshness_fields(fixture, fetched_at)
 
     return {
         "id": fixture_id,
@@ -385,7 +403,7 @@ def _normalizar_fixture(item: Dict[str, Any], headers: Dict[str, str]) -> Dict[s
         "posesion_local": _to_float(stats.get("possession_home"), 0.0),
         "posesion_visitante": _to_float(stats.get("possession_away"), 0.0),
         "momentum": momentum,
-        "cuota": 1.85,
+        "cuota": 0.0,
         "prob_real": 0.75,
         "prob_implicita": 0.54,
         "goal_pressure": {
@@ -406,7 +424,13 @@ def _normalizar_fixture(item: Dict[str, Any], headers: Dict[str, str]) -> Dict[s
             "chaos_reason": "Caos calculado desde goles, tarjetas y minuto",
         },
         "fixture_raw": fixture,
+        "provider_status_short": _safe_text(status.get("short")),
+        "provider_status_long": _safe_text(status.get("long")),
+        "provider_elapsed": minuto,
+        "provider_league_id": _to_int(league.get("id"), 0),
+        "provider_fixture_id": fixture_id,
         "source": "api_football_real",
+        **freshness,
     }
 
 
@@ -414,6 +438,7 @@ def _normalizar_fixture(item: Dict[str, Any], headers: Dict[str, str]) -> Dict[s
 # FALLBACK
 # =========================================================
 def _fallback_demo() -> List[Dict[str, Any]]:
+    now_ts = int(time.time())
     return [{
         "id": 99999,
         "liga": "Demo (API-Football fallback)",
@@ -434,7 +459,7 @@ def _fallback_demo() -> List[Dict[str, Any]]:
         "posesion_local": 53.0,
         "posesion_visitante": 47.0,
         "momentum": "ALTO",
-        "cuota": 1.85,
+        "cuota": 0.0,
         "prob_real": 0.75,
         "prob_implicita": 0.54,
         "goal_pressure": {
@@ -454,6 +479,16 @@ def _fallback_demo() -> List[Dict[str, Any]]:
             "chaos_level": "MEDIO",
             "chaos_reason": "Fallback demo",
         },
+        "provider_status_short": "LIVE",
+        "provider_status_long": "Fallback demo",
+        "provider_elapsed": 45,
+        "provider_league_id": 0,
+        "provider_fixture_id": 99999,
+        "fetched_at": now_ts,
+        "source_updated_at": now_ts,
+        "source_update_iso": "",
+        "source_delay_seconds": 0,
+        "time_fresh": True,
         "source": "fallback_demo",
     }]
 
@@ -466,6 +501,7 @@ def obtener_partidos_en_vivo() -> List[Dict[str, Any]]:
         headers = _build_headers()
         url = _build_url()
 
+        fetched_at = int(time.time())
         data = _request_json(url, headers=headers)
         fixtures = data.get("response", [])
 
@@ -477,14 +513,13 @@ def obtener_partidos_en_vivo() -> List[Dict[str, Any]]:
 
         for item in fixtures:
             try:
-                normalizado = _normalizar_fixture(item, headers)
+                normalizado = _normalizar_fixture(item, headers, fetched_at)
 
                 if normalizado.get("estado_partido") == "finalizado":
                     continue
 
                 resultados.append(normalizado)
 
-                # pequeña pausa entre consultas de stats
                 time.sleep(STAT_REQUEST_SLEEP_MS / 1000.0)
 
             except Exception as e:
