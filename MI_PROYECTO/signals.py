@@ -1,6 +1,7 @@
 # signals.py
 
 from typing import List, Dict, Any, Tuple
+import config
 
 # =========================================================
 # IMPORT PIPELINE OFICIAL
@@ -56,16 +57,31 @@ def _safe_lower(value: Any) -> str:
 
 
 # =========================================================
+# NORMALIZACION SIMPLE DE ESTADO
+# =========================================================
+def _normalizar_estado_partido(value: Any) -> str:
+    estado = _safe_lower(value, "en_juego")
+
+    if estado in {"ft", "finished", "finalizado", "ended", "after extra time", "penalties"}:
+        return "finalizado"
+
+    if estado in {"1h", "2h", "ht", "live", "en_juego", "activo", "playing"}:
+        return "en_juego"
+
+    return "en_juego"
+
+
+# =========================================================
 # VALIDACION BASE DEL PARTIDO
 # =========================================================
 def partido_es_apostable(p: Dict[str, Any]) -> Tuple[bool, str]:
     minuto = _safe_int(p.get("minuto", 0), 0)
-    estado = _safe_lower(p.get("estado_partido", "activo"))
+    estado = _normalizar_estado_partido(p.get("estado_partido", "en_juego"))
 
-    if estado in {"finalizado", "finished", "ft", "ended", "after extra time", "penalties"}:
+    if estado == "finalizado":
         return False, "Partido finalizado"
 
-    if minuto >= 89:
+    if minuto > 92:
         return False, "Minuto demasiado alto"
 
     return True, "OK"
@@ -83,6 +99,18 @@ def normalizar_partido_para_pipeline(p: Dict[str, Any]) -> Dict[str, Any]:
     goal_predictor = p.get("goal_predictor", {}) or {}
     chaos = p.get("chaos", {}) or {}
 
+    cuota = _safe_float(p.get("cuota", 0.0), 0.0)
+    if cuota <= 0:
+        cuota = config.DEFAULT_ODD
+
+    prob_real = _safe_float(p.get("prob_real", 0.0), 0.0)
+    if prob_real <= 0:
+        prob_real = config.DEFAULT_PROB_REAL
+
+    prob_implicita = _safe_float(p.get("prob_implicita", 0.0), 0.0)
+    if prob_implicita <= 0:
+        prob_implicita = config.DEFAULT_PROB_IMPLICITA
+
     partido = {
         # Identidad
         "id": p.get("id", ""),
@@ -92,7 +120,7 @@ def normalizar_partido_para_pipeline(p: Dict[str, Any]) -> Dict[str, Any]:
         "pais": _safe_text(p.get("pais", "Mundo"), "Mundo"),
 
         # Estado vivo
-        "estado_partido": p.get("estado_partido", "EN_JUEGO"),
+        "estado_partido": _normalizar_estado_partido(p.get("estado_partido", "EN_JUEGO")),
         "minuto": _safe_int(p.get("minuto", 0), 0),
         "marcador_local": _safe_int(p.get("marcador_local", 0), 0),
         "marcador_visitante": _safe_int(p.get("marcador_visitante", 0), 0),
@@ -118,9 +146,15 @@ def normalizar_partido_para_pipeline(p: Dict[str, Any]) -> Dict[str, Any]:
         },
 
         # Mercado / value base
-        "prob_real": _safe_float(p.get("prob_real", 0.0), 0.0),
-        "prob_implicita": _safe_float(p.get("prob_implicita", 0.0), 0.0),
-        "cuota": _safe_float(p.get("cuota", 1.85), 1.85),
+        "prob_real": prob_real,
+        "prob_implicita": prob_implicita,
+        "cuota": cuota,
+
+        # Frescura / delay
+        "fetched_at": _safe_int(p.get("fetched_at", 0), 0),
+        "source_updated_at": _safe_int(p.get("source_updated_at", 0), 0),
+        "source_delay_seconds": _safe_int(p.get("source_delay_seconds", 0), 0),
+        "time_fresh": bool(p.get("time_fresh", True)),
 
         # Extras
         "fixture": p.get("fixture", {}),
@@ -187,4 +221,4 @@ def generar_senales(partidos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         reverse=True
     )
 
-    return senales
+    return senales[:config.PUBLISH_MAX_SIGNALS]
