@@ -7,6 +7,9 @@ import requests
 SPORTS_URL = "https://api.the-odds-api.com/v4/sports"
 SPORT_ODDS_URL_TEMPLATE = "https://api.the-odds-api.com/v4/sports/{sport_key}/odds"
 
+ODDS_API_IO_BASE_URL = "https://api.odds-api.io/v3"
+REQUEST_TIMEOUT = 15
+
 
 # =========================================================
 # HELPERS
@@ -134,10 +137,32 @@ def _extract_away_team(event: Dict[str, Any]) -> str:
     return ""
 
 
-def _request_json(url: str, params: Dict[str, Any], timeout: int = 15) -> Any:
-    response = requests.get(url, params=params, timeout=timeout)
+def _request_json(url: str, params: Dict[str, Any], timeout: int = REQUEST_TIMEOUT, headers: Optional[Dict[str, str]] = None) -> Any:
+    response = requests.get(url, params=params, headers=headers or {}, timeout=timeout)
     response.raise_for_status()
     return response.json()
+
+
+def _get_provider_mode() -> str:
+    return _safe_text(os.getenv("ODDS_PROVIDER", "auto"), "auto").lower()
+
+
+def _empty_response(source: str, error: str = "") -> Dict[str, Any]:
+    return {
+        "ok": False,
+        "error": error,
+        "odds_source": source,
+        "odds_data_available": False,
+        "home_team": "",
+        "away_team": "",
+        "commence_time": "",
+        "sport_key": "",
+        "matched_event_id": "",
+        "match_score": 0,
+        "searched_sport_keys": [],
+        "bookmakers_found": 0,
+        "markets": [],
+    }
 
 
 # =========================================================
@@ -294,14 +319,14 @@ def _score_sport_match(sport: Dict[str, Any], league: str, country: str) -> int:
 
 
 # =========================================================
-# DESCUBRIR SPORTS DISPONIBLES
+# THE ODDS API
 # =========================================================
 def _get_active_sports(api_key: str) -> List[Dict[str, Any]]:
     try:
         data = _request_json(
             SPORTS_URL,
             params={"apiKey": api_key},
-            timeout=15,
+            timeout=REQUEST_TIMEOUT,
         )
         if isinstance(data, list):
             return data
@@ -348,10 +373,7 @@ def _resolve_candidate_sport_keys(api_key: str, league: str, country: str = "") 
     return candidates
 
 
-# =========================================================
-# EXTRAER MERCADOS TOTALS
-# =========================================================
-def _extract_totals_market(bookmakers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _extract_totals_market_the_odds(bookmakers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     results: List[Dict[str, Any]] = []
 
     for bookmaker in bookmakers or []:
@@ -394,9 +416,6 @@ def _extract_totals_market(bookmakers: List[Dict[str, Any]]) -> List[Dict[str, A
     return results
 
 
-# =========================================================
-# ELEGIR MEJOR EVENTO
-# =========================================================
 def _choose_best_event(events: List[Dict[str, Any]], local: str, visitante: str) -> Tuple[Optional[Dict[str, Any]], int]:
     best_event = None
     best_score = -1
@@ -420,9 +439,6 @@ def _choose_best_event(events: List[Dict[str, Any]], local: str, visitante: str)
     return best_event, best_score
 
 
-# =========================================================
-# CONSULTAR ODDS POR SPORT KEY
-# =========================================================
 def _fetch_odds_for_sport(api_key: str, sport_key: str) -> List[Dict[str, Any]]:
     url = SPORT_ODDS_URL_TEMPLATE.format(sport_key=sport_key)
     params = {
@@ -434,7 +450,7 @@ def _fetch_odds_for_sport(api_key: str, sport_key: str) -> List[Dict[str, Any]]:
     }
 
     try:
-        data = _request_json(url, params=params, timeout=15)
+        data = _request_json(url, params=params, timeout=REQUEST_TIMEOUT)
         if isinstance(data, list):
             return data
         return []
@@ -442,27 +458,9 @@ def _fetch_odds_for_sport(api_key: str, sport_key: str) -> List[Dict[str, Any]]:
         return []
 
 
-# =========================================================
-# API PRINCIPAL
-# =========================================================
-def obtener_odds_partido(local: str, visitante: str, league: str = "", country: str = "") -> Dict[str, Any]:
+def _obtener_odds_the_odds_api(local: str, visitante: str, league: str = "", country: str = "") -> Dict[str, Any]:
     api_key = os.getenv("THE_ODDS_API_KEY", "").strip()
-
-    base_response = {
-        "ok": False,
-        "error": "",
-        "odds_source": "the_odds_api",
-        "odds_data_available": False,
-        "home_team": "",
-        "away_team": "",
-        "commence_time": "",
-        "sport_key": "",
-        "matched_event_id": "",
-        "match_score": 0,
-        "searched_sport_keys": [],
-        "bookmakers_found": 0,
-        "markets": [],
-    }
+    base_response = _empty_response("the_odds_api")
 
     if not api_key:
         base_response["error"] = "THE_ODDS_API_KEY no configurada"
@@ -504,7 +502,7 @@ def obtener_odds_partido(local: str, visitante: str, league: str = "", country: 
     away_team = _extract_away_team(best_event)
     commence_time = _safe_text(best_event.get("commence_time"))
     bookmakers = best_event.get("bookmakers") or []
-    markets = _extract_totals_market(bookmakers)
+    markets = _extract_totals_market_the_odds(bookmakers)
 
     return {
         "ok": True,
@@ -520,4 +518,252 @@ def obtener_odds_partido(local: str, visitante: str, league: str = "", country: 
         "searched_sport_keys": sport_candidates,
         "bookmakers_found": len(bookmakers),
         "markets": markets,
-               }
+    }
+
+
+# =========================================================
+# ODDS-API.IO
+# =========================================================
+def _extract_totals_market_odds_api_io(data: Any) -> List[Dict[str, Any]]:
+    results: List[Dict[str, Any]] = []
+
+    if isinstance(data, dict):
+        if isinstance(data.get("data"), list):
+            data = data.get("data")
+        elif isinstance(data.get("matches"), list):
+            data = data.get("matches")
+        elif isinstance(data.get("response"), list):
+            data = data.get("response")
+        else:
+            data = [data]
+
+    if not isinstance(data, list):
+        return results
+
+    for event in data:
+        bookmakers = event.get("bookmakers") or event.get("sites") or []
+        for bookmaker in bookmakers:
+            bookmaker_name = _safe_text(
+                bookmaker.get("title") or bookmaker.get("name") or bookmaker.get("key"),
+                "bookmaker_desconocido"
+            )
+
+            markets = bookmaker.get("markets") or bookmaker.get("odds") or []
+            for market in markets:
+                market_name = _safe_text(
+                    market.get("key") or market.get("name") or market.get("market"),
+                    ""
+                ).lower()
+
+                if "total" not in market_name:
+                    continue
+
+                outcomes = market.get("outcomes") or market.get("values") or []
+                grouped: Dict[float, Dict[str, float]] = {}
+
+                for outcome in outcomes:
+                    outcome_name = _safe_text(
+                        outcome.get("name") or outcome.get("label") or outcome.get("side"),
+                        ""
+                    ).upper()
+
+                    point = _safe_float(
+                        outcome.get("point") or outcome.get("line") or outcome.get("total"),
+                        0.0
+                    )
+
+                    price = _safe_float(
+                        outcome.get("price") or outcome.get("odd") or outcome.get("odds"),
+                        0.0
+                    )
+
+                    if point <= 0 or price <= 0:
+                        continue
+
+                    normalized_name = outcome_name
+                    if "OVER" in normalized_name:
+                        normalized_name = "OVER"
+                    elif "UNDER" in normalized_name:
+                        normalized_name = "UNDER"
+
+                    if normalized_name not in {"OVER", "UNDER"}:
+                        continue
+
+                    grouped.setdefault(point, {})
+                    grouped[point][normalized_name] = price
+
+                for point, prices in grouped.items():
+                    over_price = _safe_float(prices.get("OVER"), 0.0)
+                    under_price = _safe_float(prices.get("UNDER"), 0.0)
+
+                    if over_price <= 0 and under_price <= 0:
+                        continue
+
+                    results.append({
+                        "bookmaker": bookmaker_name,
+                        "line": point,
+                        "over_price": over_price,
+                        "under_price": under_price,
+                    })
+
+    return results
+
+
+def _extract_event_teams_odds_api_io(event: Dict[str, Any]) -> Tuple[str, str]:
+    home_team = _safe_text(
+        event.get("home_team") or event.get("home") or event.get("team_home")
+    )
+    away_team = _safe_text(
+        event.get("away_team") or event.get("away") or event.get("team_away")
+    )
+
+    teams = event.get("teams") or []
+    if (not home_team or not away_team) and isinstance(teams, list) and len(teams) >= 2:
+        if not home_team:
+            home_team = _safe_text(teams[0])
+        if not away_team:
+            away_team = _safe_text(teams[1])
+
+    return home_team, away_team
+
+
+def _choose_best_event_odds_api_io(events: List[Dict[str, Any]], local: str, visitante: str) -> Tuple[Optional[Dict[str, Any]], int]:
+    best_event = None
+    best_score = -1
+
+    for event in events or []:
+        home_team, away_team = _extract_event_teams_odds_api_io(event)
+        score = _match_score(local, visitante, home_team, away_team)
+
+        if score > best_score:
+            best_score = score
+            best_event = event
+
+    if best_event is None:
+        return None, 0
+
+    if best_score < 90:
+        return None, best_score
+
+    return best_event, best_score
+
+
+def _fetch_odds_api_io_events(api_key: str, league: str = "", country: str = "") -> List[Dict[str, Any]]:
+    base_url = _safe_text(os.getenv("ODDS_API_IO_BASE_URL"), ODDS_API_IO_BASE_URL)
+    url = f"{base_url.rstrip('/')}/odds"
+
+    params: Dict[str, Any] = {
+        "apiKey": api_key,
+        "sport": "soccer",
+    }
+
+    if league:
+        params["league"] = league
+    if country:
+        params["country"] = country
+
+    try:
+        data = _request_json(url, params=params, timeout=REQUEST_TIMEOUT)
+        if isinstance(data, dict):
+            if isinstance(data.get("data"), list):
+                return data.get("data")
+            if isinstance(data.get("matches"), list):
+                return data.get("matches")
+            if isinstance(data.get("response"), list):
+                return data.get("response")
+        if isinstance(data, list):
+            return data
+        return []
+    except Exception:
+        return []
+
+
+def _obtener_odds_odds_api_io(local: str, visitante: str, league: str = "", country: str = "") -> Dict[str, Any]:
+    api_key = os.getenv("ODDS_API_IO_KEY", "").strip()
+    base_response = _empty_response("odds_api_io")
+
+    if not api_key:
+        base_response["error"] = "ODDS_API_IO_KEY no configurada"
+        return base_response
+
+    events = _fetch_odds_api_io_events(api_key, league=league, country=country)
+    base_response["searched_sport_keys"] = ["soccer"]
+
+    if not events:
+        base_response["error"] = "odds-api.io no devolvió eventos utilizables"
+        return base_response
+
+    best_event, best_score = _choose_best_event_odds_api_io(events, local, visitante)
+    if not best_event:
+        base_response["error"] = "no se encontró partido compatible en odds-api.io"
+        return base_response
+
+    home_team, away_team = _extract_event_teams_odds_api_io(best_event)
+    commence_time = _safe_text(
+        best_event.get("commence_time") or best_event.get("start_time") or best_event.get("kickoff")
+    )
+
+    markets = _extract_totals_market_odds_api_io([best_event])
+
+    bookmakers = best_event.get("bookmakers") or best_event.get("sites") or []
+
+    return {
+        "ok": True,
+        "error": "" if markets else "partido encontrado pero sin mercado totals disponible",
+        "odds_source": "odds_api_io",
+        "odds_data_available": len(markets) > 0,
+        "home_team": home_team,
+        "away_team": away_team,
+        "commence_time": commence_time,
+        "sport_key": "soccer",
+        "matched_event_id": _safe_text(best_event.get("id") or best_event.get("event_id")),
+        "match_score": best_score,
+        "searched_sport_keys": ["soccer"],
+        "bookmakers_found": len(bookmakers),
+        "markets": markets,
+    }
+
+
+# =========================================================
+# API PRINCIPAL
+# =========================================================
+def obtener_odds_partido(local: str, visitante: str, league: str = "", country: str = "") -> Dict[str, Any]:
+    provider = _get_provider_mode()
+
+    if provider == "odds_api_io":
+        return _obtener_odds_odds_api_io(local, visitante, league=league, country=country)
+
+    if provider == "the_odds_api":
+        return _obtener_odds_the_odds_api(local, visitante, league=league, country=country)
+
+    # auto
+    primary = _obtener_odds_odds_api_io(local, visitante, league=league, country=country)
+    if primary.get("odds_data_available", False):
+        return primary
+
+    fallback = _obtener_odds_the_odds_api(local, visitante, league=league, country=country)
+    if fallback.get("odds_data_available", False):
+        return fallback
+
+    # si ninguna trae odds útiles, devolver la más informativa
+    primary_error = _safe_text(primary.get("error"))
+    fallback_error = _safe_text(fallback.get("error"))
+
+    return {
+        "ok": False,
+        "error": f"odds_api_io: {primary_error or 'sin datos'} | the_odds_api: {fallback_error or 'sin datos'}",
+        "odds_source": "auto",
+        "odds_data_available": False,
+        "home_team": "",
+        "away_team": "",
+        "commence_time": "",
+        "sport_key": "",
+        "matched_event_id": "",
+        "match_score": max(_safe_int(primary.get("match_score")), _safe_int(fallback.get("match_score"))),
+        "searched_sport_keys": list({
+            *primary.get("searched_sport_keys", []),
+            *fallback.get("searched_sport_keys", []),
+        }),
+        "bookmakers_found": max(_safe_int(primary.get("bookmakers_found")), _safe_int(fallback.get("bookmakers_found"))),
+        "markets": [],
+        }
