@@ -2,6 +2,7 @@ import os
 from typing import Dict, Any, List, Optional, Tuple
 
 import requests
+from requests.exceptions import SSLError, Timeout, ConnectionError, HTTPError, RequestException
 
 
 SPORTS_URL = "https://api.the-odds-api.com/v4/sports"
@@ -137,8 +138,18 @@ def _extract_away_team(event: Dict[str, Any]) -> str:
     return ""
 
 
-def _request_json(url: str, params: Dict[str, Any], timeout: int = REQUEST_TIMEOUT, headers: Optional[Dict[str, str]] = None) -> Any:
-    response = requests.get(url, params=params, headers=headers or {}, timeout=timeout)
+def _request_json(
+    url: str,
+    params: Dict[str, Any],
+    timeout: int = REQUEST_TIMEOUT,
+    headers: Optional[Dict[str, str]] = None,
+) -> Any:
+    response = requests.get(
+        url,
+        params=params,
+        headers=headers or {},
+        timeout=timeout,
+    )
     response.raise_for_status()
     return response.json()
 
@@ -163,6 +174,20 @@ def _empty_response(source: str, error: str = "") -> Dict[str, Any]:
         "bookmakers_found": 0,
         "markets": [],
     }
+
+
+def _error_label(exc: Exception) -> str:
+    if isinstance(exc, SSLError):
+        return f"SSL_ERROR: {exc}"
+    if isinstance(exc, Timeout):
+        return f"TIMEOUT: {exc}"
+    if isinstance(exc, ConnectionError):
+        return f"CONNECTION_ERROR: {exc}"
+    if isinstance(exc, HTTPError):
+        return f"HTTP_ERROR: {exc}"
+    if isinstance(exc, RequestException):
+        return f"REQUEST_ERROR: {exc}"
+    return f"UNEXPECTED_ERROR: {exc}"
 
 
 # =========================================================
@@ -725,27 +750,42 @@ def _obtener_odds_odds_api_io(local: str, visitante: str, league: str = "", coun
 
 
 # =========================================================
+# WRAPPERS SEGUROS POR PROVEEDOR
+# =========================================================
+def _safe_provider_odds_api_io(local: str, visitante: str, league: str = "", country: str = "") -> Dict[str, Any]:
+    try:
+        return _obtener_odds_odds_api_io(local, visitante, league=league, country=country)
+    except Exception as exc:
+        return _empty_response("odds_api_io", _error_label(exc))
+
+
+def _safe_provider_the_odds_api(local: str, visitante: str, league: str = "", country: str = "") -> Dict[str, Any]:
+    try:
+        return _obtener_odds_the_odds_api(local, visitante, league=league, country=country)
+    except Exception as exc:
+        return _empty_response("the_odds_api", _error_label(exc))
+
+
+# =========================================================
 # API PRINCIPAL
 # =========================================================
 def obtener_odds_partido(local: str, visitante: str, league: str = "", country: str = "") -> Dict[str, Any]:
     provider = _get_provider_mode()
 
     if provider == "odds_api_io":
-        return _obtener_odds_odds_api_io(local, visitante, league=league, country=country)
+        return _safe_provider_odds_api_io(local, visitante, league=league, country=country)
 
     if provider == "the_odds_api":
-        return _obtener_odds_the_odds_api(local, visitante, league=league, country=country)
+        return _safe_provider_the_odds_api(local, visitante, league=league, country=country)
 
-    # auto
-    primary = _obtener_odds_odds_api_io(local, visitante, league=league, country=country)
+    primary = _safe_provider_odds_api_io(local, visitante, league=league, country=country)
     if primary.get("odds_data_available", False):
         return primary
 
-    fallback = _obtener_odds_the_odds_api(local, visitante, league=league, country=country)
+    fallback = _safe_provider_the_odds_api(local, visitante, league=league, country=country)
     if fallback.get("odds_data_available", False):
         return fallback
 
-    # si ninguna trae odds útiles, devolver la más informativa
     primary_error = _safe_text(primary.get("error"))
     fallback_error = _safe_text(fallback.get("error"))
 
@@ -764,6 +804,9 @@ def obtener_odds_partido(local: str, visitante: str, league: str = "", country: 
             *primary.get("searched_sport_keys", []),
             *fallback.get("searched_sport_keys", []),
         }),
-        "bookmakers_found": max(_safe_int(primary.get("bookmakers_found")), _safe_int(fallback.get("bookmakers_found"))),
+        "bookmakers_found": max(
+            _safe_int(primary.get("bookmakers_found")),
+            _safe_int(fallback.get("bookmakers_found"))
+        ),
         "markets": [],
-        }
+    }
