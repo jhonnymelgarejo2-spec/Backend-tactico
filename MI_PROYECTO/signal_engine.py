@@ -156,7 +156,7 @@ def calcular_confianza_base(datos):
     elif 76 <= minuto <= 88:
         confianza += 5
 
-    return clamp(confianza, 40, 95)
+    return clamp(confianza, 35, 95)
 
 
 # =========================================================
@@ -366,9 +366,9 @@ def clasificar_tier(confianza, valor, value_categoria="SIN_VALUE"):
         return "TOP"
     if confianza >= 74 and valor >= 2.5:
         return "FUERTE"
-    if confianza >= 67 and valor >= 1.0:
+    if confianza >= 60 and valor >= 0.5:
         return "NORMAL"
-    return "DESCARTAR"
+    return "BAJA"
 
 
 # =========================================================
@@ -739,7 +739,7 @@ def build_over_next_15_signal(datos, estado, gol_inminente, base, valor, prob_re
 
     if confianza < config.OVER_NEXT_15_MIN_CONFIDENCE:
         return None
-    if valor < config.OVER_NEXT_15_MIN_VALUE:
+    if minuto < config.OVER_NEXT_15_MIN_MINUTE or minuto > config.OVER_NEXT_15_MAX_MINUTE:
         return None
 
     linea = total_goles + 0.5
@@ -758,10 +758,6 @@ def build_over_next_15_signal(datos, estado, gol_inminente, base, valor, prob_re
 
     senal = enriquecer_con_value(senal)
     senal["tier"] = clasificar_tier(senal["confianza"], senal["valor"], senal["value_categoria"])
-
-    if senal["tier"] == "DESCARTAR":
-        return None
-
     return senal
 
 
@@ -792,7 +788,7 @@ def build_over_match_signal(datos, estado, gol_inminente, base, valor, prob_real
 
     if confianza < config.OVER_MATCH_MIN_CONFIDENCE:
         return None
-    if valor < config.OVER_MATCH_MIN_VALUE:
+    if minuto < config.OVER_MATCH_MIN_MINUTE or minuto > config.OVER_MATCH_MAX_MINUTE:
         return None
 
     linea_match = max(1.5, total_goles + 0.5)
@@ -811,10 +807,6 @@ def build_over_match_signal(datos, estado, gol_inminente, base, valor, prob_real
 
     senal = enriquecer_con_value(senal)
     senal["tier"] = clasificar_tier(senal["confianza"], senal["valor"], senal["value_categoria"])
-
-    if senal["tier"] == "DESCARTAR":
-        return None
-
     return senal
 
 
@@ -882,17 +874,7 @@ def build_under_match_signal(datos, estado, gol_inminente, valor, prob_real, pro
 
     if confianza < config.UNDER_MATCH_MIN_CONFIDENCE:
         return None
-    if valor < config.UNDER_MATCH_MIN_VALUE:
-        return None
     if minuto < config.UNDER_MATCH_MIN_MINUTE:
-        return None
-    if xg >= config.UNDER_MATCH_MAX_XG:
-        return None
-    if shots_on_target > config.UNDER_MATCH_MAX_SHOTS_ON_TARGET:
-        return None
-    if dangerous_attacks >= config.UNDER_MATCH_MAX_DANGEROUS_ATTACKS:
-        return None
-    if (goal10 * 100) >= config.UNDER_MATCH_MAX_GOAL_PROB_10:
         return None
 
     senal = {
@@ -909,10 +891,6 @@ def build_under_match_signal(datos, estado, gol_inminente, valor, prob_real, pro
 
     senal = enriquecer_con_value(senal)
     senal["tier"] = clasificar_tier(senal["confianza"], senal["valor"], senal["value_categoria"])
-
-    if senal["tier"] == "DESCARTAR":
-        return None
-
     return senal
 
 
@@ -924,9 +902,9 @@ def generar_senales_posibles(datos):
     if minuto >= 89:
         return []
 
-    cuota = safe_float(datos.get("cuota", config.DEFAULT_ODD), config.DEFAULT_ODD)
-    if not cuota_en_rango(cuota):
-        return []
+    cuota = safe_float(datos.get("cuota", 0.0), 0.0)
+    if cuota <= 0:
+        cuota = config.DEFAULT_ODD
 
     valor = calcular_valor(datos)
     prob_real = safe_float(datos.get("prob_real", config.DEFAULT_PROB_REAL), config.DEFAULT_PROB_REAL)
@@ -1130,7 +1108,7 @@ def generar_senal(datos):
             "minuto": safe_int(datos.get("minuto", 0), 0),
             "mercado": "SIN_SEÑAL",
             "apuesta": "Sin oportunidad clara",
-            "cuota": safe_float(datos.get("cuota", config.DEFAULT_ODD), config.DEFAULT_ODD),
+            "cuota": safe_float(datos.get("cuota", config.DEFAULT_ODD), config.DEFAULT_ODD) or config.DEFAULT_ODD,
             "confianza": calcular_confianza_base(datos),
             "valor": calcular_valor(datos),
             "prob_real": safe_float(datos.get("prob_real", config.DEFAULT_PROB_REAL), config.DEFAULT_PROB_REAL),
@@ -1171,7 +1149,7 @@ def generar_senal(datos):
 
     tactical_score = calcular_tactical_score(datos, estado, gol_inminente)
 
-    ai_decision_score = round(
+    base_decision_score = round(
         (safe_float(resultado.get("confianza", 0), 0.0) * 0.65) +
         (safe_float(resultado.get("valor", 0), 0.0) * 1.2) +
         (tactical_score * 0.25),
@@ -1193,11 +1171,11 @@ def generar_senal(datos):
     resultado["linea_goles_probable"] = pred_goles["linea_goles_probable"]
     resultado["over_under_probable"] = pred_goles["over_under_probable"]
     resultado["confianza_prediccion"] = pred_ganador["confianza_prediccion"]
-    resultado["recomendacion_final"] = "APOSTAR"
+    resultado["recomendacion_final"] = "PENDIENTE_VALIDACION"
     resultado["riesgo_operativo"] = riesgo_operativo
 
     resultado["tactical_score"] = tactical_score
-    resultado["ai_decision_score"] = ai_decision_score
+    resultado["ai_decision_score"] = base_decision_score
     resultado["risk_score"] = riesgo_operativo_a_score(riesgo_operativo, datos, estado)
     resultado["signal_score"] = calcular_signal_score(resultado, datos, estado, gol_inminente)
     resultado["signal_rank"] = signal_rank_desde_score(resultado["signal_score"])
