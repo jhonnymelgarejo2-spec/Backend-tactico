@@ -17,6 +17,7 @@
       --green: #29d17d;
       --yellow: #ffcc66;
       --red: #ff6b6b;
+      --blue: #7db8ff;
       --shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
       --radius: 18px;
       --maxw: 1500px;
@@ -339,6 +340,12 @@
       border-color: rgba(255, 107, 107, 0.24);
     }
 
+    .badge-blue {
+      background: rgba(125, 184, 255, 0.14);
+      color: #c9e0ff;
+      border-color: rgba(125, 184, 255, 0.24);
+    }
+
     .detail-link {
       color: var(--accent);
       font-size: 13px;
@@ -453,9 +460,9 @@
 
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-label">Señales activas</div>
+        <div class="stat-label">Señales visibles</div>
         <div class="stat-value" id="statSignals">0</div>
-        <div class="stat-sub">Después de filtros</div>
+        <div class="stat-sub">Máximo 6</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Hot matches</div>
@@ -513,6 +520,7 @@
               <option value="all">Todas las acciones</option>
               <option value="apostar">Solo apostar</option>
               <option value="observar">Solo observar</option>
+              <option value="bloqueadas">Solo bloqueadas</option>
             </select>
             <select id="sortFilter" class="filter-select">
               <option value="ranking">Ordenar por ranking</option>
@@ -584,13 +592,32 @@
       return "rank-normal";
     }
 
-    function actionBadge(signal) {
-      const action = safeText(signal.recomendacion_final || signal.ai_recommendation || "OBSERVAR").toUpperCase();
-      const oddsOk = Boolean(signal.odds_data_available) && Boolean(signal.odds_validation_ok);
+    function hasRealOdds(signal) {
+      return Boolean(signal.odds_data_available) && Boolean(signal.odds_validation_ok);
+    }
 
-      if (!oddsOk) return { text: "OBSERVAR", className: "badge-yellow" };
-      if (action.includes("NO_APOSTAR")) return { text: "NO APOSTAR", className: "badge-red" };
-      if (action.includes("APOSTAR")) return { text: "APOSTAR", className: "badge-green" };
+    function getPanelDecision(signal) {
+      return safeText(signal.decision_panel_final || "OBSERVAR").toUpperCase();
+    }
+
+    function actionBadge(signal) {
+      const action = getPanelDecision(signal);
+
+      if (action === "APOSTAR_FUERTE") {
+        return { text: "APOSTAR FUERTE", className: "badge-green" };
+      }
+      if (action === "APOSTAR") {
+        return { text: "APOSTAR", className: "badge-green" };
+      }
+      if (action === "APOSTAR_SUAVE") {
+        return { text: "APOSTAR SUAVE", className: "badge-blue" };
+      }
+      if (action === "NO_APOSTAR") {
+        return { text: "NO APOSTAR", className: "badge-red" };
+      }
+      if (action === "NO_PUBLICAR") {
+        return { text: "BLOQUEADA", className: "badge-red" };
+      }
       return { text: "OBSERVAR", className: "badge-yellow" };
     }
 
@@ -598,9 +625,21 @@
       const available = Boolean(signal.odds_data_available);
       const valid = Boolean(signal.odds_validation_ok);
 
-      if (available && valid) return { text: "VALIDADA", className: "badge-green" };
+      if (available && valid) return { text: "ODDS REALES", className: "badge-green" };
       if (available && !valid) return { text: "ODDS FALLIDAS", className: "badge-red" };
-      return { text: "SIN ODDS", className: "badge-yellow" };
+      return { text: "SIN ODDS REALES", className: "badge-yellow" };
+    }
+
+    function cooldownBadge(signal) {
+      const blocked = Boolean(signal.post_goal_cooldown_block);
+      if (blocked) {
+        return { text: "COOLDOWN", className: "badge-red" };
+      }
+      return null;
+    }
+
+    function visibleSignalValue(signal) {
+      return safeNumber(signal.value ?? signal.valor, 0);
     }
 
     function applyFilters(signals) {
@@ -641,13 +680,15 @@
       }
 
       if (action === "apostar") {
-        out = out.filter(s => actionBadge(s).text === "APOSTAR");
+        out = out.filter(s => ["APOSTAR_FUERTE", "APOSTAR", "APOSTAR_SUAVE"].includes(getPanelDecision(s)));
       } else if (action === "observar") {
-        out = out.filter(s => actionBadge(s).text === "OBSERVAR");
+        out = out.filter(s => getPanelDecision(s) === "OBSERVAR");
+      } else if (action === "bloqueadas") {
+        out = out.filter(s => ["NO_PUBLICAR", "NO_APOSTAR"].includes(getPanelDecision(s)));
       }
 
       if (sort === "value") {
-        out.sort((a, b) => safeNumber(b.value ?? b.valor, 0) - safeNumber(a.value ?? a.valor, 0));
+        out.sort((a, b) => visibleSignalValue(b) - visibleSignalValue(a));
       } else if (sort === "confidence") {
         out.sort((a, b) => safeNumber(b.confidence, 0) - safeNumber(a.confidence, 0));
       } else if (sort === "risk_low") {
@@ -675,7 +716,9 @@
         const rankCls = rankClass(rank);
         const action = actionBadge(signal);
         const odds = oddsBadge(signal);
+        const cooldown = cooldownBadge(signal);
 
+        const realOdds = hasRealOdds(signal);
         const probReal = safeNumber(signal.prob_real ?? signal.prob, 0);
         const fair = probReal > 0 ? getFairOdds(probReal) : 0;
 
@@ -686,11 +729,11 @@
         const selection = safeText(signal.selection, "-");
         const reason = safeText(signal.reason || signal.razon_tactica || "Sin razón disponible");
         const odd = safeNumber(signal.odd ?? signal.cuota, 0);
-        const value = safeNumber(signal.value ?? signal.valor, 0);
+        const value = visibleSignalValue(signal);
         const risk = safeNumber(signal.risk_score, 0);
         const confidence = safeNumber(signal.confidence, 0);
         const ai = safeNumber(signal.ai_decision_score ?? signal.ai_score, 0);
-        const bookmaker = safeText(signal.odds_selected_bookmaker || "Sin bookmaker");
+        const bookmaker = realOdds ? safeText(signal.odds_selected_bookmaker || "Bookmaker") : "Sin bookmaker";
 
         return `
           <div class="signal-card" onclick="goToMatchDetail('${signal.match_id}')">
@@ -718,7 +761,7 @@
 
             <div class="signal-metrics">
               <div class="metric-box">
-                <div class="k">Cuota</div>
+                <div class="k">Cuota ${realOdds ? "real" : "modelo"}</div>
                 <div class="v">${odd > 0 ? fmt(odd, 2) : "-"}</div>
               </div>
               <div class="metric-box">
@@ -747,6 +790,7 @@
               <div class="signal-footer-left">
                 <span class="badge ${action.className}">${action.text}</span>
                 <span class="badge ${odds.className}">${odds.text}</span>
+                ${cooldown ? `<span class="badge ${cooldown.className}">${cooldown.text}</span>` : ""}
                 <span class="badge">${bookmaker}</span>
               </div>
               <div class="detail-link">Ver detalle →</div>
@@ -755,7 +799,7 @@
         `;
       }).join("");
 
-      const visibleValues = signals.map(s => safeNumber(s.value ?? s.valor, 0));
+      const visibleValues = signals.map(s => visibleSignalValue(s));
       const visibleRisks = signals.map(s => safeNumber(s.risk_score, 0));
 
       if (visibleValues.length) {
@@ -885,4 +929,4 @@
     loadDashboard();
   </script>
 </body>
-                                                                                  </html>
+  </html>
