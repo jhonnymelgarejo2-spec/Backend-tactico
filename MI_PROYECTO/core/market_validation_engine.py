@@ -1,6 +1,7 @@
 # market_validation_engine.py
 
 from typing import Dict, Any, List
+
 import config
 
 
@@ -14,6 +15,17 @@ def _safe_float(value: Any, default: float = 0.0) -> float:
         if isinstance(value, str):
             value = value.replace("%", "").strip()
         return float(value)
+    except Exception:
+        return default
+
+
+def _safe_int(value: Any, default: int = 0) -> int:
+    try:
+        if value is None or value == "":
+            return default
+        if isinstance(value, str):
+            value = value.replace("%", "").strip()
+        return int(float(value))
     except Exception:
         return default
 
@@ -34,6 +46,48 @@ def _line_close(a: float, b: float, tolerance: float = 0.26) -> bool:
 
 
 # =========================================================
+# HELPERS EXTRA
+# =========================================================
+def _get_default_odd() -> float:
+    return _safe_float(getattr(config, "DEFAULT_ODD", 1.85), 1.85)
+
+
+def _get_odd_min_global() -> float:
+    return _safe_float(getattr(config, "ODD_MIN_GLOBAL", 1.30), 1.30)
+
+
+def _get_odd_max_global() -> float:
+    return _safe_float(getattr(config, "ODD_MAX_GLOBAL", 3.20), 3.20)
+
+
+def _get_min_confidence_global() -> float:
+    return _safe_float(getattr(config, "MIN_CONFIDENCE_GLOBAL", 64.0), 64.0)
+
+
+def _get_min_value_global() -> float:
+    return _safe_float(getattr(config, "MIN_VALUE_GLOBAL", 0.5), 0.5)
+
+
+def _get_markets_allowed() -> List[str]:
+    allowed = getattr(config, "MARKETS_ALLOWED", None)
+    if isinstance(allowed, (list, tuple, set)):
+        return [_upper(x) for x in allowed]
+    return [
+        "OVER_MATCH_DYNAMIC",
+        "OVER_NEXT_15_DYNAMIC",
+        "UNDER_MATCH_DYNAMIC",
+    ]
+
+
+def _is_over_market(market: str) -> bool:
+    return _upper(market) in {"OVER_MATCH_DYNAMIC", "OVER_NEXT_15_DYNAMIC"}
+
+
+def _is_under_market(market: str) -> bool:
+    return _upper(market) == "UNDER_MATCH_DYNAMIC"
+
+
+# =========================================================
 # SELECCION DEL MEJOR MERCADO
 # =========================================================
 def _pick_best_market(signal: Dict[str, Any], odds_payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -51,16 +105,18 @@ def _pick_best_market(signal: Dict[str, Any], odds_payload: Dict[str, Any]) -> D
         over_price = _safe_float(item.get("over_price"), 0.0)
         under_price = _safe_float(item.get("under_price"), 0.0)
 
-        if market_type in ("OVER_MATCH_DYNAMIC", "OVER_NEXT_15_DYNAMIC"):
+        if _is_over_market(market_type):
             selected_price = over_price
-        else:
+        elif _is_under_market(market_type):
             selected_price = under_price
+        else:
+            selected_price = 0.0
 
         if selected_price <= 0:
             continue
 
         diff = abs(odds_line - signal_line)
-        in_range = config.ODD_MIN_GLOBAL <= selected_price <= config.ODD_MAX_GLOBAL
+        in_range = _get_odd_min_global() <= selected_price <= _get_odd_max_global()
 
         candidates.append({
             "raw": item,
@@ -72,15 +128,11 @@ def _pick_best_market(signal: Dict[str, Any], odds_payload: Dict[str, Any]) -> D
     if not candidates:
         return {}
 
-    # Preferimos:
-    # 1) línea cercana
-    # 2) cuota dentro de rango
-    # 3) menor distancia total
     candidates.sort(
         key=lambda x: (
             0 if x["in_range"] else 1,
             x["line_diff"],
-            abs(x["selected_price"] - config.DEFAULT_ODD)
+            abs(x["selected_price"] - _get_default_odd())
         )
     )
 
@@ -105,7 +157,7 @@ def _validate_common_rules(
     confidence = _safe_float(signal.get("confidence"), 0.0)
     prob_real = _safe_float(signal.get("prob_real"), _safe_float(signal.get("prob"), 0.0))
 
-    if selected_price < config.ODD_MIN_GLOBAL or selected_price > config.ODD_MAX_GLOBAL:
+    if selected_price < _get_odd_min_global() or selected_price > _get_odd_max_global():
         blocked_reasons.append("Cuota fuera del rango operativo")
 
     if market in ("OVER_MATCH_DYNAMIC", "UNDER_MATCH_DYNAMIC"):
@@ -121,10 +173,10 @@ def _validate_common_rules(
     if edge <= 0:
         blocked_reasons.append("No hay edge real contra la cuota")
 
-    if confidence < config.MIN_CONFIDENCE_GLOBAL:
+    if confidence < _get_min_confidence_global():
         blocked_reasons.append("Confianza insuficiente para validación externa")
 
-    if value < config.MIN_VALUE_GLOBAL:
+    if value < _get_min_value_global():
         blocked_reasons.append("Value interno insuficiente")
 
     return blocked_reasons
@@ -142,22 +194,29 @@ def _validate_under_rules(signal: Dict[str, Any], selected_price: float) -> List
     goal_prob_10 = _safe_float(signal.get("goal_prob_10"), 0.0)
     minute = _safe_float(signal.get("minute"), 0.0)
 
-    if selected_price < config.UNDER_MATCH_MIN_ODD:
+    under_min_odd = _safe_float(getattr(config, "UNDER_MATCH_MIN_ODD", 1.55), 1.55)
+    under_min_minute = _safe_float(getattr(config, "UNDER_MATCH_MIN_MINUTE", 60), 60)
+    under_max_xg = _safe_float(getattr(config, "UNDER_MATCH_MAX_XG", 1.35), 1.35)
+    under_max_sot = _safe_float(getattr(config, "UNDER_MATCH_MAX_SHOTS_ON_TARGET", 3), 3)
+    under_max_danger = _safe_float(getattr(config, "UNDER_MATCH_MAX_DANGEROUS_ATTACKS", 16), 16)
+    under_max_goal_prob = _safe_float(getattr(config, "UNDER_MATCH_MAX_GOAL_PROB_10", 40), 40)
+
+    if selected_price < under_min_odd:
         blocked_reasons.append("Under mal pagado para el riesgo")
 
-    if minute < config.UNDER_MATCH_MIN_MINUTE:
+    if minute < under_min_minute:
         blocked_reasons.append("Under demasiado temprano")
 
-    if xg >= config.UNDER_MATCH_MAX_XG:
+    if xg >= under_max_xg:
         blocked_reasons.append("Under contradicho por xG alto")
 
-    if shots_on_target > config.UNDER_MATCH_MAX_SHOTS_ON_TARGET:
+    if shots_on_target > under_max_sot:
         blocked_reasons.append("Under contradicho por tiros al arco")
 
-    if dangerous_attacks >= config.UNDER_MATCH_MAX_DANGEROUS_ATTACKS:
+    if dangerous_attacks >= under_max_danger:
         blocked_reasons.append("Under contradicho por ataques peligrosos")
 
-    if goal_prob_10 >= config.UNDER_MATCH_MAX_GOAL_PROB_10:
+    if goal_prob_10 >= under_max_goal_prob:
         blocked_reasons.append("Under contradicho por probabilidad de gol")
 
     return blocked_reasons
@@ -169,13 +228,17 @@ def _validate_over_match_rules(signal: Dict[str, Any], selected_price: float) ->
     tactical_score = _safe_float(signal.get("tactical_score"), 0.0)
     minute = _safe_float(signal.get("minute"), 0.0)
 
-    if selected_price < config.OVER_MATCH_MIN_ODD:
+    over_min_odd = _safe_float(getattr(config, "OVER_MATCH_MIN_ODD", 1.40), 1.40)
+    over_min_tactical = _safe_float(getattr(config, "OVER_MATCH_MIN_TACTICAL_SCORE", 12), 12)
+    over_max_minute = _safe_float(getattr(config, "OVER_MATCH_MAX_MINUTE", 82), 82)
+
+    if selected_price < over_min_odd:
         blocked_reasons.append("Over mal pagado")
 
-    if tactical_score < config.OVER_MATCH_MIN_TACTICAL_SCORE:
+    if tactical_score < over_min_tactical:
         blocked_reasons.append("Over sin respaldo táctico suficiente")
 
-    if minute > config.OVER_MATCH_MAX_MINUTE:
+    if minute > over_max_minute:
         blocked_reasons.append("Over match demasiado tardío")
 
     return blocked_reasons
@@ -188,16 +251,22 @@ def _validate_over_next15_rules(signal: Dict[str, Any], selected_price: float) -
     goal_prob_10 = _safe_float(signal.get("goal_prob_10"), 0.0)
     minute = _safe_float(signal.get("minute"), 0.0)
 
-    if selected_price < config.OVER_NEXT_15_MIN_ODD:
+    min_odd = _safe_float(getattr(config, "OVER_NEXT_15_MIN_ODD", 1.50), 1.50)
+    min_tactical = _safe_float(getattr(config, "OVER_NEXT_15_MIN_TACTICAL_SCORE", 14), 14)
+    min_goal_prob = _safe_float(getattr(config, "OVER_NEXT_15_MIN_GOAL_PROB_10", 40), 40)
+    min_minute = _safe_float(getattr(config, "OVER_NEXT_15_MIN_MINUTE", 20), 20)
+    max_minute = _safe_float(getattr(config, "OVER_NEXT_15_MAX_MINUTE", 86), 86)
+
+    if selected_price < min_odd:
         blocked_reasons.append("Over próximo 15 mal pagado")
 
-    if tactical_score < config.OVER_NEXT_15_MIN_TACTICAL_SCORE:
+    if tactical_score < min_tactical:
         blocked_reasons.append("Over próximo 15 sin respaldo táctico")
 
-    if goal_prob_10 < config.OVER_NEXT_15_MIN_GOAL_PROB_10:
+    if goal_prob_10 < min_goal_prob:
         blocked_reasons.append("Over próximo 15 sin probabilidad de gol suficiente")
 
-    if minute < config.OVER_NEXT_15_MIN_MINUTE or minute > config.OVER_NEXT_15_MAX_MINUTE:
+    if minute < min_minute or minute > max_minute:
         blocked_reasons.append("Over próximo 15 fuera de ventana operable")
 
     return blocked_reasons
@@ -213,6 +282,7 @@ def validar_mercado_con_odds(signal: Dict[str, Any], odds_payload: Dict[str, Any
     result = {
         "odds_validation_ok": False,
         "odds_data_available": False,
+        "odds_source": _safe_text(odds_payload.get("odds_source")) if isinstance(odds_payload, dict) else "",
         "market_validation_reason": "Sin validación externa",
         "odds_selected_bookmaker": "",
         "odds_selected_line": 0.0,
@@ -221,16 +291,25 @@ def validar_mercado_con_odds(signal: Dict[str, Any], odds_payload: Dict[str, Any
         "market_edge_with_odds": 0.0,
         "odds_side": "",
         "market_validation_codes": [],
+        "matched_event_id": _safe_text(odds_payload.get("matched_event_id")) if isinstance(odds_payload, dict) else "",
+        "odds_match_score": _safe_int(odds_payload.get("match_score")) if isinstance(odds_payload, dict) else 0,
+        "searched_sport_keys": odds_payload.get("searched_sport_keys", []) if isinstance(odds_payload, dict) else [],
+        "bookmakers_found": _safe_int(odds_payload.get("bookmakers_found")) if isinstance(odds_payload, dict) else 0,
     }
 
-    if market not in config.MARKETS_ALLOWED:
+    if market not in _get_markets_allowed():
         result["market_validation_reason"] = "Mercado no soportado por validador externo"
         result["market_validation_codes"] = ["MARKET_NOT_SUPPORTED"]
         return result
 
-    if not isinstance(odds_payload, dict) or not odds_payload.get("odds_data_available", False):
+    if not isinstance(odds_payload, dict):
+        result["market_validation_reason"] = "Payload de odds inválido"
+        result["market_validation_codes"] = ["INVALID_ODDS_PAYLOAD"]
+        return result
+
+    if not odds_payload.get("odds_data_available", False):
         result["market_validation_reason"] = _safe_text(
-            odds_payload.get("error") if isinstance(odds_payload, dict) else "",
+            odds_payload.get("error"),
             "Sin datos externos"
         )
         result["market_validation_codes"] = ["NO_ODDS_DATA"]
@@ -252,10 +331,10 @@ def validar_mercado_con_odds(signal: Dict[str, Any], odds_payload: Dict[str, Any
     selected_price = 0.0
     side = ""
 
-    if market in ("OVER_MATCH_DYNAMIC", "OVER_NEXT_15_DYNAMIC"):
+    if _is_over_market(market):
         selected_price = over_price
         side = "OVER"
-    elif market == "UNDER_MATCH_DYNAMIC":
+    elif _is_under_market(market):
         selected_price = under_price
         side = "UNDER"
 
@@ -278,7 +357,6 @@ def validar_mercado_con_odds(signal: Dict[str, Any], odds_payload: Dict[str, Any
     blocked_reasons: List[str] = []
     blocked_codes: List[str] = []
 
-    # Reglas comunes
     common_blocks = _validate_common_rules(
         signal=signal,
         market=market,
@@ -289,7 +367,6 @@ def validar_mercado_con_odds(signal: Dict[str, Any], odds_payload: Dict[str, Any
     )
     blocked_reasons.extend(common_blocks)
 
-    # Mapear códigos básicos
     code_map = {
         "Cuota fuera del rango operativo": "ODDS_OUT_OF_RANGE",
         "Línea del sistema y línea de mercado no coinciden": "LINE_MISMATCH",
@@ -301,7 +378,6 @@ def validar_mercado_con_odds(signal: Dict[str, Any], odds_payload: Dict[str, Any
     }
     blocked_codes.extend([code_map[r] for r in common_blocks if r in code_map])
 
-    # Reglas por mercado
     if market == "UNDER_MATCH_DYNAMIC":
         specific = _validate_under_rules(signal, selected_price)
         blocked_reasons.extend(specific)
@@ -336,8 +412,6 @@ def validar_mercado_con_odds(signal: Dict[str, Any], odds_payload: Dict[str, Any
         }
         blocked_codes.extend([specific_map[r] for r in specific if r in specific_map])
 
-    # Resultado final
-    # quitar duplicados conservando orden
     seen = set()
     dedup_reasons = []
     for r in blocked_reasons:
