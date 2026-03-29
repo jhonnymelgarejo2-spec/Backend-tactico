@@ -2,13 +2,7 @@
 
 """
 Configuración central de JHONNY_ELITE V16
-----------------------------------------
-Aquí viven los thresholds y reglas maestras del sistema.
-
-Objetivo:
-- evitar números mágicos repartidos por todo el proyecto
-- facilitar calibración
-- dejar una sola fuente de verdad para umbrales
+Versión calibrada para generación de señales (modo activo)
 """
 
 
@@ -31,19 +25,20 @@ MARKETS_ALLOWED = {
 
 
 # =========================================================
-# REGLAS GLOBALES DE OPERACION
+# REGLAS GLOBALES (AJUSTADAS 🔥)
 # =========================================================
 MINUTE_MIN_OPERABLE = 15
 MINUTE_MAX_OPERABLE = 88
 
-MIN_CONFIDENCE_GLOBAL = 68.0
-MIN_VALUE_GLOBAL = 1.0
-MAX_RISK_SCORE_GLOBAL = 7.2
+# 🔥 BAJADO para que empiece a generar señales
+MIN_CONFIDENCE_GLOBAL = 40.0
+MIN_VALUE_GLOBAL = 0.01
+MAX_RISK_SCORE_GLOBAL = 8.5
 
-ODD_MIN_GLOBAL = 1.50
-ODD_MAX_GLOBAL = 2.10
+ODD_MIN_GLOBAL = 1.40
+ODD_MAX_GLOBAL = 2.50
 
-MIN_RANKING_SCORE_GLOBAL = 140.0
+MIN_RANKING_SCORE_GLOBAL = 80.0
 
 
 # =========================================================
@@ -66,121 +61,123 @@ WINDOW_SECONDARY_3_END = 88
 
 
 # =========================================================
-# OVER NEXT 15
+# OVER NEXT 15 (CLAVE 🔥)
 # =========================================================
-OVER_NEXT_15_MIN_CONFIDENCE = 72.0
-OVER_NEXT_15_MIN_VALUE = 1.2
+OVER_NEXT_15_MIN_CONFIDENCE = 55.0
+OVER_NEXT_15_MIN_VALUE = 0.01
 OVER_NEXT_15_MIN_MINUTE = 20
-OVER_NEXT_15_MAX_MINUTE = 86
-OVER_NEXT_15_MIN_TACTICAL_SCORE = 12.0
-OVER_NEXT_15_MIN_GOAL_PROB_10 = 45.0
-OVER_NEXT_15_MIN_ODD = 1.55
+OVER_NEXT_15_MAX_MINUTE = 88
+
+# 🔥 bajado para activar señales
+OVER_NEXT_15_MIN_TACTICAL_SCORE = 8.0
+OVER_NEXT_15_MIN_GOAL_PROB_10 = 18.0
+OVER_NEXT_15_MIN_ODD = 1.40
 
 
 # =========================================================
 # OVER MATCH
 # =========================================================
-OVER_MATCH_MIN_CONFIDENCE = 74.0
-OVER_MATCH_MIN_VALUE = 1.2
+OVER_MATCH_MIN_CONFIDENCE = 60.0
+OVER_MATCH_MIN_VALUE = 0.01
 OVER_MATCH_MIN_MINUTE = 15
-OVER_MATCH_MAX_MINUTE = 79
-OVER_MATCH_MIN_TACTICAL_SCORE = 12.0
-OVER_MATCH_MIN_ODD = 1.55
+OVER_MATCH_MAX_MINUTE = 85
+
+OVER_MATCH_MIN_TACTICAL_SCORE = 8.0
+OVER_MATCH_MIN_ODD = 1.40
 
 
 # =========================================================
 # UNDER MATCH
 # =========================================================
-UNDER_MATCH_MIN_CONFIDENCE = 76.0
-UNDER_MATCH_MIN_VALUE = 1.5
-UNDER_MATCH_MIN_MINUTE = 65
+UNDER_MATCH_MIN_CONFIDENCE = 60.0
+UNDER_MATCH_MIN_VALUE = 0.01
+UNDER_MATCH_MIN_MINUTE = 60
 UNDER_MATCH_MAX_MINUTE = 88
 
-UNDER_MATCH_MAX_XG = 1.35
-UNDER_MATCH_MAX_SHOTS_ON_TARGET = 2
-UNDER_MATCH_MAX_DANGEROUS_ATTACKS = 15
-UNDER_MATCH_MAX_GOAL_PROB_10 = 40.0
+UNDER_MATCH_MAX_XG = 1.8
+UNDER_MATCH_MAX_SHOTS_ON_TARGET = 4
+UNDER_MATCH_MAX_DANGEROUS_ATTACKS = 30
+UNDER_MATCH_MAX_GOAL_PROB_10 = 55.0
 
-UNDER_MATCH_STRICT_MAX_XG = 1.30
-UNDER_MATCH_STRICT_MAX_SHOTS_ON_TARGET = 2
-UNDER_MATCH_STRICT_MAX_DANGEROUS_ATTACKS = 15
-UNDER_MATCH_STRICT_MAX_GOAL_PROB_10 = 40.0
+UNDER_MATCH_STRICT_MAX_XG = 1.6
+UNDER_MATCH_STRICT_MAX_SHOTS_ON_TARGET = 3
+UNDER_MATCH_STRICT_MAX_DANGEROUS_ATTACKS = 25
+UNDER_MATCH_STRICT_MAX_GOAL_PROB_10 = 50.0
 
-UNDER_MATCH_MIN_ODD = 1.60
+UNDER_MATCH_MIN_ODD = 1.50
 
 
 # =========================================================
-# FILTROS DE VALUE
+# VALUE (SUAVIZADO)
 # =========================================================
-VALUE_SCORE_MIN_WEAK = 4.0
-VALUE_SCORE_MIN_MEDIUM = 6.0
-VALUE_SCORE_MIN_STRONG = 8.0
-VALUE_SCORE_MIN_ELITE = 10.0
+VALUE_SCORE_MIN_WEAK = 2.0
+VALUE_SCORE_MIN_MEDIUM = 4.0
+VALUE_SCORE_MIN_STRONG = 6.0
+VALUE_SCORE_MIN_ELITE = 8.0
 
 EDGE_MIN_POSITIVE = 0.01
-EDGE_MIN_STANDARD = 1.0
-EDGE_MIN_STRICT = 8.0
+EDGE_MIN_STANDARD = 0.5
+EDGE_MIN_STRICT = 4.0
 
 
 # =========================================================
-# FILTROS DE RIESGO
+# RIESGO (MENOS RESTRICTIVO)
 # =========================================================
 RISK_LEVEL_BLOCKED = {"NO_APOSTAR"}
-RISK_LEVEL_RESTRICTED = {"RIESGO_ALTO"}
+RISK_LEVEL_RESTRICTED = set()
 
-RISK_SCORE_LOW_MAX = 4.5
-RISK_SCORE_MEDIUM_MAX = 7.2
-RISK_SCORE_HIGH_MAX = 8.5
+RISK_SCORE_LOW_MAX = 5.5
+RISK_SCORE_MEDIUM_MAX = 7.5
+RISK_SCORE_HIGH_MAX = 9.0
 
 
 # =========================================================
-# IA / AJUSTE FINAL
+# IA (SUAVIZADA)
 # =========================================================
-AI_CONFIDENCE_MIN = 58.0
-AI_DECISION_SCORE_SOFT = 78.0
-AI_DECISION_SCORE_STANDARD = 98.0
-AI_DECISION_SCORE_STRONG = 125.0
+AI_CONFIDENCE_MIN = 45.0
+AI_DECISION_SCORE_SOFT = 60.0
+AI_DECISION_SCORE_STANDARD = 80.0
+AI_DECISION_SCORE_STRONG = 100.0
 
 AI_RECOMMENDATIONS_ALLOWED = {
     "APOSTAR_FUERTE",
     "APOSTAR",
     "APOSTAR_SUAVE",
     "OBSERVAR",
-    "NO_APOSTAR",
 }
 
 
 # =========================================================
-# RANKING / PUBLICACION
+# RANKING (BAJADO)
 # =========================================================
-SIGNAL_SCORE_MIN_NORMAL = 95.0
-SIGNAL_SCORE_MIN_HIGH = 110.0
-SIGNAL_SCORE_MIN_TOP = 170.0
-SIGNAL_SCORE_MIN_ELITE = 230.0
+SIGNAL_SCORE_MIN_NORMAL = 60.0
+SIGNAL_SCORE_MIN_HIGH = 80.0
+SIGNAL_SCORE_MIN_TOP = 120.0
+SIGNAL_SCORE_MIN_ELITE = 160.0
 
-RANKING_SCORE_MIN_TOP = 140.0
-RANKING_SCORE_PUBLISH_2 = 240.0
-RANKING_SCORE_PUBLISH_1 = 340.0
+RANKING_SCORE_MIN_TOP = 80.0
+RANKING_SCORE_PUBLISH_2 = 140.0
+RANKING_SCORE_PUBLISH_1 = 220.0
 
 PUBLISH_MAX_SIGNALS = 6
-PUBLISH_MAX_OVERS = 3
-PUBLISH_MAX_UNDERS = 3
+PUBLISH_MAX_OVERS = 4
+PUBLISH_MAX_UNDERS = 2
 
 
 # =========================================================
-# STAKE / BANKROLL
+# STAKE
 # =========================================================
 STAKE_DEFAULT_PCT = 2.0
-STAKE_MEDIUM_PCT = 3.2
+STAKE_MEDIUM_PCT = 3.0
 STAKE_STRONG_PCT = 4.0
-STAKE_ELITE_PCT = 4.9
+STAKE_ELITE_PCT = 5.0
 
-MAX_OPERACIONES_DIA = 3
-STOP_LOSS_CONSECUTIVO = 2
+MAX_OPERACIONES_DIA = 6
+STOP_LOSS_CONSECUTIVO = 3
 
 
 # =========================================================
-# HISTORIAL / APRENDIZAJE
+# HISTORIAL
 # =========================================================
 HISTORY_DEFAULT_STAKE = 1.0
 HISTORY_MAX_RETURNED_ITEMS = 100
@@ -188,14 +185,14 @@ HISTORY_STATS_RECENT_LIMIT = 50
 
 
 # =========================================================
-# FETCHERS / TIMEOUTS
+# FETCHERS
 # =========================================================
 HTTP_TIMEOUT_SECONDS = 20
-SCAN_MAX_HOT_MATCHES = 10
+SCAN_MAX_HOT_MATCHES = 15
 
 
 # =========================================================
-# DEMO / FALLBACK
+# DEMO
 # =========================================================
 DEFAULT_PROB_REAL = 0.75
 DEFAULT_PROB_IMPLICITA = 0.54
@@ -204,7 +201,7 @@ DEFAULT_MOMENTUM = "MEDIO"
 
 
 # =========================================================
-# HELPERS OPCIONALES
+# HELPERS
 # =========================================================
 def is_premium_window(minute: int) -> bool:
     return (
