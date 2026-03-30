@@ -21,12 +21,14 @@ def build_dashboard_payload(scan_result: Dict[str, Any]) -> Dict[str, Any]:
                 "total_matches": 0,
                 "total_signals": 0,
                 "total_hot_matches": 0,
+                "observed_signals": 0,
                 "avg_confidence": 0.0,
                 "avg_value": 0.0,
                 "avg_risk": 0.0,
                 "elite_signals": 0,
                 "top_signals": 0,
                 "validated_odds_signals": 0,
+                "publish_ready_signals": 0,
                 "errors": 1,
             },
         }
@@ -48,26 +50,35 @@ def build_dashboard_payload(scan_result: Dict[str, Any]) -> Dict[str, Any]:
     elite_signals = 0
     top_signals = 0
     validated_odds_signals = 0
+    publish_ready_signals = 0
 
     for signal in signals:
         rank = safe_text(signal.get("signal_rank")).upper()
+
         if rank == "ELITE":
             elite_signals += 1
+
         if rank in {"ELITE", "TOP"}:
             top_signals += 1
+
         if bool(signal.get("odds_validation_ok", False)):
             validated_odds_signals += 1
 
+        if bool(signal.get("publish_ready", False)):
+            publish_ready_signals += 1
+
     stats = {
-        "total_matches": safe_int(base_stats.get("total_matches"), len(hot_matches)),
+        "total_matches": safe_int(base_stats.get("total_matches"), 0),
         "total_signals": safe_int(base_stats.get("total_signals"), len(signals)),
         "total_hot_matches": safe_int(base_stats.get("total_hot_matches"), len(hot_matches)),
+        "observed_signals": safe_int(base_stats.get("observed_signals"), len(signals)),
         "avg_confidence": _avg(confidences),
         "avg_value": _avg(values),
         "avg_risk": _avg(risks),
         "elite_signals": elite_signals,
         "top_signals": top_signals,
         "validated_odds_signals": validated_odds_signals,
+        "publish_ready_signals": publish_ready_signals,
         "errors": safe_int(base_stats.get("errors"), len(errors)),
     }
 
@@ -82,4 +93,4 @@ def build_dashboard_payload(scan_result: Dict[str, Any]) -> Dict[str, Any]:
         "hot_matches": hot_matches,
         "stats": stats,
         "errors": errors,
-            }
+    }
