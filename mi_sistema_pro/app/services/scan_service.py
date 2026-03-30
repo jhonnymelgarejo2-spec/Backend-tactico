@@ -22,7 +22,10 @@ def run_scan_cycle() -> Dict[str, Any]:
 
     try:
         matches = obtener_partidos_en_vivo()
-        logger.info("Fetch completado | total_matches_raw=%s", len(matches) if isinstance(matches, list) else "invalid")
+        logger.info(
+            "Fetch completado | total_matches_raw=%s",
+            len(matches) if isinstance(matches, list) else "invalid",
+        )
     except Exception as e:
         matches = []
         errors.append(f"ERROR_FETCH_MATCHES: {e}")
@@ -37,6 +40,7 @@ def run_scan_cycle() -> Dict[str, Any]:
 
     signals: List[Dict[str, Any]] = []
     hot_matches: List[Dict[str, Any]] = []
+    observed_signals: List[Dict[str, Any]] = []
 
     for match in matches:
         try:
@@ -49,19 +53,41 @@ def run_scan_cycle() -> Dict[str, Any]:
             hot_match = build_hot_match(match)
             if hot_match:
                 hot_matches.append(hot_match)
-                logger.info("Hot match detectado | partido=%s | minuto=%s", partido, hot_match.get("minuto"))
+                logger.info(
+                    "Hot match detectado | partido=%s | minuto=%s",
+                    partido,
+                    hot_match.get("minuto"),
+                )
 
             signal = process_match_signal(match)
+
             if signal:
-                signals.append(signal)
-                logger.info(
-                    "Señal añadida | partido=%s | market=%s | score=%s | rank=%s | publish_ready=%s",
-                    partido,
-                    signal.get("market"),
-                    signal.get("signal_score"),
-                    signal.get("signal_rank"),
-                    signal.get("publish_ready"),
-                )
+                observed_signals.append(signal)
+
+                publish_ready = bool(signal.get("publish_ready", False))
+                odds_validation_ok = bool(signal.get("odds_validation_ok", False))
+                odds_data_available = bool(signal.get("odds_data_available", False))
+
+                if publish_ready and odds_validation_ok and odds_data_available:
+                    signals.append(signal)
+                    logger.info(
+                        "Señal PUBLICABLE añadida | partido=%s | market=%s | score=%s | rank=%s | publish_ready=%s",
+                        partido,
+                        signal.get("market"),
+                        signal.get("signal_score"),
+                        signal.get("signal_rank"),
+                        signal.get("publish_ready"),
+                    )
+                else:
+                    logger.info(
+                        "Señal observada pero NO publicable | partido=%s | market=%s | publish_ready=%s | odds_data_available=%s | odds_validation_ok=%s | error=%s",
+                        partido,
+                        signal.get("market"),
+                        signal.get("publish_ready"),
+                        signal.get("odds_data_available"),
+                        signal.get("odds_validation_ok"),
+                        signal.get("odds_error", ""),
+                    )
             else:
                 logger.info("Partido sin señal final | partido=%s", partido)
 
@@ -96,10 +122,11 @@ def run_scan_cycle() -> Dict[str, Any]:
     result.errors = errors
 
     logger.info(
-        "Fin scan cycle | total_matches=%s | total_signals=%s | total_hot_matches=%s | errors=%s",
+        "Fin scan cycle | total_matches=%s | total_signals=%s | total_hot_matches=%s | observed_signals=%s | errors=%s",
         result.total_matches,
         result.total_signals,
         len(result.hot_matches),
+        len(observed_signals),
         len(result.errors),
     )
 
@@ -113,6 +140,7 @@ def run_scan_cycle() -> Dict[str, Any]:
             "total_matches": result.total_matches,
             "total_signals": result.total_signals,
             "total_hot_matches": len(result.hot_matches),
+            "observed_signals": len(observed_signals),
             "errors": len(result.errors),
         },
         "signals": result.signals,
