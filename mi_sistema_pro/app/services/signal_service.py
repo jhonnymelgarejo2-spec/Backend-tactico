@@ -61,6 +61,8 @@ def _apply_odds_to_signal(signal: Dict[str, Any], odds_payload: Dict[str, Any]) 
     enriched["odds_selected_price"] = 0.0
     enriched["odds_side"] = ""
     enriched["odds_validation_ok"] = False
+    enriched["publish_ready"] = False
+    enriched["recomendacion_final"] = "OBSERVAR"
 
     if not enriched["odds_data_available"]:
         logger.info(
