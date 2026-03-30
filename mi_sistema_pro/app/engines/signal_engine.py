@@ -154,6 +154,42 @@ def _signal_rank(signal_score: float) -> str:
     return "NORMAL"
 
 
+def _base_signal_payload(
+    match: Dict[str, Any],
+    market: str,
+    selection: str,
+    line: float,
+    confidence: float,
+    value: float,
+    signal_score: float,
+    reason: str,
+) -> Dict[str, Any]:
+    prob_real = safe_float(match.get("prob_real"), 0.0)
+    prob_implicita = safe_float(match.get("prob_implicita"), 0.0)
+    cuota = safe_float(match.get("cuota"), 0.0)
+
+    return {
+        "match_id": safe_text(match.get("id")),
+        "partido": f"{safe_text(match.get('local'))} vs {safe_text(match.get('visitante'))}",
+        "market": market,
+        "selection": selection,
+        "line": line,
+        "odd": cuota,
+        "cuota": cuota,
+        "prob_real": prob_real,
+        "prob_implicita": prob_implicita,
+        "confidence": confidence,
+        "value": value,
+        "valor": value,
+        "risk_score": 5.0,
+        "signal_score": signal_score,
+        "signal_rank": _signal_rank(signal_score),
+        "recomendacion_final": "OBSERVAR",
+        "publish_ready": False,
+        "reason": reason,
+    }
+
+
 # =========================================================
 # BUILDERS
 # =========================================================
@@ -162,9 +198,6 @@ def _build_over_next_15(match: Dict[str, Any], confidence: float, value: float, 
     xg = safe_float(match.get("xG"), 0.0)
     shots_on_target = safe_int(match.get("shots_on_target"), 0)
     dangerous_attacks = safe_int(match.get("dangerous_attacks"), 0)
-    prob_real = safe_float(match.get("prob_real"), 0.0)
-    prob_implicita = safe_float(match.get("prob_implicita"), 0.0)
-    cuota = safe_float(match.get("cuota"), 0.0)
     goal10 = safe_float((match.get("goal_predictor") or {}).get("goal_next_10_prob"), 0.0)
 
     score = confidence
@@ -187,26 +220,16 @@ def _build_over_next_15(match: Dict[str, Any], confidence: float, value: float, 
 
     if xg >= 1.4 and shots_on_target >= 3 and dangerous_attacks >= 16:
         signal_score = round(score * 1.1 + value * 2.0, 2)
-        return {
-            "match_id": safe_text(match.get("id")),
-            "partido": f"{safe_text(match.get('local'))} vs {safe_text(match.get('visitante'))}",
-            "market": "OVER_NEXT_15_DYNAMIC",
-            "selection": "Over próximos 15 min",
-            "line": 0.5,
-            "odd": cuota,
-            "cuota": cuota,
-            "prob_real": prob_real,
-            "prob_implicita": prob_implicita,
-            "confidence": score,
-            "value": value,
-            "valor": value,
-            "risk_score": 5.0,
-            "signal_score": signal_score,
-            "signal_rank": _signal_rank(signal_score),
-            "recomendacion_final": "APOSTAR" if score >= 68 and value > 1 else "OBSERVAR",
-            "publish_ready": score >= 68 and value > 1,
-            "reason": f"Presión ofensiva real | {state_reason}",
-        }
+        return _base_signal_payload(
+            match=match,
+            market="OVER_NEXT_15_DYNAMIC",
+            selection="Over próximos 15 min",
+            line=0.5,
+            confidence=score,
+            value=value,
+            signal_score=signal_score,
+            reason=f"Presión ofensiva real | {state_reason}",
+        )
 
     return None
 
@@ -216,9 +239,7 @@ def _build_under_match(match: Dict[str, Any], confidence: float, value: float, s
     xg = safe_float(match.get("xG"), 0.0)
     shots_on_target = safe_int(match.get("shots_on_target"), 0)
     dangerous_attacks = safe_int(match.get("dangerous_attacks"), 0)
-    prob_real = safe_float(match.get("prob_real"), 0.0)
-    prob_implicita = safe_float(match.get("prob_implicita"), 0.0)
-    cuota = safe_float(match.get("cuota"), 0.0)
+    goal10 = safe_float((match.get("goal_predictor") or {}).get("goal_next_10_prob"), 0.0)
     total_goals = safe_int(match.get("marcador_local"), 0) + safe_int(match.get("marcador_visitante"), 0)
 
     score = confidence
@@ -234,6 +255,8 @@ def _build_under_match(match: Dict[str, Any], confidence: float, value: float, s
         score += 6
     if dangerous_attacks < 14:
         score += 5
+    if goal10 < 0.25:
+        score += 5
     if state in ("CERRADO", "MUERTO"):
         score += 8
 
@@ -245,28 +268,18 @@ def _build_under_match(match: Dict[str, Any], confidence: float, value: float, s
     if minuto < 65:
         return None
 
-    if xg < 1.1 and shots_on_target <= 2 and dangerous_attacks < 14:
+    if xg < 1.1 and shots_on_target <= 2 and dangerous_attacks < 14 and goal10 < 0.30:
         signal_score = round(score * 1.1 + value * 2.0, 2)
-        return {
-            "match_id": safe_text(match.get("id")),
-            "partido": f"{safe_text(match.get('local'))} vs {safe_text(match.get('visitante'))}",
-            "market": "UNDER_MATCH_DYNAMIC",
-            "selection": "Under partido",
-            "line": max(2.5, total_goals + 0.5),
-            "odd": cuota,
-            "cuota": cuota,
-            "prob_real": prob_real,
-            "prob_implicita": prob_implicita,
-            "confidence": score,
-            "value": value,
-            "valor": value,
-            "risk_score": 5.0,
-            "signal_score": signal_score,
-            "signal_rank": _signal_rank(signal_score),
-            "recomendacion_final": "APOSTAR" if score >= 68 and value > 1 else "OBSERVAR",
-            "publish_ready": score >= 68 and value > 1,
-            "reason": f"Cierre de partido | {state_reason}",
-        }
+        return _base_signal_payload(
+            match=match,
+            market="UNDER_MATCH_DYNAMIC",
+            selection="Under partido",
+            line=max(2.5, total_goals + 0.5),
+            confidence=score,
+            value=value,
+            signal_score=signal_score,
+            reason=f"Cierre de partido | {state_reason}",
+        )
 
     return None
 
@@ -276,9 +289,6 @@ def _build_over_match(match: Dict[str, Any], confidence: float, value: float, st
     xg = safe_float(match.get("xG"), 0.0)
     shots_on_target = safe_int(match.get("shots_on_target"), 0)
     dangerous_attacks = safe_int(match.get("dangerous_attacks"), 0)
-    prob_real = safe_float(match.get("prob_real"), 0.0)
-    prob_implicita = safe_float(match.get("prob_implicita"), 0.0)
-    cuota = safe_float(match.get("cuota"), 0.0)
     total_goals = safe_int(match.get("marcador_local"), 0) + safe_int(match.get("marcador_visitante"), 0)
 
     score = confidence
@@ -301,26 +311,16 @@ def _build_over_match(match: Dict[str, Any], confidence: float, value: float, st
 
     if xg >= 1.5 and shots_on_target >= 3:
         signal_score = round(score * 1.1 + value * 2.0, 2)
-        return {
-            "match_id": safe_text(match.get("id")),
-            "partido": f"{safe_text(match.get('local'))} vs {safe_text(match.get('visitante'))}",
-            "market": "OVER_MATCH_DYNAMIC",
-            "selection": "Over partido",
-            "line": max(1.5, total_goals + 0.5),
-            "odd": cuota,
-            "cuota": cuota,
-            "prob_real": prob_real,
-            "prob_implicita": prob_implicita,
-            "confidence": score,
-            "value": value,
-            "valor": value,
-            "risk_score": 5.0,
-            "signal_score": signal_score,
-            "signal_rank": _signal_rank(signal_score),
-            "recomendacion_final": "APOSTAR" if score >= 68 and value > 1 else "OBSERVAR",
-            "publish_ready": score >= 68 and value > 1,
-            "reason": f"Proyección de más goles | {state_reason}",
-        }
+        return _base_signal_payload(
+            match=match,
+            market="OVER_MATCH_DYNAMIC",
+            selection="Over partido",
+            line=max(1.5, total_goals + 0.5),
+            confidence=score,
+            value=value,
+            signal_score=signal_score,
+            reason=f"Proyección de más goles | {state_reason}",
+        )
 
     return None
 
@@ -382,8 +382,8 @@ def generate_signal(match: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     best["shots_on_target"] = safe_int(match.get("shots_on_target"), 0)
     best["dangerous_attacks"] = safe_int(match.get("dangerous_attacks"), 0)
     best["momentum"] = safe_text(match.get("momentum"))
-    best["odds_data_available"] = safe_float(match.get("cuota"), 0.0) > 0
-    best["odds_validation_ok"] = safe_float(match.get("cuota"), 0.0) > 0
+    best["odds_data_available"] = False
+    best["odds_validation_ok"] = False
     best["source"] = safe_text(match.get("source"))
     best["time_fresh"] = bool(match.get("time_fresh", True))
     best["source_delay_seconds"] = safe_int(match.get("source_delay_seconds"), 0)
