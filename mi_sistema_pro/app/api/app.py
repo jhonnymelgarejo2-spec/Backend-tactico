@@ -1,92 +1,101 @@
-# app/api/app.py
-
 from flask import Flask, jsonify
 
-from app.config.config import config
-from app.services.scan_service import (
-    run_scan_cycle,
-    get_dashboard_data,
-    get_signals,
-    get_hot_matches,
-)
+from app.config.config import settings
+from app.services.scan_service import run_scan_cycle
+
+app = Flask(__name__)
 
 
-def create_app() -> Flask:
-    app = Flask(__name__)
+@app.get("/health")
+def health():
+    return jsonify({
+        "ok": True,
+        "system": settings.SYSTEM_NAME,
+        "version": settings.SYSTEM_VERSION,
+        "status": "healthy",
+    })
 
-    @app.get("/health")
-    def health():
+
+@app.get("/scan")
+def scan():
+    try:
+        result = run_scan_cycle()
+        return jsonify(result), 200
+    except Exception as e:
         return jsonify({
-            "status": "ok",
-            "system": config.SYSTEM_NAME,
-            "version": config.SYSTEM_VERSION,
-            "mode": config.SYSTEM_MODE,
-        })
-
-    @app.get("/scan")
-    def scan():
-        try:
-            result = run_scan_cycle()
-            return jsonify(result), 200
-        except Exception as e:
-            return jsonify({
-                "status": "error",
-                "message": f"Scan falló: {e}",
-                "signals": [],
-                "hot_matches": [],
+            "ok": False,
+            "error": f"SCAN_CRASH: {e}",
+            "signals": [],
+            "hot_matches": [],
+            "stats": {
                 "total_matches": 0,
                 "total_signals": 0,
                 "total_hot_matches": 0,
-            }), 200
+                "errors": 1,
+            },
+        }), 200
 
-    @app.get("/dashboard-data")
-    def dashboard_data():
-        try:
-            return jsonify(get_dashboard_data()), 200
-        except Exception as e:
-            return jsonify({
-                "status": "error",
-                "message": f"dashboard-data falló: {e}",
-                "signals": [],
-                "stats": {"win_rate": 0.0},
+
+@app.get("/signals")
+def signals():
+    try:
+        result = run_scan_cycle()
+        return jsonify({
+            "ok": True,
+            "signals": result.get("signals", []),
+            "total": len(result.get("signals", [])),
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "ok": False,
+            "error": f"SIGNALS_CRASH: {e}",
+            "signals": [],
+            "total": 0,
+        }), 200
+
+
+@app.get("/hot-matches")
+def hot_matches():
+    try:
+        result = run_scan_cycle()
+        return jsonify({
+            "ok": True,
+            "hot_matches": result.get("hot_matches", []),
+            "total": len(result.get("hot_matches", [])),
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "ok": False,
+            "error": f"HOT_MATCHES_CRASH: {e}",
+            "hot_matches": [],
+            "total": 0,
+        }), 200
+
+
+@app.get("/dashboard-data")
+def dashboard_data():
+    try:
+        result = run_scan_cycle()
+        return jsonify({
+            "ok": True,
+            "signals": result.get("signals", []),
+            "hot_matches": result.get("hot_matches", []),
+            "stats": result.get("stats", {}),
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "ok": False,
+            "error": f"DASHBOARD_CRASH: {e}",
+            "signals": [],
+            "hot_matches": [],
+            "stats": {
                 "total_matches": 0,
-                "total_hot_matches": 0,
                 "total_signals": 0,
-            }), 200
-
-    @app.get("/signals")
-    def signals():
-        try:
-            return jsonify(get_signals()), 200
-        except Exception as e:
-            return jsonify({
-                "status": "error",
-                "message": f"signals falló: {e}",
-                "signals": [],
-                "total_signals": 0,
-            }), 200
-
-    @app.get("/hot-matches")
-    def hot_matches():
-        try:
-            return jsonify(get_hot_matches()), 200
-        except Exception as e:
-            return jsonify({
-                "status": "error",
-                "message": f"hot-matches falló: {e}",
-                "hot_matches": [],
                 "total_hot_matches": 0,
-            }), 200
-
-    return app
-
-
-app = create_app()
+                "errors": 1,
+            },
+        }), 200
 
 
 if __name__ == "__main__":
-    app.run(
-        host=config.HOST,
-        port=config.PORT,
-        debug=config.DEBUG,
-      )
+    app.run(host="0.0.0.0", port=settings.PORT, debug=settings.DEBUG)
