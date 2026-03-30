@@ -1,35 +1,42 @@
+# app/config/config.py
+
 import os
 
 
 class Settings:
-    SYSTEM_NAME = "MI_SISTEMA_PRO"
-    SYSTEM_VERSION = "V1"
+    SYSTEM_NAME: str = os.getenv("SYSTEM_NAME", "JHONNY_ELITE")
+    SYSTEM_VERSION: str = os.getenv("SYSTEM_VERSION", "V17")
+    DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
+    PORT: int = int(os.getenv("PORT", "10000"))
 
-    DEBUG = os.getenv("DEBUG", "false").lower() == "true"
-    PORT = int(os.getenv("PORT", "8000"))
+    # Operación
+    MINUTE_MIN_OPERABLE: int = int(os.getenv("MINUTE_MIN_OPERABLE", "15"))
+    MINUTE_MAX_OPERABLE: int = int(os.getenv("MINUTE_MAX_OPERABLE", "88"))
+    MAX_SIGNALS: int = int(os.getenv("MAX_SIGNALS", "6"))
 
-    SCAN_INTERVAL_SECONDS = int(os.getenv("SCAN_INTERVAL_SECONDS", "60"))
-    MAX_SIGNALS = int(os.getenv("MAX_SIGNALS", "6"))
+    # API Football
+    FOOTBALL_API_KEY: str = os.getenv("FOOTBALL_API_KEY", "").strip()
+    FOOTBALL_API_URL: str = os.getenv(
+        "FOOTBALL_API_URL",
+        "https://v3.football.api-sports.io/fixtures?live=all",
+    ).strip()
+    FOOTBALL_STATISTICS_URL: str = os.getenv(
+        "FOOTBALL_STATISTICS_URL",
+        "https://v3.football.api-sports.io/fixtures/statistics",
+    ).strip()
 
-    MINUTE_MIN_OPERABLE = int(os.getenv("MINUTE_MIN_OPERABLE", "15"))
-    MINUTE_MAX_OPERABLE = int(os.getenv("MINUTE_MAX_OPERABLE", "88"))
+    HTTP_TIMEOUT_SECONDS: int = int(os.getenv("HTTP_TIMEOUT_SECONDS", "20"))
+    STAT_REQUEST_SLEEP_MS: int = int(os.getenv("STAT_REQUEST_SLEEP_MS", "120"))
+    MAX_SOURCE_DELAY_SECONDS: int = int(os.getenv("MAX_SOURCE_DELAY_SECONDS", "90"))
 
-    DEFAULT_ODD = float(os.getenv("DEFAULT_ODD", "0.0"))
-    DEFAULT_PROB_REAL = float(os.getenv("DEFAULT_PROB_REAL", "0.0"))
-    DEFAULT_PROB_IMPLICITA = float(os.getenv("DEFAULT_PROB_IMPLICITA", "0.0"))
+    # Defaults
+    DEFAULT_PROB_REAL: float = float(os.getenv("DEFAULT_PROB_REAL", "0.75"))
+    DEFAULT_PROB_IMPLICITA: float = float(os.getenv("DEFAULT_PROB_IMPLICITA", "0.54"))
+    DEFAULT_ODD: float = float(os.getenv("DEFAULT_ODD", "1.85"))
+    DEFAULT_MOMENTUM: str = os.getenv("DEFAULT_MOMENTUM", "MEDIO")
 
-    ALLOWED_MARKETS = {
-        "OVER_NEXT_15_DYNAMIC",
-        "OVER_MATCH_DYNAMIC",
-        "UNDER_MATCH_DYNAMIC",
-    }
-
-    FOOTBALL_API_KEY = os.getenv("FOOTBALL_API_KEY", "").strip()
-    FOOTBALL_API_URL = os.getenv("FOOTBALL_API_URL", "").strip()
-
-    ODDS_PROVIDER = os.getenv("ODDS_PROVIDER", "none").strip().lower()
-    ODDS_API_IO_KEY = os.getenv("ODDS_API_IO_KEY", "").strip()
-    THE_ODDS_API_KEY = os.getenv("THE_ODDS_API_KEY", "").strip()
+    # Demo / fallback
+    USE_FALLBACK_IF_EMPTY: bool = os.getenv("USE_FALLBACK_IF_EMPTY", "true").lower() == "true"
 
 
 settings = Settings()
