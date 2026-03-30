@@ -7,6 +7,9 @@ from app.models.models import ScanResult
 from app.services.hot_match_service import build_hot_match
 from app.services.signal_service import process_match_signal
 from app.utils.helpers import safe_float, safe_int, safe_text
+from app.utils.logger import get_logger
+
+logger = get_logger("scan_service")
 
 
 def run_scan_cycle() -> Dict[str, Any]:
@@ -15,15 +18,20 @@ def run_scan_cycle() -> Dict[str, Any]:
     result = ScanResult()
     errors: List[str] = []
 
+    logger.info("Inicio scan cycle")
+
     try:
         matches = obtener_partidos_en_vivo()
+        logger.info("Fetch completado | total_matches_raw=%s", len(matches) if isinstance(matches, list) else "invalid")
     except Exception as e:
         matches = []
         errors.append(f"ERROR_FETCH_MATCHES: {e}")
+        logger.exception("Error obteniendo partidos en vivo")
 
     if not isinstance(matches, list):
         matches = []
         errors.append("ERROR_FETCH_MATCHES: respuesta no válida, no es lista")
+        logger.error("Respuesta de fetch inválida: no es lista")
 
     result.total_matches = len(matches)
 
@@ -33,18 +41,33 @@ def run_scan_cycle() -> Dict[str, Any]:
     for match in matches:
         try:
             if not isinstance(match, dict):
+                logger.warning("Match inválido ignorado: no es dict")
                 continue
+
+            partido = f"{safe_text(match.get('local'))} vs {safe_text(match.get('visitante'))}"
 
             hot_match = build_hot_match(match)
             if hot_match:
                 hot_matches.append(hot_match)
+                logger.info("Hot match detectado | partido=%s | minuto=%s", partido, hot_match.get("minuto"))
 
             signal = process_match_signal(match)
             if signal:
                 signals.append(signal)
+                logger.info(
+                    "Señal añadida | partido=%s | market=%s | score=%s | rank=%s | publish_ready=%s",
+                    partido,
+                    signal.get("market"),
+                    signal.get("signal_score"),
+                    signal.get("signal_rank"),
+                    signal.get("publish_ready"),
+                )
+            else:
+                logger.info("Partido sin señal final | partido=%s", partido)
 
         except Exception as e:
             errors.append(f"ERROR_PROCESS_MATCH_{safe_text(match.get('id'))}: {e}")
+            logger.exception("Error procesando partido id=%s", match.get("id"))
 
     signals.sort(
         key=lambda s: (
@@ -71,6 +94,14 @@ def run_scan_cycle() -> Dict[str, Any]:
     result.signals = signals
     result.hot_matches = hot_matches
     result.errors = errors
+
+    logger.info(
+        "Fin scan cycle | total_matches=%s | total_signals=%s | total_hot_matches=%s | errors=%s",
+        result.total_matches,
+        result.total_signals,
+        len(result.hot_matches),
+        len(result.errors),
+    )
 
     return {
         "ok": True,
