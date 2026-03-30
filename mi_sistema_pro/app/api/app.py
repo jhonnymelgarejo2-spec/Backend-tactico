@@ -16,7 +16,7 @@ def _empty_stats(errors: int = 1) -> dict:
     }
 
 
-def _safe_scan_result():
+def _safe_scan_result() -> dict:
     try:
         result = run_scan_cycle()
         if not isinstance(result, dict):
@@ -38,7 +38,7 @@ def _safe_scan_result():
         }
 
 
-@app.get("/")
+@app.route("/", methods=["GET"])
 def root():
     return jsonify({
         "ok": True,
@@ -52,26 +52,26 @@ def root():
             "/hot-matches",
             "/dashboard-data",
         ],
-    })
+    }), 200
 
 
-@app.get("/health")
+@app.route("/health", methods=["GET"])
 def health():
     return jsonify({
         "ok": True,
         "system": settings.SYSTEM_NAME,
         "version": settings.SYSTEM_VERSION,
         "status": "healthy",
-    })
+    }), 200
 
 
-@app.get("/scan")
+@app.route("/scan", methods=["GET"])
 def scan():
     result = _safe_scan_result()
     return jsonify(result), 200
 
 
-@app.get("/signals")
+@app.route("/signals", methods=["GET"])
 def signals():
     result = _safe_scan_result()
     return jsonify({
@@ -83,7 +83,7 @@ def signals():
     }), 200
 
 
-@app.get("/hot-matches")
+@app.route("/hot-matches", methods=["GET"])
 def hot_matches():
     result = _safe_scan_result()
     return jsonify({
@@ -95,7 +95,7 @@ def hot_matches():
     }), 200
 
 
-@app.get("/dashboard-data")
+@app.route("/dashboard-data", methods=["GET"])
 def dashboard_data():
     result = _safe_scan_result()
     payload = build_dashboard_payload(result)
