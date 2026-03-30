@@ -4,6 +4,7 @@ from typing import Dict, Any, List
 from app.config.config import settings
 from app.fetchers.live_match_fetcher import obtener_partidos_en_vivo
 from app.models.models import ScanResult
+from app.services.hot_match_service import build_hot_match
 from app.services.signal_service import process_match_signal
 from app.utils.helpers import safe_float, safe_int, safe_text
 
@@ -34,30 +35,9 @@ def run_scan_cycle() -> Dict[str, Any]:
             if not isinstance(match, dict):
                 continue
 
-            minuto = safe_int(match.get("minuto"), 0)
-            xg = safe_float(match.get("xG"), 0.0)
-            da = safe_int(match.get("dangerous_attacks"), 0)
-            estado = safe_text(match.get("estado_partido"), "en_juego").lower()
-
-            if estado != "finalizado" and minuto >= 15 and (xg >= 1.0 or da >= 12):
-                hot_matches.append({
-                    "id": safe_text(match.get("id")),
-                    "local": safe_text(match.get("local")),
-                    "visitante": safe_text(match.get("visitante")),
-                    "liga": safe_text(match.get("liga")),
-                    "pais": safe_text(match.get("pais")),
-                    "minuto": minuto,
-                    "marcador_local": safe_int(match.get("marcador_local")),
-                    "marcador_visitante": safe_int(match.get("marcador_visitante")),
-                    "xG": xg,
-                    "shots": safe_int(match.get("shots")),
-                    "shots_on_target": safe_int(match.get("shots_on_target")),
-                    "dangerous_attacks": da,
-                    "momentum": safe_text(match.get("momentum")),
-                    "source": safe_text(match.get("source")),
-                    "time_fresh": bool(match.get("time_fresh", True)),
-                    "source_delay_seconds": safe_int(match.get("source_delay_seconds"), 0),
-                })
+            hot_match = build_hot_match(match)
+            if hot_match:
+                hot_matches.append(hot_match)
 
             signal = process_match_signal(match)
             if signal:
@@ -107,4 +87,4 @@ def run_scan_cycle() -> Dict[str, Any]:
         "signals": result.signals,
         "hot_matches": result.hot_matches,
         "errors": result.errors,
-            }
+        }
