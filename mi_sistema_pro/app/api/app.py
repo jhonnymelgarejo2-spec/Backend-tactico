@@ -6,6 +6,54 @@ from app.services.scan_service import run_scan_cycle
 app = Flask(__name__)
 
 
+def _empty_stats(errors: int = 1) -> dict:
+    return {
+        "total_matches": 0,
+        "total_signals": 0,
+        "total_hot_matches": 0,
+        "errors": errors,
+    }
+
+
+def _safe_scan_result():
+    try:
+        result = run_scan_cycle()
+        if not isinstance(result, dict):
+            return {
+                "ok": False,
+                "error": "SCAN_RESULT_INVALID",
+                "signals": [],
+                "hot_matches": [],
+                "stats": _empty_stats(),
+            }
+        return result
+    except Exception as e:
+        return {
+            "ok": False,
+            "error": f"SCAN_CRASH: {e}",
+            "signals": [],
+            "hot_matches": [],
+            "stats": _empty_stats(),
+        }
+
+
+@app.get("/")
+def root():
+    return jsonify({
+        "ok": True,
+        "system": settings.SYSTEM_NAME,
+        "version": settings.SYSTEM_VERSION,
+        "message": "API activa",
+        "endpoints": [
+            "/health",
+            "/scan",
+            "/signals",
+            "/hot-matches",
+            "/dashboard-data",
+        ],
+    })
+
+
 @app.get("/health")
 def health():
     return jsonify({
@@ -18,83 +66,46 @@ def health():
 
 @app.get("/scan")
 def scan():
-    try:
-        result = run_scan_cycle()
-        return jsonify(result), 200
-    except Exception as e:
-        return jsonify({
-            "ok": False,
-            "error": f"SCAN_CRASH: {e}",
-            "signals": [],
-            "hot_matches": [],
-            "stats": {
-                "total_matches": 0,
-                "total_signals": 0,
-                "total_hot_matches": 0,
-                "errors": 1,
-            },
-        }), 200
+    result = _safe_scan_result()
+    return jsonify(result), 200
 
 
 @app.get("/signals")
 def signals():
-    try:
-        result = run_scan_cycle()
-        return jsonify({
-            "ok": True,
-            "signals": result.get("signals", []),
-            "total": len(result.get("signals", [])),
-        }), 200
-    except Exception as e:
-        return jsonify({
-            "ok": False,
-            "error": f"SIGNALS_CRASH: {e}",
-            "signals": [],
-            "total": 0,
-        }), 200
+    result = _safe_scan_result()
+    return jsonify({
+        "ok": result.get("ok", False),
+        "error": result.get("error", ""),
+        "signals": result.get("signals", []),
+        "total": len(result.get("signals", [])),
+        "stats": result.get("stats", _empty_stats(0)),
+    }), 200
 
 
 @app.get("/hot-matches")
 def hot_matches():
-    try:
-        result = run_scan_cycle()
-        return jsonify({
-            "ok": True,
-            "hot_matches": result.get("hot_matches", []),
-            "total": len(result.get("hot_matches", [])),
-        }), 200
-    except Exception as e:
-        return jsonify({
-            "ok": False,
-            "error": f"HOT_MATCHES_CRASH: {e}",
-            "hot_matches": [],
-            "total": 0,
-        }), 200
+    result = _safe_scan_result()
+    return jsonify({
+        "ok": result.get("ok", False),
+        "error": result.get("error", ""),
+        "hot_matches": result.get("hot_matches", []),
+        "total": len(result.get("hot_matches", [])),
+        "stats": result.get("stats", _empty_stats(0)),
+    }), 200
 
 
 @app.get("/dashboard-data")
 def dashboard_data():
-    try:
-        result = run_scan_cycle()
-        return jsonify({
-            "ok": True,
-            "signals": result.get("signals", []),
-            "hot_matches": result.get("hot_matches", []),
-            "stats": result.get("stats", {}),
-        }), 200
-    except Exception as e:
-        return jsonify({
-            "ok": False,
-            "error": f"DASHBOARD_CRASH: {e}",
-            "signals": [],
-            "hot_matches": [],
-            "stats": {
-                "total_matches": 0,
-                "total_signals": 0,
-                "total_hot_matches": 0,
-                "errors": 1,
-            },
-        }), 200
+    result = _safe_scan_result()
+    return jsonify({
+        "ok": result.get("ok", False),
+        "error": result.get("error", ""),
+        "signals": result.get("signals", []),
+        "hot_matches": result.get("hot_matches", []),
+        "stats": result.get("stats", _empty_stats(0)),
+        "system": settings.SYSTEM_NAME,
+        "version": settings.SYSTEM_VERSION,
+    }), 200
 
 
 if __name__ == "__main__":
