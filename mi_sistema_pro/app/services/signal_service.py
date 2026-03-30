@@ -3,6 +3,9 @@ from typing import Dict, Any, Optional, List
 from app.engines.signal_engine import generate_signal
 from app.odds.odds_service import obtener_odds_partido
 from app.utils.helpers import safe_float, safe_text
+from app.utils.logger import get_logger
+
+logger = get_logger("signal_service")
 
 
 def _pick_best_market_for_signal(signal: Dict[str, Any], odds_payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -60,14 +63,31 @@ def _apply_odds_to_signal(signal: Dict[str, Any], odds_payload: Dict[str, Any]) 
     enriched["odds_validation_ok"] = False
 
     if not enriched["odds_data_available"]:
+        logger.info(
+            "Sin odds válidas | partido=%s | market=%s | source=%s | error=%s",
+            enriched.get("partido"),
+            enriched.get("market"),
+            enriched["odds_source"],
+            enriched["odds_error"],
+        )
         return enriched
 
     best = _pick_best_market_for_signal(enriched, odds_payload)
     if not best:
+        logger.info(
+            "No hay línea compatible | partido=%s | market=%s",
+            enriched.get("partido"),
+            enriched.get("market"),
+        )
         return enriched
 
     selected_price = safe_float(best.get("price"), 0.0)
     if selected_price <= 0:
+        logger.info(
+            "Precio inválido en odds | partido=%s | market=%s",
+            enriched.get("partido"),
+            enriched.get("market"),
+        )
         return enriched
 
     implied_probability = round(1.0 / selected_price, 4)
@@ -101,13 +121,35 @@ def _apply_odds_to_signal(signal: Dict[str, Any], odds_payload: Dict[str, Any]) 
     enriched["publish_ready"] = confidence >= 68 and value > 1 and enriched["odds_validation_ok"]
     enriched["recomendacion_final"] = "APOSTAR" if enriched["publish_ready"] else "OBSERVAR"
 
+    logger.info(
+        "Señal enriquecida | partido=%s | market=%s | odd=%.2f | prob_real=%.4f | prob_implicita=%.4f | value=%.2f | publish_ready=%s",
+        enriched.get("partido"),
+        enriched.get("market"),
+        selected_price,
+        prob_real,
+        implied_probability,
+        value,
+        enriched["publish_ready"],
+    )
+
     return enriched
 
 
 def process_match_signal(match: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    partido = f"{safe_text(match.get('local'))} vs {safe_text(match.get('visitante'))}"
+
     signal = generate_signal(match)
     if not signal:
+        logger.info("Sin señal base | partido=%s | minuto=%s", partido, match.get("minuto"))
         return None
+
+    logger.info(
+        "Señal base generada | partido=%s | market=%s | confidence=%s | value=%s",
+        partido,
+        signal.get("market"),
+        signal.get("confidence"),
+        signal.get("value"),
+    )
 
     try:
         odds_payload = obtener_odds_partido(
@@ -117,6 +159,7 @@ def process_match_signal(match: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             country=safe_text(match.get("pais")),
         )
     except Exception as e:
+        logger.exception("Crash en odds_service | partido=%s", partido)
         odds_payload = {
             "ok": False,
             "error": f"ODDS_SERVICE_CRASH: {e}",
