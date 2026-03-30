@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
 
 from app.config.config import settings
+from app.services.dashboard_service import build_dashboard_payload
 from app.services.scan_service import run_scan_cycle
 
 app = Flask(__name__)
@@ -97,15 +98,8 @@ def hot_matches():
 @app.get("/dashboard-data")
 def dashboard_data():
     result = _safe_scan_result()
-    return jsonify({
-        "ok": result.get("ok", False),
-        "error": result.get("error", ""),
-        "signals": result.get("signals", []),
-        "hot_matches": result.get("hot_matches", []),
-        "stats": result.get("stats", _empty_stats(0)),
-        "system": settings.SYSTEM_NAME,
-        "version": settings.SYSTEM_VERSION,
-    }), 200
+    payload = build_dashboard_payload(result)
+    return jsonify(payload), 200
 
 
 if __name__ == "__main__":
