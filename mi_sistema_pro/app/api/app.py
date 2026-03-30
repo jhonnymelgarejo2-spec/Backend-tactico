@@ -12,6 +12,7 @@ def _empty_stats(errors: int = 1) -> dict:
         "total_matches": 0,
         "total_signals": 0,
         "total_hot_matches": 0,
+        "observed_signals": 0,
         "errors": errors,
     }
 
@@ -25,6 +26,7 @@ def _safe_scan_result() -> dict:
                 "error": "SCAN_RESULT_INVALID",
                 "signals": [],
                 "hot_matches": [],
+                "observed_signals": [],
                 "stats": _empty_stats(),
             }
         return result
@@ -34,6 +36,7 @@ def _safe_scan_result() -> dict:
             "error": f"SCAN_CRASH: {e}",
             "signals": [],
             "hot_matches": [],
+            "observed_signals": [],
             "stats": _empty_stats(),
         }
 
@@ -49,6 +52,7 @@ def root():
             "/health",
             "/scan",
             "/signals",
+            "/observed-signals",
             "/hot-matches",
             "/dashboard-data",
         ],
@@ -79,6 +83,22 @@ def signals():
         "error": result.get("error", ""),
         "signals": result.get("signals", []),
         "total": len(result.get("signals", [])),
+        "stats": result.get("stats", _empty_stats(0)),
+    }), 200
+
+
+@app.route("/observed-signals", methods=["GET"])
+def observed_signals():
+    result = _safe_scan_result()
+    observed = result.get("observed_signals", [])
+    if not isinstance(observed, list):
+        observed = []
+
+    return jsonify({
+        "ok": result.get("ok", False),
+        "error": result.get("error", ""),
+        "observed_signals": observed,
+        "total": len(observed),
         "stats": result.get("stats", _empty_stats(0)),
     }), 200
 
