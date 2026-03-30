@@ -2,65 +2,9 @@ import time
 from typing import Dict, Any, List
 
 from app.config.config import settings
+from app.fetchers.live_match_fetcher import obtener_partidos_en_vivo
 from app.models.models import ScanResult
 from app.utils.helpers import safe_float, safe_int, safe_text
-
-
-def _dummy_matches() -> List[Dict[str, Any]]:
-    return [
-        {
-            "id": "1",
-            "local": "Equipo A",
-            "visitante": "Equipo B",
-            "liga": "Liga Demo",
-            "pais": "Demo",
-            "minuto": 67,
-            "estado_partido": "en_juego",
-            "marcador_local": 1,
-            "marcador_visitante": 1,
-            "xG": 1.74,
-            "shots": 13,
-            "shots_on_target": 5,
-            "dangerous_attacks": 24,
-            "momentum": "ALTO",
-            "prob_real": 0.66,
-            "prob_implicita": 0.54,
-            "cuota": 1.92,
-            "goal_pressure": {"pressure_score": 7.2},
-            "goal_predictor": {
-                "goal_next_5_prob": 0.22,
-                "goal_next_10_prob": 0.35,
-                "predictor_score": 6.8,
-            },
-            "chaos": {"chaos_score": 4.1},
-        },
-        {
-            "id": "2",
-            "local": "Equipo C",
-            "visitante": "Equipo D",
-            "liga": "Liga Demo",
-            "pais": "Demo",
-            "minuto": 74,
-            "estado_partido": "en_juego",
-            "marcador_local": 0,
-            "marcador_visitante": 0,
-            "xG": 0.88,
-            "shots": 7,
-            "shots_on_target": 2,
-            "dangerous_attacks": 11,
-            "momentum": "MEDIO",
-            "prob_real": 0.58,
-            "prob_implicita": 0.52,
-            "cuota": 1.80,
-            "goal_pressure": {"pressure_score": 4.0},
-            "goal_predictor": {
-                "goal_next_5_prob": 0.10,
-                "goal_next_10_prob": 0.18,
-                "predictor_score": 3.2,
-            },
-            "chaos": {"chaos_score": 2.0},
-        },
-    ]
 
 
 def _is_operable_minute(minuto: int) -> bool:
@@ -132,10 +76,12 @@ def _simple_signal_logic(match: Dict[str, Any]) -> Dict[str, Any] | None:
         "selection": selection,
         "line": 0.0,
         "odd": cuota,
+        "cuota": cuota,
         "prob_real": prob_real,
         "prob_implicita": prob_implicita,
         "confidence": round(confidence, 2),
         "value": value,
+        "valor": value,
         "risk_score": 5.0,
         "signal_score": signal_score,
         "signal_rank": signal_rank,
@@ -155,6 +101,9 @@ def _simple_signal_logic(match: Dict[str, Any]) -> Dict[str, Any] | None:
         "momentum": safe_text(match.get("momentum")),
         "odds_data_available": cuota > 0,
         "odds_validation_ok": cuota > 0,
+        "source": safe_text(match.get("source")),
+        "time_fresh": bool(match.get("time_fresh", True)),
+        "source_delay_seconds": safe_int(match.get("source_delay_seconds"), 0),
     }
 
 
@@ -165,10 +114,14 @@ def run_scan_cycle() -> Dict[str, Any]:
     errors: List[str] = []
 
     try:
-        matches = _dummy_matches()
+        matches = obtener_partidos_en_vivo()
     except Exception as e:
         matches = []
         errors.append(f"ERROR_FETCH_MATCHES: {e}")
+
+    if not isinstance(matches, list):
+        matches = []
+        errors.append("ERROR_FETCH_MATCHES: respuesta no válida, no es lista")
 
     result.total_matches = len(matches)
 
@@ -177,12 +130,33 @@ def run_scan_cycle() -> Dict[str, Any]:
 
     for match in matches:
         try:
+            if not isinstance(match, dict):
+                continue
+
             minuto = safe_int(match.get("minuto"), 0)
             xg = safe_float(match.get("xG"), 0.0)
             da = safe_int(match.get("dangerous_attacks"), 0)
+            estado = safe_text(match.get("estado_partido"), "en_juego").lower()
 
-            if minuto >= 15 and (xg >= 1.0 or da >= 12):
-                hot_matches.append(match)
+            if estado != "finalizado" and minuto >= 15 and (xg >= 1.0 or da >= 12):
+                hot_matches.append({
+                    "id": safe_text(match.get("id")),
+                    "local": safe_text(match.get("local")),
+                    "visitante": safe_text(match.get("visitante")),
+                    "liga": safe_text(match.get("liga")),
+                    "pais": safe_text(match.get("pais")),
+                    "minuto": minuto,
+                    "marcador_local": safe_int(match.get("marcador_local")),
+                    "marcador_visitante": safe_int(match.get("marcador_visitante")),
+                    "xG": xg,
+                    "shots": safe_int(match.get("shots")),
+                    "shots_on_target": safe_int(match.get("shots_on_target")),
+                    "dangerous_attacks": da,
+                    "momentum": safe_text(match.get("momentum")),
+                    "source": safe_text(match.get("source")),
+                    "time_fresh": bool(match.get("time_fresh", True)),
+                    "source_delay_seconds": safe_int(match.get("source_delay_seconds"), 0),
+                })
 
             signal = _simple_signal_logic(match)
             if signal:
@@ -196,6 +170,15 @@ def run_scan_cycle() -> Dict[str, Any]:
             safe_float(s.get("signal_score"), 0.0),
             safe_float(s.get("confidence"), 0.0),
             safe_float(s.get("value"), 0.0),
+        ),
+        reverse=True,
+    )
+
+    hot_matches.sort(
+        key=lambda m: (
+            safe_float(m.get("xG"), 0.0),
+            safe_int(m.get("shots_on_target"), 0),
+            safe_int(m.get("dangerous_attacks"), 0),
         ),
         reverse=True,
     )
