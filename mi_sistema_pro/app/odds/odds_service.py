@@ -61,8 +61,27 @@ def _normalize_text(text: str) -> str:
     return t
 
 
+def _apply_aliases(text: str) -> str:
+    aliases = {
+        "argentinos jrs": "argentinos juniors",
+        "argentinos jr": "argentinos juniors",
+        "arg jrs": "argentinos juniors",
+        "hungria": "hungary",
+        "grecia": "greece",
+        "rusia": "russia",
+        "jordania": "jordan",
+        "espana": "spain",
+        "mirandes": "mirandes",
+        "aldosivi": "aldosivi",
+        "nigeria": "nigeria",
+        "mali": "mali",
+    }
+    return aliases.get(text, text)
+
+
 def _normalize_team_name(name: str) -> str:
     text = _normalize_text(name)
+    text = _apply_aliases(text)
 
     replacements = {
         "fc": "",
@@ -300,6 +319,7 @@ def _is_excluded_competition(league: str) -> bool:
         "segunda rfef", "tercera",
         "primera b", "segunda b",
         "regional", "amateur", "amateure",
+        "segunda division",
     ]
 
     return any(term in l for term in excluded_terms)
@@ -336,6 +356,8 @@ def _is_allowed_major_competition(league: str, country: str = "") -> bool:
         "africa cup",
         "friendlies",
         "friendly",
+        "amistosos",
+        "amistoso",
         "fa cup",
         "copa del rey",
         "coppa italia",
@@ -356,7 +378,7 @@ def _is_allowed_major_competition(league: str, country: str = "") -> bool:
     if any(term in l for term in major_terms):
         return True
 
-    if "world" in c and ("friendly" in l or "friendlies" in l):
+    if "world" in c and ("friendly" in l or "friendlies" in l or "amistoso" in l or "amistosos" in l):
         return True
 
     return False
@@ -1029,4 +1051,4 @@ def obtener_odds_partido(local: str, visitante: str, league: str = "", country: 
         "markets": [],
         "debug_candidates": primary.get("debug_candidates", []) or fallback.get("debug_candidates", []),
         "searched_match": primary.get("searched_match", {}) or fallback.get("searched_match", {}),
-    }
+        }
