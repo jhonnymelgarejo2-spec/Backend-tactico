@@ -67,7 +67,10 @@ def run_scan_cycle() -> Dict[str, Any]:
                 observed_signals.append(signal)
 
                 publish_ready = bool(signal.get("publish_ready", False))
-                publication_mode = safe_text(signal.get("publication_mode"), "STRICT_BLOCKED").upper()
+                publication_mode = safe_text(
+                    signal.get("publication_mode"),
+                    "STRICT_BLOCKED",
+                ).upper()
 
                 if publish_ready:
                     signals.append(signal)
@@ -157,6 +160,7 @@ def run_scan_cycle() -> Dict[str, Any]:
             "errors": len(result.errors),
         },
         "signals": result.signals,
+        "observed_signals": observed_signals,
         "hot_matches": result.hot_matches,
         "errors": result.errors,
-                    }
+    }
