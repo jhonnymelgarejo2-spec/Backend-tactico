@@ -67,6 +67,8 @@ def _apply_flexible_mode(signal: Dict[str, Any], odds_payload: Dict[str, Any]) -
     enriched["odds_selected_price"] = 0.0
     enriched["odds_side"] = ""
     enriched["odds_validation_ok"] = False
+    enriched["odds_debug_candidates"] = odds_payload.get("debug_candidates", [])
+    enriched["odds_searched_match"] = odds_payload.get("searched_match", {})
     enriched["publication_mode"] = "STRICT_BLOCKED"
     enriched["publish_ready"] = False
     enriched["recomendacion_final"] = "OBSERVAR"
@@ -117,6 +119,8 @@ def _apply_odds_to_signal(signal: Dict[str, Any], odds_payload: Dict[str, Any]) 
     enriched["odds_selected_price"] = 0.0
     enriched["odds_side"] = ""
     enriched["odds_validation_ok"] = False
+    enriched["odds_debug_candidates"] = odds_payload.get("debug_candidates", [])
+    enriched["odds_searched_match"] = odds_payload.get("searched_match", {})
     enriched["publication_mode"] = "STRICT"
     enriched["publish_ready"] = False
     enriched["recomendacion_final"] = "OBSERVAR"
@@ -224,6 +228,8 @@ def process_match_signal(match: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             "odds_source": "none",
             "odds_data_available": False,
             "markets": [],
+            "debug_candidates": [],
+            "searched_match": {},
         }
 
     return _apply_odds_to_signal(signal, odds_payload)
