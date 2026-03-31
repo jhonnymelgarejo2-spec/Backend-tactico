@@ -1,8 +1,13 @@
+
 from flask import Flask, jsonify
 
 from app.config.config import settings
 from app.services.dashboard_service import build_dashboard_payload
-from app.services.scan_service import run_scan_cycle
+from app.services.scan_cache_service import (
+    clear_scan_cache,
+    get_cache_meta,
+    get_scan_result,
+)
 
 app = Flask(__name__)
 
@@ -19,9 +24,9 @@ def _empty_stats(errors: int = 1) -> dict:
     }
 
 
-def _safe_scan_result() -> dict:
+def _safe_scan_result(force_refresh: bool = False) -> dict:
     try:
-        result = run_scan_cycle()
+        result = get_scan_result(force_refresh=force_refresh)
         if not isinstance(result, dict):
             return {
                 "ok": False,
@@ -53,6 +58,9 @@ def root():
         "endpoints": [
             "/health",
             "/scan",
+            "/scan/refresh",
+            "/scan/cache-meta",
+            "/scan/cache-clear",
             "/signals",
             "/observed-signals",
             "/hot-matches",
@@ -75,6 +83,26 @@ def health():
 def scan():
     result = _safe_scan_result()
     return jsonify(result), 200
+
+
+@app.route("/scan/refresh", methods=["GET"])
+def scan_refresh():
+    result = _safe_scan_result(force_refresh=True)
+    return jsonify(result), 200
+
+
+@app.route("/scan/cache-meta", methods=["GET"])
+def scan_cache_meta():
+    return jsonify({
+        "ok": True,
+        "cache": get_cache_meta(),
+    }), 200
+
+
+@app.route("/scan/cache-clear", methods=["GET"])
+def scan_cache_clear():
+    payload = clear_scan_cache()
+    return jsonify(payload), 200
 
 
 @app.route("/signals", methods=["GET"])
