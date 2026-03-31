@@ -16,6 +16,8 @@ def build_dashboard_payload(scan_result: Dict[str, Any]) -> Dict[str, Any]:
             "ok": False,
             "error": "SCAN_RESULT_INVALID",
             "signals": [],
+            "strict_signals": [],
+            "flex_signals": [],
             "observed_signals": [],
             "hot_matches": [],
             "stats": {
@@ -37,6 +39,8 @@ def build_dashboard_payload(scan_result: Dict[str, Any]) -> Dict[str, Any]:
         }
 
     signals = scan_result.get("signals", [])
+    strict_signals = scan_result.get("strict_signals", signals)
+    flex_signals = scan_result.get("flex_signals", [])
     observed_signals = scan_result.get("observed_signals", [])
     hot_matches = scan_result.get("hot_matches", [])
     base_stats = scan_result.get("stats", {}) or {}
@@ -44,32 +48,28 @@ def build_dashboard_payload(scan_result: Dict[str, Any]) -> Dict[str, Any]:
 
     if not isinstance(signals, list):
         signals = []
+    if not isinstance(strict_signals, list):
+        strict_signals = []
+    if not isinstance(flex_signals, list):
+        flex_signals = []
     if not isinstance(observed_signals, list):
         observed_signals = []
     if not isinstance(hot_matches, list):
         hot_matches = []
 
-    confidences = [safe_float(s.get("confidence"), 0.0) for s in signals]
-    values = [safe_float(s.get("value", s.get("valor", 0.0)), 0.0) for s in signals]
-    risks = [safe_float(s.get("risk_score"), 0.0) for s in signals]
+    # En el modo final, signals y strict_signals representan lo mismo.
+    strict_base = strict_signals if strict_signals else signals
+
+    confidences = [safe_float(s.get("confidence"), 0.0) for s in strict_base]
+    values = [safe_float(s.get("value", s.get("valor", 0.0)), 0.0) for s in strict_base]
+    risks = [safe_float(s.get("risk_score"), 0.0) for s in strict_base]
 
     elite_signals = 0
     top_signals = 0
     validated_odds_signals = 0
     publish_ready_signals = 0
 
-    strict_signals_count = 0
-    flex_signals_count = 0
-
-    for signal in observed_signals:
-        publication_mode = safe_text(signal.get("publication_mode")).upper()
-
-        if publication_mode == "STRICT":
-            strict_signals_count += 1
-        elif publication_mode == "INTERNAL_FLEX":
-            flex_signals_count += 1
-
-    for signal in signals:
+    for signal in strict_base:
         rank = safe_text(signal.get("signal_rank")).upper()
 
         if rank == "ELITE":
@@ -86,11 +86,11 @@ def build_dashboard_payload(scan_result: Dict[str, Any]) -> Dict[str, Any]:
 
     stats = {
         "total_matches": safe_int(base_stats.get("total_matches"), 0),
-        "total_signals": safe_int(base_stats.get("total_signals"), len(signals)),
+        "total_signals": safe_int(base_stats.get("total_signals"), len(strict_base)),
         "total_hot_matches": safe_int(base_stats.get("total_hot_matches"), len(hot_matches)),
         "observed_signals": safe_int(base_stats.get("observed_signals"), len(observed_signals)),
-        "strict_signals": safe_int(base_stats.get("strict_signals"), strict_signals_count),
-        "flex_signals": safe_int(base_stats.get("flex_signals"), flex_signals_count),
+        "strict_signals": safe_int(base_stats.get("strict_signals"), len(strict_base)),
+        "flex_signals": safe_int(base_stats.get("flex_signals"), len(flex_signals)),
         "avg_confidence": _avg(confidences),
         "avg_value": _avg(values),
         "avg_risk": _avg(risks),
@@ -108,9 +108,11 @@ def build_dashboard_payload(scan_result: Dict[str, Any]) -> Dict[str, Any]:
         "version": safe_text(scan_result.get("version")),
         "scan_started_at": safe_int(scan_result.get("scan_started_at"), 0),
         "scan_finished_at": safe_int(scan_result.get("scan_finished_at"), 0),
-        "signals": signals,
+        "signals": strict_base,
+        "strict_signals": strict_base,
+        "flex_signals": flex_signals,
         "observed_signals": observed_signals,
         "hot_matches": hot_matches,
         "stats": stats,
         "errors": errors,
-        }
+            }
