@@ -75,6 +75,10 @@ def _apply_aliases(text: str) -> str:
         "aldosivi": "aldosivi",
         "nigeria": "nigeria",
         "mali": "mali",
+        "turkiye": "turkey",
+        "bosnia herzegovina": "bosnia and herzegovina",
+        "rep of ireland": "republic of ireland",
+        "fyr macedonia": "north macedonia",
     }
     return aliases.get(text, text)
 
@@ -319,7 +323,6 @@ def _is_excluded_competition(league: str) -> bool:
         "segunda rfef", "tercera",
         "primera b", "segunda b",
         "regional", "amateur", "amateure",
-        "segunda division",
     ]
 
     return any(term in l for term in excluded_terms)
@@ -348,8 +351,10 @@ def _is_allowed_major_competition(league: str, country: str = "") -> bool:
         "copa sudamericana",
         "copa america",
         "nations league",
-        "euro",
         "world cup",
+        "world cup qualification",
+        "qualification europe",
+        "euro",
         "mundial",
         "concacaf",
         "asian cup",
@@ -373,6 +378,11 @@ def _is_allowed_major_competition(league: str, country: str = "") -> bool:
         "primera division",
         "primera a",
         "campeonato",
+        "national league",
+        "national league north",
+        "national league south",
+        "non league",
+        "vanarama",
     ]
 
     if any(term in l for term in major_terms):
