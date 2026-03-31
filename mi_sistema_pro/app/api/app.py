@@ -13,6 +13,8 @@ def _empty_stats(errors: int = 1) -> dict:
         "total_signals": 0,
         "total_hot_matches": 0,
         "observed_signals": 0,
+        "strict_signals": 0,
+        "flex_signals": 0,
         "errors": errors,
     }
 
@@ -78,11 +80,15 @@ def scan():
 @app.route("/signals", methods=["GET"])
 def signals():
     result = _safe_scan_result()
+    signals_list = result.get("signals", [])
+    if not isinstance(signals_list, list):
+        signals_list = []
+
     return jsonify({
         "ok": result.get("ok", False),
         "error": result.get("error", ""),
-        "signals": result.get("signals", []),
-        "total": len(result.get("signals", [])),
+        "signals": signals_list,
+        "total": len(signals_list),
         "stats": result.get("stats", _empty_stats(0)),
     }), 200
 
@@ -106,11 +112,15 @@ def observed_signals():
 @app.route("/hot-matches", methods=["GET"])
 def hot_matches():
     result = _safe_scan_result()
+    hot_matches_list = result.get("hot_matches", [])
+    if not isinstance(hot_matches_list, list):
+        hot_matches_list = []
+
     return jsonify({
         "ok": result.get("ok", False),
         "error": result.get("error", ""),
-        "hot_matches": result.get("hot_matches", []),
-        "total": len(result.get("hot_matches", [])),
+        "hot_matches": hot_matches_list,
+        "total": len(hot_matches_list),
         "stats": result.get("stats", _empty_stats(0)),
     }), 200
 
