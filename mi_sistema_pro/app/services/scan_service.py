@@ -38,11 +38,10 @@ def run_scan_cycle() -> Dict[str, Any]:
 
     result.total_matches = len(matches)
 
-    signals: List[Dict[str, Any]] = []
-    hot_matches: List[Dict[str, Any]] = []
-    observed_signals: List[Dict[str, Any]] = []
     strict_signals: List[Dict[str, Any]] = []
     flex_signals: List[Dict[str, Any]] = []
+    observed_signals: List[Dict[str, Any]] = []
+    hot_matches: List[Dict[str, Any]] = []
 
     for match in matches:
         try:
@@ -73,22 +72,30 @@ def run_scan_cycle() -> Dict[str, Any]:
                 ).upper()
 
                 if publish_ready:
-                    signals.append(signal)
-
                     if publication_mode == "STRICT":
                         strict_signals.append(signal)
+                        logger.info(
+                            "Señal STRICT añadida | partido=%s | market=%s | score=%s | rank=%s",
+                            partido,
+                            signal.get("market"),
+                            signal.get("signal_score"),
+                            signal.get("signal_rank"),
+                        )
                     elif publication_mode == "INTERNAL_FLEX":
                         flex_signals.append(signal)
-
-                    logger.info(
-                        "Señal PUBLICABLE añadida | partido=%s | market=%s | mode=%s | score=%s | rank=%s | publish_ready=%s",
-                        partido,
-                        signal.get("market"),
-                        publication_mode,
-                        signal.get("signal_score"),
-                        signal.get("signal_rank"),
-                        signal.get("publish_ready"),
-                    )
+                        logger.info(
+                            "Señal FLEX añadida | partido=%s | market=%s | score=%s | rank=%s",
+                            partido,
+                            signal.get("market"),
+                            signal.get("signal_score"),
+                            signal.get("signal_rank"),
+                        )
+                    else:
+                        logger.info(
+                            "Señal publicable con modo no esperado | partido=%s | mode=%s",
+                            partido,
+                            publication_mode,
+                        )
                 else:
                     logger.info(
                         "Señal observada pero NO publicable | partido=%s | market=%s | mode=%s | publish_ready=%s | odds_data_available=%s | odds_validation_ok=%s | error=%s",
@@ -107,7 +114,25 @@ def run_scan_cycle() -> Dict[str, Any]:
             errors.append(f"ERROR_PROCESS_MATCH_{safe_text(match.get('id'))}: {e}")
             logger.exception("Error procesando partido id=%s", match.get("id"))
 
-    signals.sort(
+    strict_signals.sort(
+        key=lambda s: (
+            safe_float(s.get("signal_score"), 0.0),
+            safe_float(s.get("confidence"), 0.0),
+            safe_float(s.get("value"), 0.0),
+        ),
+        reverse=True,
+    )
+
+    flex_signals.sort(
+        key=lambda s: (
+            safe_float(s.get("signal_score"), 0.0),
+            safe_float(s.get("confidence"), 0.0),
+            safe_float(s.get("value"), 0.0),
+        ),
+        reverse=True,
+    )
+
+    observed_signals.sort(
         key=lambda s: (
             safe_float(s.get("signal_score"), 0.0),
             safe_float(s.get("confidence"), 0.0),
@@ -125,18 +150,18 @@ def run_scan_cycle() -> Dict[str, Any]:
         reverse=True,
     )
 
-    signals = signals[:settings.MAX_SIGNALS]
+    strict_signals = strict_signals[:settings.MAX_SIGNALS]
+    flex_signals = flex_signals[:settings.MAX_SIGNALS]
     hot_matches = hot_matches[:10]
 
-    result.total_signals = len(signals)
-    result.signals = signals
+    result.total_signals = len(strict_signals)
+    result.signals = strict_signals
     result.hot_matches = hot_matches
     result.errors = errors
 
     logger.info(
-        "Fin scan cycle | total_matches=%s | total_signals=%s | strict_signals=%s | flex_signals=%s | total_hot_matches=%s | observed_signals=%s | errors=%s",
+        "Fin scan cycle | total_matches=%s | strict_signals=%s | flex_signals=%s | total_hot_matches=%s | observed_signals=%s | errors=%s",
         result.total_matches,
-        result.total_signals,
         len(strict_signals),
         len(flex_signals),
         len(result.hot_matches),
@@ -152,14 +177,16 @@ def run_scan_cycle() -> Dict[str, Any]:
         "scan_finished_at": int(time.time()),
         "stats": {
             "total_matches": result.total_matches,
-            "total_signals": result.total_signals,
+            "total_signals": len(strict_signals),
             "total_hot_matches": len(result.hot_matches),
             "observed_signals": len(observed_signals),
             "strict_signals": len(strict_signals),
             "flex_signals": len(flex_signals),
             "errors": len(result.errors),
         },
-        "signals": result.signals,
+        "signals": strict_signals,
+        "strict_signals": strict_signals,
+        "flex_signals": flex_signals,
         "observed_signals": observed_signals,
         "hot_matches": result.hot_matches,
         "errors": result.errors,
