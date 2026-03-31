@@ -515,11 +515,11 @@ def _choose_best_event(
     if best_event is None:
         return None, 0, debug_candidates
 
-    if best_score < 120:
+    # 🔥 CAMBIO CLAVE (ANTES 120)
+    if best_score < 80:
         return None, best_score, debug_candidates
 
     return best_event, best_score, debug_candidates
-
 
 def _fetch_odds_for_sport(api_key: str, sport_key: str) -> List[Dict[str, Any]]:
     url = SPORT_ODDS_URL_TEMPLATE.format(sport_key=sport_key)
@@ -771,11 +771,11 @@ def _choose_best_event_odds_api_io(
     if best_event is None:
         return None, 0, debug_candidates
 
-    if best_score < 120:
+    # 🔥 CAMBIO CLAVE (ANTES 120)
+    if best_score < 80:
         return None, best_score, debug_candidates
 
     return best_event, best_score, debug_candidates
-
 
 def _fetch_odds_api_io_events(api_key: str, league: str = "", country: str = "") -> List[Dict[str, Any]]:
     base_url = _safe_text(os.getenv("ODDS_API_IO_BASE_URL"), ODDS_API_IO_BASE_URL)
@@ -791,8 +791,10 @@ def _fetch_odds_api_io_events(api_key: str, league: str = "", country: str = "")
     if country:
         params["country"] = country
 
+    # 🔥 PRIMER INTENTO (con filtros)
     try:
         data = _request_json(url, params=params, timeout=REQUEST_TIMEOUT)
+
         if isinstance(data, dict):
             if isinstance(data.get("data"), list):
                 return data.get("data")
@@ -800,11 +802,36 @@ def _fetch_odds_api_io_events(api_key: str, league: str = "", country: str = "")
                 return data.get("matches")
             if isinstance(data.get("response"), list):
                 return data.get("response")
+
         if isinstance(data, list):
             return data
-        return []
+
+    except Exception:
+        pass
+
+    # 🔥 FALLBACK (sin filtros)
+    try:
+        data = _request_json(
+            url,
+            params={"apiKey": api_key, "sport": "soccer"},
+            timeout=REQUEST_TIMEOUT,
+        )
+
+        if isinstance(data, dict):
+            if isinstance(data.get("data"), list):
+                return data.get("data")
+            if isinstance(data.get("matches"), list):
+                return data.get("matches")
+            if isinstance(data.get("response"), list):
+                return data.get("response")
+
+        if isinstance(data, list):
+            return data
+
     except Exception:
         return []
+
+    return []
 
 
 def _obtener_odds_odds_api_io(local: str, visitante: str, league: str = "", country: str = "") -> Dict[str, Any]:
