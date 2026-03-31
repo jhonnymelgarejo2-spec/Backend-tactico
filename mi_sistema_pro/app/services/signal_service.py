@@ -50,6 +50,62 @@ def _pick_best_market_for_signal(signal: Dict[str, Any], odds_payload: Dict[str,
     return candidates[0]
 
 
+def _apply_flexible_mode(signal: Dict[str, Any], odds_payload: Dict[str, Any]) -> Dict[str, Any]:
+    enriched = dict(signal)
+
+    confidence = safe_float(enriched.get("confidence"), 0.0)
+    value = safe_float(enriched.get("value", enriched.get("valor", 0.0)), 0.0)
+    risk_score = safe_float(enriched.get("risk_score"), 999.0)
+    signal_rank = safe_text(enriched.get("signal_rank")).upper()
+    time_fresh = bool(enriched.get("time_fresh", True))
+
+    enriched["odds_source"] = safe_text(odds_payload.get("odds_source"), "none")
+    enriched["odds_data_available"] = False
+    enriched["odds_error"] = safe_text(odds_payload.get("error"), "")
+    enriched["odds_selected_bookmaker"] = ""
+    enriched["odds_selected_line"] = 0.0
+    enriched["odds_selected_price"] = 0.0
+    enriched["odds_side"] = ""
+    enriched["odds_validation_ok"] = False
+    enriched["publication_mode"] = "STRICT_BLOCKED"
+    enriched["publish_ready"] = False
+    enriched["recomendacion_final"] = "OBSERVAR"
+
+    flexible_ok = (
+        confidence >= 85
+        and value >= 8
+        and risk_score <= 5
+        and signal_rank in {"TOP", "ELITE"}
+        and time_fresh
+    )
+
+    if flexible_ok:
+        enriched["publication_mode"] = "INTERNAL_FLEX"
+        enriched["publish_ready"] = True
+        enriched["recomendacion_final"] = "APOSTAR_SUAVE"
+
+        logger.info(
+            "Modo flexible activado | partido=%s | market=%s | confidence=%.2f | value=%.2f | rank=%s",
+            enriched.get("partido"),
+            enriched.get("market"),
+            confidence,
+            value,
+            signal_rank,
+        )
+    else:
+        logger.info(
+            "Sin odds válidas y sin modo flexible | partido=%s | market=%s | confidence=%.2f | value=%.2f | rank=%s | error=%s",
+            enriched.get("partido"),
+            enriched.get("market"),
+            confidence,
+            value,
+            signal_rank,
+            enriched["odds_error"],
+        )
+
+    return enriched
+
+
 def _apply_odds_to_signal(signal: Dict[str, Any], odds_payload: Dict[str, Any]) -> Dict[str, Any]:
     enriched = dict(signal)
 
@@ -61,18 +117,12 @@ def _apply_odds_to_signal(signal: Dict[str, Any], odds_payload: Dict[str, Any]) 
     enriched["odds_selected_price"] = 0.0
     enriched["odds_side"] = ""
     enriched["odds_validation_ok"] = False
+    enriched["publication_mode"] = "STRICT"
     enriched["publish_ready"] = False
     enriched["recomendacion_final"] = "OBSERVAR"
 
     if not enriched["odds_data_available"]:
-        logger.info(
-            "Sin odds válidas | partido=%s | market=%s | source=%s | error=%s",
-            enriched.get("partido"),
-            enriched.get("market"),
-            enriched["odds_source"],
-            enriched["odds_error"],
-        )
-        return enriched
+        return _apply_flexible_mode(enriched, odds_payload)
 
     best = _pick_best_market_for_signal(enriched, odds_payload)
     if not best:
@@ -81,7 +131,10 @@ def _apply_odds_to_signal(signal: Dict[str, Any], odds_payload: Dict[str, Any]) 
             enriched.get("partido"),
             enriched.get("market"),
         )
-        return enriched
+        return _apply_flexible_mode(enriched, {
+            **odds_payload,
+            "error": "NO_COMPATIBLE_MARKET_LINE",
+        })
 
     selected_price = safe_float(best.get("price"), 0.0)
     if selected_price <= 0:
@@ -90,7 +143,10 @@ def _apply_odds_to_signal(signal: Dict[str, Any], odds_payload: Dict[str, Any]) 
             enriched.get("partido"),
             enriched.get("market"),
         )
-        return enriched
+        return _apply_flexible_mode(enriched, {
+            **odds_payload,
+            "error": "INVALID_ODDS_PRICE",
+        })
 
     implied_probability = round(1.0 / selected_price, 4)
     prob_real = safe_float(enriched.get("prob_real"), 0.0)
@@ -124,7 +180,7 @@ def _apply_odds_to_signal(signal: Dict[str, Any], odds_payload: Dict[str, Any]) 
     enriched["recomendacion_final"] = "APOSTAR" if enriched["publish_ready"] else "OBSERVAR"
 
     logger.info(
-        "Señal enriquecida | partido=%s | market=%s | odd=%.2f | prob_real=%.4f | prob_implicita=%.4f | value=%.2f | publish_ready=%s",
+        "Señal enriquecida con odds | partido=%s | market=%s | odd=%.2f | prob_real=%.4f | prob_implicita=%.4f | value=%.2f | publish_ready=%s",
         enriched.get("partido"),
         enriched.get("market"),
         selected_price,
