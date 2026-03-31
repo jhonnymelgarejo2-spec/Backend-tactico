@@ -1,4 +1,3 @@
-
 from flask import Flask, jsonify
 
 from app.config.config import settings
@@ -32,8 +31,8 @@ def _safe_scan_result(force_refresh: bool = False) -> dict:
                 "ok": False,
                 "error": "SCAN_RESULT_INVALID",
                 "signals": [],
-                "hot_matches": [],
                 "observed_signals": [],
+                "hot_matches": [],
                 "stats": _empty_stats(),
             }
         return result
@@ -42,10 +41,14 @@ def _safe_scan_result(force_refresh: bool = False) -> dict:
             "ok": False,
             "error": f"SCAN_CRASH: {e}",
             "signals": [],
-            "hot_matches": [],
             "observed_signals": [],
+            "hot_matches": [],
             "stats": _empty_stats(),
         }
+
+
+def _safe_list(value) -> list:
+    return value if isinstance(value, list) else []
 
 
 @app.route("/", methods=["GET"])
@@ -63,6 +66,8 @@ def root():
             "/scan/cache-clear",
             "/signals",
             "/observed-signals",
+            "/strict-signals",
+            "/flex-signals",
             "/hot-matches",
             "/dashboard-data",
         ],
@@ -108,9 +113,7 @@ def scan_cache_clear():
 @app.route("/signals", methods=["GET"])
 def signals():
     result = _safe_scan_result()
-    signals_list = result.get("signals", [])
-    if not isinstance(signals_list, list):
-        signals_list = []
+    signals_list = _safe_list(result.get("signals", []))
 
     return jsonify({
         "ok": result.get("ok", False),
@@ -124,9 +127,7 @@ def signals():
 @app.route("/observed-signals", methods=["GET"])
 def observed_signals():
     result = _safe_scan_result()
-    observed = result.get("observed_signals", [])
-    if not isinstance(observed, list):
-        observed = []
+    observed = _safe_list(result.get("observed_signals", []))
 
     return jsonify({
         "ok": result.get("ok", False),
@@ -137,12 +138,48 @@ def observed_signals():
     }), 200
 
 
+@app.route("/strict-signals", methods=["GET"])
+def strict_signals():
+    result = _safe_scan_result()
+    observed = _safe_list(result.get("observed_signals", []))
+
+    strict = [
+        signal for signal in observed
+        if str(signal.get("publication_mode", "")).upper() == "STRICT"
+    ]
+
+    return jsonify({
+        "ok": result.get("ok", False),
+        "error": result.get("error", ""),
+        "strict_signals": strict,
+        "total": len(strict),
+        "stats": result.get("stats", _empty_stats(0)),
+    }), 200
+
+
+@app.route("/flex-signals", methods=["GET"])
+def flex_signals():
+    result = _safe_scan_result()
+    observed = _safe_list(result.get("observed_signals", []))
+
+    flex = [
+        signal for signal in observed
+        if str(signal.get("publication_mode", "")).upper() == "INTERNAL_FLEX"
+    ]
+
+    return jsonify({
+        "ok": result.get("ok", False),
+        "error": result.get("error", ""),
+        "flex_signals": flex,
+        "total": len(flex),
+        "stats": result.get("stats", _empty_stats(0)),
+    }), 200
+
+
 @app.route("/hot-matches", methods=["GET"])
 def hot_matches():
     result = _safe_scan_result()
-    hot_matches_list = result.get("hot_matches", [])
-    if not isinstance(hot_matches_list, list):
-        hot_matches_list = []
+    hot_matches_list = _safe_list(result.get("hot_matches", []))
 
     return jsonify({
         "ok": result.get("ok", False),
