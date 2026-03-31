@@ -75,7 +75,6 @@ def _normalize_team_name(name: str) -> str:
         "deportes": "depor",
         "athletic": "ath",
         "atletico": "atl",
-        "atletico.": "atl",
         "sporting": "sport",
         "association": "",
         "fk": "",
@@ -103,13 +102,19 @@ def _normalize_team_name(name: str) -> str:
         "ii": "",
         "iii": "",
         "iv": "",
+        "u17": "",
+        "u18": "",
         "u19": "",
         "u20": "",
         "u21": "",
+        "u22": "",
         "u23": "",
+        "sub17": "",
+        "sub18": "",
         "sub19": "",
         "sub20": "",
         "sub21": "",
+        "sub22": "",
         "sub23": "",
         "w": "",
     }
@@ -279,6 +284,85 @@ def _league_country_bonus(event_text: str, league: str, country: str) -> int:
 
 
 # =========================================================
+# FILTRO DE COMPETENCIAS
+# =========================================================
+def _is_excluded_competition(league: str) -> bool:
+    l = _normalize_text(league)
+
+    excluded_terms = [
+        "u17", "u18", "u19", "u20", "u21", "u22", "u23",
+        "sub17", "sub18", "sub19", "sub20", "sub21", "sub22", "sub23",
+        "reserve", "reserves", "reservas",
+        "women", "femenino", "femenina", "ladies",
+        "youth", "juvenil", "junior",
+        "development", "development league",
+        "serie c", "serie d",
+        "segunda rfef", "tercera",
+        "primera b", "segunda b",
+        "regional", "amateur", "amateure",
+    ]
+
+    return any(term in l for term in excluded_terms)
+
+
+def _is_allowed_major_competition(league: str, country: str = "") -> bool:
+    l = _normalize_text(league)
+    c = _normalize_text(country)
+
+    if _is_excluded_competition(l):
+        return False
+
+    major_terms = [
+        "premier league",
+        "la liga",
+        "bundesliga",
+        "serie a",
+        "ligue 1",
+        "eredivisie",
+        "primeira liga",
+        "mls",
+        "champions league",
+        "europa league",
+        "conference league",
+        "copa libertadores",
+        "copa sudamericana",
+        "copa america",
+        "nations league",
+        "euro",
+        "world cup",
+        "mundial",
+        "concacaf",
+        "asian cup",
+        "africa cup",
+        "friendlies",
+        "friendly",
+        "fa cup",
+        "copa del rey",
+        "coppa italia",
+        "dfb pokal",
+        "coupe de france",
+        "super cup",
+        "supercopa",
+        "league cup",
+        "liga mx",
+        "campeonato brasileiro",
+        "brasileirao",
+        "liga profesional argentina",
+        "primera division",
+        "primera a",
+        "campeonato",
+    ]
+
+    if any(term in l for term in major_terms):
+        return True
+
+    if "world" in c and ("friendly" in l or "friendlies" in l):
+        return True
+
+    return False
+
+
+# =========================================================
 # MAPEO DE LIGAS
 # =========================================================
 def _league_mapping_candidates(league: str, country: str = "") -> List[str]:
@@ -287,50 +371,40 @@ def _league_mapping_candidates(league: str, country: str = "") -> List[str]:
 
     candidates: List[str] = []
 
-    if "liga mx femenil" in l:
-        candidates.append("soccer_mexico_ligamx")
     if "liga mx" in l:
         candidates.append("soccer_mexico_ligamx")
     if "mls" in l:
         candidates.append("soccer_usa_mls")
-    if "la liga 2" in l or "segunda division" in l:
-        candidates.append("soccer_spain_segunda_division")
     if "la liga" in l:
         candidates.append("soccer_spain_la_liga")
     if "serie a" in l and "italy" in c:
         candidates.append("soccer_italy_serie_a")
-    if "serie b" in l and "italy" in c:
-        candidates.append("soccer_italy_serie_b")
     if "primeira liga" in l:
         candidates.append("soccer_portugal_primeira_liga")
     if "eredivisie" in l:
         candidates.append("soccer_netherlands_eredivisie")
-    if "allsvenskan" in l:
-        candidates.append("soccer_sweden_allsvenskan")
-    if "superettan" in l:
-        candidates.append("soccer_sweden_superettan")
-    if "j league" in l:
-        candidates.append("soccer_japan_j_league")
-    if "k league 1" in l:
-        candidates.append("soccer_korea_kleague1")
     if "champions league" in l:
         candidates.append("soccer_uefa_champs_league")
     if "europa league" in l:
         candidates.append("soccer_uefa_europa_league")
+    if "conference league" in l:
+        candidates.append("soccer_uefa_europa_conference_league")
     if "copa libertadores" in l:
         candidates.append("soccer_conmebol_copa_libertadores")
     if "sudamericana" in l:
         candidates.append("soccer_conmebol_copa_sudamericana")
-    if "concacaf" in l:
-        candidates.append("soccer_concacaf_champions_cup")
-    if "primera" in l and "argentina" in c:
+    if "premier league" in l and "england" in c:
+        candidates.append("soccer_epl")
+    if "bundesliga" in l:
+        candidates.append("soccer_germany_bundesliga")
+    if "ligue 1" in l:
+        candidates.append("soccer_france_ligue_one")
+    if "argentina" in c and ("liga profesional" in l or "primera division" in l):
         candidates.append("soccer_argentina_primera_division")
-    if "primera" in l and "chile" in c:
-        candidates.append("soccer_chile_campeonato")
-    if "serie c" in l and "italy" in c:
-        candidates.append("soccer_italy_serie_c")
-    if "copa" in l and "iceland" in c:
-        candidates.append("soccer_iceland_cup")
+    if "brazil" in c or "brasil" in c:
+        candidates.append("soccer_brazil_campeonato")
+    if "nations league" in l:
+        candidates.append("soccer_uefa_nations_league")
 
     seen = set()
     out: List[str] = []
@@ -515,11 +589,11 @@ def _choose_best_event(
     if best_event is None:
         return None, 0, debug_candidates
 
-    # 🔥 CAMBIO CLAVE (ANTES 120)
     if best_score < 80:
         return None, best_score, debug_candidates
 
     return best_event, best_score, debug_candidates
+
 
 def _fetch_odds_for_sport(api_key: str, sport_key: str) -> List[Dict[str, Any]]:
     url = SPORT_ODDS_URL_TEMPLATE.format(sport_key=sport_key)
@@ -547,6 +621,10 @@ def _obtener_odds_the_odds_api(local: str, visitante: str, league: str = "", cou
 
     if not api_key:
         base_response["error"] = "THE_ODDS_API_KEY no configurada"
+        return base_response
+
+    if not _is_allowed_major_competition(league, country):
+        base_response["error"] = "competencia descartada por filtro de calidad"
         return base_response
 
     sport_candidates = _resolve_candidate_sport_keys(api_key, league=league, country=country)
@@ -771,11 +849,11 @@ def _choose_best_event_odds_api_io(
     if best_event is None:
         return None, 0, debug_candidates
 
-    # 🔥 CAMBIO CLAVE (ANTES 120)
     if best_score < 80:
         return None, best_score, debug_candidates
 
     return best_event, best_score, debug_candidates
+
 
 def _fetch_odds_api_io_events(api_key: str, league: str = "", country: str = "") -> List[Dict[str, Any]]:
     base_url = _safe_text(os.getenv("ODDS_API_IO_BASE_URL"), ODDS_API_IO_BASE_URL)
@@ -791,7 +869,6 @@ def _fetch_odds_api_io_events(api_key: str, league: str = "", country: str = "")
     if country:
         params["country"] = country
 
-    # 🔥 PRIMER INTENTO (con filtros)
     try:
         data = _request_json(url, params=params, timeout=REQUEST_TIMEOUT)
 
@@ -809,7 +886,6 @@ def _fetch_odds_api_io_events(api_key: str, league: str = "", country: str = "")
     except Exception:
         pass
 
-    # 🔥 FALLBACK (sin filtros)
     try:
         data = _request_json(
             url,
@@ -920,11 +996,11 @@ def obtener_odds_partido(local: str, visitante: str, league: str = "", country: 
     if provider == "the_odds_api":
         return _safe_provider_the_odds_api(local, visitante, league=league, country=country)
 
-    primary = _safe_provider_odds_api_io(local, visitante, league=league, country=country)
+    primary = _safe_provider_the_odds_api(local, visitante, league=league, country=country)
     if primary.get("odds_data_available", False):
         return primary
 
-    fallback = _safe_provider_the_odds_api(local, visitante, league=league, country=country)
+    fallback = _safe_provider_odds_api_io(local, visitante, league=league, country=country)
     if fallback.get("odds_data_available", False):
         return fallback
 
@@ -933,7 +1009,7 @@ def obtener_odds_partido(local: str, visitante: str, league: str = "", country: 
 
     return {
         "ok": False,
-        "error": f"odds_api_io: {primary_error or 'sin datos'} | the_odds_api: {fallback_error or 'sin datos'}",
+        "error": f"the_odds_api: {primary_error or 'sin datos'} | odds_api_io: {fallback_error or 'sin datos'}",
         "odds_source": "auto",
         "odds_data_available": False,
         "home_team": "",
@@ -953,4 +1029,4 @@ def obtener_odds_partido(local: str, visitante: str, league: str = "", country: 
         "markets": [],
         "debug_candidates": primary.get("debug_candidates", []) or fallback.get("debug_candidates", []),
         "searched_match": primary.get("searched_match", {}) or fallback.get("searched_match", {}),
-        }
+    }
