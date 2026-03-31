@@ -31,6 +31,8 @@ def _safe_scan_result(force_refresh: bool = False) -> dict:
                 "ok": False,
                 "error": "SCAN_RESULT_INVALID",
                 "signals": [],
+                "strict_signals": [],
+                "flex_signals": [],
                 "observed_signals": [],
                 "hot_matches": [],
                 "stats": _empty_stats(),
@@ -41,6 +43,8 @@ def _safe_scan_result(force_refresh: bool = False) -> dict:
             "ok": False,
             "error": f"SCAN_CRASH: {e}",
             "signals": [],
+            "strict_signals": [],
+            "flex_signals": [],
             "observed_signals": [],
             "hot_matches": [],
             "stats": _empty_stats(),
@@ -124,29 +128,10 @@ def signals():
     }), 200
 
 
-@app.route("/observed-signals", methods=["GET"])
-def observed_signals():
-    result = _safe_scan_result()
-    observed = _safe_list(result.get("observed_signals", []))
-
-    return jsonify({
-        "ok": result.get("ok", False),
-        "error": result.get("error", ""),
-        "observed_signals": observed,
-        "total": len(observed),
-        "stats": result.get("stats", _empty_stats(0)),
-    }), 200
-
-
 @app.route("/strict-signals", methods=["GET"])
 def strict_signals():
     result = _safe_scan_result()
-    observed = _safe_list(result.get("observed_signals", []))
-
-    strict = [
-        signal for signal in observed
-        if str(signal.get("publication_mode", "")).upper() == "STRICT"
-    ]
+    strict = _safe_list(result.get("strict_signals", result.get("signals", [])))
 
     return jsonify({
         "ok": result.get("ok", False),
@@ -160,18 +145,27 @@ def strict_signals():
 @app.route("/flex-signals", methods=["GET"])
 def flex_signals():
     result = _safe_scan_result()
-    observed = _safe_list(result.get("observed_signals", []))
-
-    flex = [
-        signal for signal in observed
-        if str(signal.get("publication_mode", "")).upper() == "INTERNAL_FLEX"
-    ]
+    flex = _safe_list(result.get("flex_signals", []))
 
     return jsonify({
         "ok": result.get("ok", False),
         "error": result.get("error", ""),
         "flex_signals": flex,
         "total": len(flex),
+        "stats": result.get("stats", _empty_stats(0)),
+    }), 200
+
+
+@app.route("/observed-signals", methods=["GET"])
+def observed_signals():
+    result = _safe_scan_result()
+    observed = _safe_list(result.get("observed_signals", []))
+
+    return jsonify({
+        "ok": result.get("ok", False),
+        "error": result.get("error", ""),
+        "observed_signals": observed,
+        "total": len(observed),
         "stats": result.get("stats", _empty_stats(0)),
     }), 200
 
