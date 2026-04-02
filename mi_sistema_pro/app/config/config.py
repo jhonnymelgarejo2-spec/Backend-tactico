@@ -1,6 +1,10 @@
 # app/config/config.py
 
+from dotenv import load_dotenv
 import os
+
+# 🔥 CARGAR VARIABLES DEL .env
+load_dotenv()
 
 
 class Settings:
@@ -10,7 +14,7 @@ class Settings:
     SYSTEM_NAME: str = os.getenv("SYSTEM_NAME", "JHONNY_ELITE")
     SYSTEM_VERSION: str = os.getenv("SYSTEM_VERSION", "V17")
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
-    PORT: int = int(os.getenv("PORT", "10000"))
+    PORT: int = int(os.getenv("PORT", "5000"))  # 🔥 cambiado a 5000 por defecto
 
     # =========================================================
     # OPERACION GENERAL
